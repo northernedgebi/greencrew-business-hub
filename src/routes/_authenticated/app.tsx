@@ -132,7 +132,7 @@ function Onboarding() {
   async function create(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
-    const { data, error } = await supabase.rpc("create_company", { _name: name, _phone: phone || undefined, _plan: plan });
+    const { data, error } = await supabase.rpc("create_company", { _name: name, ...(phone ? { _phone: phone } : {}), _plan: plan });
     setBusy(false);
     if (error) return toast.error(error.message);
     ws.setCompany(data as string);

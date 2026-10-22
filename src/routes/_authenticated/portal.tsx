@@ -36,7 +36,7 @@ function Portal() {
       <main className="mx-auto max-w-3xl p-4 sm:p-8">
         {q.isLoading || !q.data ? <Spinner /> : q.data.me.length === 0 ? <Empty title="No account linked" text="Ask your landscaping company to connect your account." /> : (
           <>
-            <PageHeader title={`Hi, ${q.data.me[0].name}`} />
+            <PageHeader title={`Hi, ${q.data.me[0]?.name ?? ""}`} />
             <h2 className="mb-2 font-bold">Upcoming visits</h2>
             <Card className="divide-y p-0 sm:p-0">{q.data.jobs.length === 0 ? <p className="p-4 text-sm text-muted-foreground">None scheduled.</p> : q.data.jobs.map((j) => (
               <div key={j.id} className="flex justify-between p-4 text-sm"><span className="font-medium">{j.title} · {j.scheduled_date}</span><StatusBadge status={j.status} /></div>))}</Card>
