@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
@@ -34,7 +34,12 @@ function AuthPage() {
   const [sent, setSent] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "" });
 
-  if (plan) sessionStorage.setItem("lawnoffice.plan", plan);
+  useEffect(() => {
+    if (plan) sessionStorage.setItem("lawnoffice.plan", plan);
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) navigate({ to: "/app" });
+    });
+  }, [plan, navigate]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
