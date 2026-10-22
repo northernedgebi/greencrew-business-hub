@@ -8,12 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/marketing";
 
-type Search = { mode?: "signup" | "signin"; plan?: string };
+type Search = { mode?: "signup" | "signin"; plan?: string | undefined };
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>): Search => ({
-    mode: s.mode === "signup" ? "signup" : "signin",
-    plan: typeof s.plan === "string" ? s.plan : undefined,
+    mode: s["mode"] === "signup" ? "signup" : "signin",
+    plan: typeof s["plan"] === "string" ? s["plan"] : undefined,
   }),
   head: () => ({
     meta: [
