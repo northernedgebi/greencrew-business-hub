@@ -1,0 +1,164 @@
+import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import {
+  LayoutDashboard, Users, CalendarDays, Repeat, Receipt, UsersRound, Settings, LogOut, Shield, MoreHorizontal,
+} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useWorkspace } from "@/lib/workspace";
+import { can, ROLE_LABELS, type Permission } from "@/lib/permissions";
+import { Logo, PLANS } from "@/components/marketing";
+import { Spinner } from "@/components/app-ui";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+
+export const Route = createFileRoute("/_authenticated/app")({
+  head: () => ({ meta: [{ title: "LawnOffice" }, { name: "robots", content: "noindex" }] }),
+  component: AppLayout,
+});
+
+type NavItem = { to: string; label: string; icon: typeof Users; perm?: Permission; mobile?: boolean };
+const NAV: NavItem[] = [
+  { to: "/app", label: "Dashboard", icon: LayoutDashboard, mobile: true },
+  { to: "/app/schedule", label: "Schedule", icon: CalendarDays, mobile: true },
+  { to: "/app/customers", label: "Customers", icon: Users, mobile: true },
+  { to: "/app/recurring", label: "Recurring", icon: Repeat, perm: "jobs.manage" },
+  { to: "/app/invoices", label: "Invoices", icon: Receipt, perm: "billing.manage", mobile: true },
+  { to: "/app/team", label: "Team & Crews", icon: UsersRound, perm: "crews.manage" },
+  { to: "/app/settings", label: "Settings", icon: Settings },
+];
+
+function AppLayout() {
+  const ws = useWorkspace();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    if (!ws.loading && ws.memberships.length === 0 && ws.isPortalCustomer) navigate({ to: "/portal" });
+  }, [ws.loading, ws.memberships.length, ws.isPortalCustomer, navigate]);
+
+  if (ws.loading) return <Spinner />;
+  if (ws.memberships.length === 0) return ws.isPortalCustomer ? <Spinner /> : <Onboarding />;
+
+  const items = NAV.filter((n) => !n.perm || can(ws.role, n.perm));
+  const isActive = (to: string) => (to === "/app" ? pathname === "/app" || pathname === "/app/" : pathname.startsWith(to));
+
+  async function signOut() {
+    await qc.cancelQueries();
+    qc.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  }
+
+  const sideLinks = (
+    <nav className="flex flex-1 flex-col gap-1">
+      {items.map((n) => (
+        <Link key={n.to} to={n.to} className={`flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors ${isActive(n.to) ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground/80 hover:bg-sidebar-accent"}`}>
+          <n.icon className="h-5 w-5" />{n.label}
+        </Link>
+      ))}
+      {ws.isSuperAdmin && (
+        <Link to="/admin" className="flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent"><Shield className="h-5 w-5" />Platform admin</Link>
+      )}
+    </nav>
+  );
+  const companyBlock = (
+    <div className="mt-4 rounded-xl bg-sidebar-accent p-3 text-sm">
+      {ws.memberships.length > 1 ? (
+        <select className="w-full rounded-md bg-sidebar px-2 py-2 text-sidebar-foreground" value={ws.companyId} onChange={(e) => ws.setCompany(e.target.value)}>
+          {ws.memberships.map((m) => <option key={m.company_id} value={m.company_id}>{m.company.name}</option>)}
+        </select>
+      ) : (
+        <p className="truncate font-semibold text-sidebar-accent-foreground">{ws.current?.company.name}</p>
+      )}
+      <p className="mt-1 text-xs text-sidebar-foreground/60">{ws.role && ROLE_LABELS[ws.role]} · {ws.email}</p>
+      <button onClick={signOut} className="mt-3 flex items-center gap-2 text-xs font-semibold text-sidebar-foreground/80 hover:text-sidebar-accent-foreground"><LogOut className="h-4 w-4" />Sign out</button>
+    </div>
+  );
+
+  const mobileItems = items.filter((n) => n.mobile).slice(0, 4);
+
+  return (
+    <div className="min-h-screen md:flex">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col bg-sidebar p-4 md:flex">
+        <div className="mb-6 px-2"><Logo light /></div>
+        {sideLinks}
+        {companyBlock}
+      </aside>
+
+      <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b bg-forest px-4 md:hidden">
+        <Logo light />
+        <span className="max-w-[45%] truncate text-xs font-medium text-forest-foreground/70">{ws.current?.company.name}</span>
+      </header>
+
+      <main className="min-w-0 flex-1 px-4 pb-28 pt-5 sm:px-6 md:pb-10 md:pt-8 lg:px-10">
+        <div className="mx-auto max-w-6xl"><Outlet /></div>
+      </main>
+
+      <nav className="pb-safe fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t bg-card md:hidden">
+        {mobileItems.map((n) => (
+          <Link key={n.to} to={n.to} className={`flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-semibold ${isActive(n.to) ? "text-primary" : "text-muted-foreground"}`}>
+            <n.icon className="h-6 w-6" />{n.label}
+          </Link>
+        ))}
+        <Sheet>
+          <SheetTrigger className="flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-semibold text-muted-foreground"><MoreHorizontal className="h-6 w-6" />More</SheetTrigger>
+          <SheetContent side="right" className="flex w-72 flex-col border-0 bg-sidebar p-4">
+            <div className="mb-6 mt-2 px-2"><Logo light /></div>
+            {sideLinks}
+            {companyBlock}
+          </SheetContent>
+        </Sheet>
+      </nav>
+    </div>
+  );
+}
+
+function Onboarding() {
+  const ws = useWorkspace();
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [plan, setPlan] = useState("starter");
+  useEffect(() => {
+    const p = sessionStorage.getItem("lawnoffice.plan");
+    if (p) setPlan(p);
+  }, []);
+
+  async function create(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    const { data, error } = await supabase.rpc("create_company", { _name: name, _phone: phone || undefined, _plan: plan });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    ws.setCompany(data as string);
+    ws.refetch();
+    toast.success("Your workspace is ready");
+  }
+
+  return (
+    <div className="grid min-h-screen place-items-center bg-hero px-4">
+      <form onSubmit={create} className="w-full max-w-md space-y-4 rounded-2xl bg-card p-6 shadow-2xl sm:p-8">
+        <Logo />
+        <h1 className="pt-4 text-2xl font-bold">Set up your company</h1>
+        <p className="text-sm text-muted-foreground">You'll be the owner of this workspace. If a company invited you, ask them to send the invite to {ws.email}.</p>
+        <div className="space-y-1.5"><Label>Company name</Label><Input className="h-12" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Green Acres Lawn Care" /></div>
+        <div className="space-y-1.5"><Label>Business phone</Label><Input className="h-12" value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
+        <div className="space-y-1.5"><Label>Plan</Label>
+          <div className="grid grid-cols-3 gap-2">
+            {PLANS.map((p) => (
+              <button type="button" key={p.id} onClick={() => setPlan(p.id)} className={`rounded-lg border p-3 text-left text-sm ${plan === p.id ? "border-primary bg-secondary" : ""}`}>
+                <span className="block font-semibold">{p.name}</span><span className="text-muted-foreground">${p.price}/mo</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        <Button type="submit" size="lg" className="w-full" disabled={busy}>{busy ? "Creating…" : "Start 14-day trial"}</Button>
+      </form>
+    </div>
+  );
+}
