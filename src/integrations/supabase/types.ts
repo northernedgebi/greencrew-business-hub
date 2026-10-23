@@ -488,6 +488,7 @@ export type Database = {
           notes: string | null
           price: number
           property_id: string | null
+          recurrence_date: string | null
           recurring_plan_id: string | null
           scheduled_date: string
           start_time: string | null
@@ -505,6 +506,7 @@ export type Database = {
           notes?: string | null
           price?: number
           property_id?: string | null
+          recurrence_date?: string | null
           recurring_plan_id?: string | null
           scheduled_date: string
           start_time?: string | null
@@ -522,6 +524,7 @@ export type Database = {
           notes?: string | null
           price?: number
           property_id?: string | null
+          recurrence_date?: string | null
           recurring_plan_id?: string | null
           scheduled_date?: string
           start_time?: string | null
