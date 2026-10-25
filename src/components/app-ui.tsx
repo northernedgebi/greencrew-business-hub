@@ -38,6 +38,8 @@ const TONES: Record<string, string> = {
   paid: "bg-success/15 text-primary",
   void: "bg-muted text-muted-foreground line-through",
   overdue: "bg-destructive/15 text-destructive",
+  accepted: "bg-success/15 text-primary",
+  declined: "bg-destructive/15 text-destructive",
   active: "bg-success/15 text-primary",
   inactive: "bg-muted text-muted-foreground",
 };

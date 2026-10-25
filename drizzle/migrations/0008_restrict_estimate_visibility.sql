@@ -1,0 +1,1 @@
+CREATE POLICY "restrict estimate visibility" ON public.estimates AS RESTRICTIVE FOR SELECT TO authenticated USING (public.can_read_company(company_id) OR public.has_role(auth.uid(),'super_admin'));

@@ -4,4 +4,4 @@
 - [x] Step 2: Read-Only role; relabel Crew Member / Office Administrator.
 - [x] Step 3: Registration fields (address, email, website, logo).
 - [x] Step 4: Dashboard additions (crews, recurring, activity, productivity).
-- [ ] Step 5: Estimates and reports pages.
+- [x] Step 5: Estimates and reports pages.
