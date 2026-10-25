@@ -5,3 +5,6 @@
 - [x] Step 3: Registration fields (address, email, website, logo).
 - [x] Step 4: Dashboard additions (crews, recurring, activity, productivity).
 - [x] Step 5: Estimates and reports pages.
+
+- [x] Crew routes: optimize order, map, move stops between days/crews
+- [ ] Monthly calendar with drag-and-drop moves
