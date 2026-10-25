@@ -17,11 +17,13 @@ export type Database = {
       companies: {
         Row: {
           address: string | null
+          booking_weekdays: number[]
           created_at: string
           created_by: string
           email: string | null
           id: string
           logo_url: string | null
+          max_visits_per_day: number
           name: string
           phone: string | null
           plan: string
@@ -31,11 +33,13 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          booking_weekdays?: number[]
           created_at?: string
           created_by: string
           email?: string | null
           id?: string
           logo_url?: string | null
+          max_visits_per_day?: number
           name: string
           phone?: string | null
           plan?: string
@@ -45,11 +49,13 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          booking_weekdays?: number[]
           created_at?: string
           created_by?: string
           email?: string | null
           id?: string
           logo_url?: string | null
+          max_visits_per_day?: number
           name?: string
           phone?: string | null
           plan?: string
@@ -219,6 +225,9 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          start_address: string | null
+          start_lat: number | null
+          start_lng: number | null
         }
         Insert: {
           color?: string | null
@@ -226,6 +235,9 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          start_address?: string | null
+          start_lat?: number | null
+          start_lng?: number | null
         }
         Update: {
           color?: string | null
@@ -233,6 +245,9 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          start_address?: string | null
+          start_lat?: number | null
+          start_lng?: number | null
         }
         Relationships: [
           {
@@ -528,6 +543,7 @@ export type Database = {
           property_id: string | null
           recurrence_date: string | null
           recurring_plan_id: string | null
+          route_order: number | null
           scheduled_date: string
           start_time: string | null
           status: Database["public"]["Enums"]["job_status"]
@@ -546,6 +562,7 @@ export type Database = {
           property_id?: string | null
           recurrence_date?: string | null
           recurring_plan_id?: string | null
+          route_order?: number | null
           scheduled_date: string
           start_time?: string | null
           status?: Database["public"]["Enums"]["job_status"]
@@ -564,6 +581,7 @@ export type Database = {
           property_id?: string | null
           recurrence_date?: string | null
           recurring_plan_id?: string | null
+          route_order?: number | null
           scheduled_date?: string
           start_time?: string | null
           status?: Database["public"]["Enums"]["job_status"]
@@ -861,6 +879,90 @@ export type Database = {
           },
         ]
       }
+      service_requests: {
+        Row: {
+          company_id: string
+          company_reply: string | null
+          created_at: string
+          customer_id: string
+          estimate_id: string | null
+          id: string
+          job_id: string | null
+          kind: string
+          message: string | null
+          requested_date: string | null
+          scheduled_job_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          company_reply?: string | null
+          created_at?: string
+          customer_id: string
+          estimate_id?: string | null
+          id?: string
+          job_id?: string | null
+          kind: string
+          message?: string | null
+          requested_date?: string | null
+          scheduled_job_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          company_reply?: string | null
+          created_at?: string
+          customer_id?: string
+          estimate_id?: string | null
+          id?: string
+          job_id?: string | null
+          kind?: string
+          message?: string | null
+          requested_date?: string | null
+          scheduled_job_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_requests_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_requests_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_requests_estimate_id_fkey"
+            columns: ["estimate_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_requests_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_requests_scheduled_job_id_fkey"
+            columns: ["scheduled_job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -922,7 +1024,26 @@ export type Database = {
       }
       is_manager: { Args: { _company: string }; Returns: boolean }
       is_member: { Args: { _company: string }; Returns: boolean }
+      is_member_any: { Args: { _company: string }; Returns: boolean }
       is_office: { Args: { _company: string }; Returns: boolean }
+      link_my_customer_accounts: { Args: never; Returns: number }
+      portal_available_days: {
+        Args: { _from: string; _job: string; _to: string }
+        Returns: string[]
+      }
+      portal_cancel_request: { Args: { _id: string }; Returns: undefined }
+      portal_request_reschedule: {
+        Args: { _date: string; _job: string; _message: string }
+        Returns: string
+      }
+      portal_request_service: {
+        Args: { _customer: string; _message: string }
+        Returns: string
+      }
+      portal_respond_estimate: {
+        Args: { _accept: boolean; _estimate: string }
+        Returns: undefined
+      }
       recalc_invoice: { Args: { _id: string }; Returns: undefined }
     }
     Enums: {

@@ -5,3 +5,9 @@
 - [x] Step 3: Registration fields (address, email, website, logo).
 - [x] Step 4: Dashboard additions (crews, recurring, activity, productivity).
 - [x] Step 5: Estimates and reports pages.
+
+- [x] Crew routes: optimize order, map, move stops between days/crews
+- [x] Monthly calendar with drag-and-drop moves
+- [x] Crew-friendly route view with notes per stop
+- [x] Platform admin: companies list, disable/enable, new signups, revenue (MRR)
+- [x] Customer portal: see schedule, request reschedule (company approves), bills & payments, send notes/requests, company quotes them, customer approves, company schedules

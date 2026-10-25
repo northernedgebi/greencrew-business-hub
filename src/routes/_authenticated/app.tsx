@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
-  LayoutDashboard, Users, CalendarDays, Receipt, UsersRound, Settings, LogOut, Shield, MoreHorizontal, FileText, BarChart3,
+  LayoutDashboard, Users, CalendarDays, Receipt, UsersRound, Settings, LogOut, Shield, MoreHorizontal, FileText, BarChart3, Map as MapIcon, Inbox,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/lib/workspace";
@@ -25,8 +25,10 @@ type NavItem = { to: string; label: string; icon: typeof Users; perm?: Permissio
 const NAV: NavItem[] = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, mobile: true },
   { to: "/app/schedule", label: "Schedule", icon: CalendarDays, mobile: true },
+  { to: "/app/routes", label: "Routes", icon: MapIcon, mobile: true },
   { to: "/app/customers", label: "Customers", icon: Users, mobile: true },
   { to: "/app/invoices", label: "Invoices", icon: Receipt, perm: "billing.manage", mobile: true },
+  { to: "/app/requests", label: "Requests", icon: Inbox, perm: "billing.manage" },
   { to: "/app/estimates", label: "Estimates", icon: FileText, perm: "dashboard.financials" },
   { to: "/app/reports", label: "Reports", icon: BarChart3, perm: "dashboard.financials" },
   { to: "/app/team", label: "Team & Crews", icon: UsersRound, perm: "crews.manage" },
@@ -45,6 +47,14 @@ function AppLayout() {
 
   if (ws.loading) return <Spinner />;
   if (ws.memberships.length === 0) return ws.isPortalCustomer ? <Spinner /> : <Onboarding />;
+  if (ws.current?.company.subscription_status === "suspended" && !ws.isSuperAdmin) return (
+    <div className="grid min-h-screen place-items-center p-6 text-center">
+      <div className="max-w-sm"><Logo /><h1 className="mt-6 font-display text-2xl font-bold">Account disabled</h1>
+        <p className="mt-2 text-muted-foreground">{ws.current.company.name} has been disabled. Please contact LawnOffice support to restore access.</p>
+        {ws.memberships.length > 1 && <Button className="mt-4" variant="outline" onClick={() => ws.setCompany(ws.memberships.find((m) => m.company_id !== ws.companyId)!.company_id)}>Switch company</Button>}
+        <Button className="mt-4 ml-2" onClick={async () => { qc.clear(); await supabase.auth.signOut(); navigate({ to: "/auth", replace: true }); }}>Sign out</Button></div>
+    </div>
+  );
 
   const items = NAV.filter((n) => !n.perm || can(ws.role, n.perm));
   const isActive = (to: string) => (to === "/app" ? pathname === "/app" || pathname === "/app/" : pathname.startsWith(to));

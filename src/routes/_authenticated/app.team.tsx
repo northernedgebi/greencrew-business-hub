@@ -95,10 +95,16 @@ function Team() {
 
         <Card>
           <h2 className="mb-3 font-bold">Crews</h2>
-          <div className="flex flex-wrap gap-2">
+          <div className="space-y-2">
             {q.data.crews.map((c) => (
-              <span key={c.id} className="flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-sm font-medium">{c.name}
-                <button onClick={() => confirm("Delete crew?") && run(supabase.from("crews").delete().eq("id", c.id))}><Trash2 className="h-3.5 w-3.5" /></button></span>
+              <div key={c.id} className="rounded-xl bg-secondary p-2.5">
+                <div className="flex items-center justify-between text-sm font-semibold">{c.name}
+                  <button aria-label={`Delete ${c.name}`} onClick={() => confirm("Delete crew?") && run(supabase.from("crews").delete().eq("id", c.id))}><Trash2 className="h-3.5 w-3.5" /></button></div>
+                <form className="mt-2 flex gap-2" onSubmit={(e) => { e.preventDefault(); const v = String(new FormData(e.currentTarget).get("start") ?? "").trim(); void run(supabase.from("crews").update({ start_address: v || null, start_lat: null, start_lng: null }).eq("company_id", companyId).eq("id", c.id), "Route start saved"); }}>
+                  <Input name="start" className="h-10 bg-background" placeholder="Route start address (yard / shop)" defaultValue={(c as { start_address?: string | null }).start_address ?? ""} />
+                  <Button type="submit" size="sm" variant="outline" className="h-10">Save</Button>
+                </form>
+              </div>
             ))}
           </div>
           <form className="mt-3 flex gap-2" onSubmit={async (e) => { e.preventDefault(); if (await run(supabase.from("crews").insert({ company_id: companyId, name: crewName }))) setCrewName(""); }}>

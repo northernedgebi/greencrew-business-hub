@@ -14,3 +14,6 @@
 - Recurring plan edits affect newly generated visits; existing visits are edited individually to preserve dispatch changes and completed work.
 - Store crew schedule access on invitations and company memberships; enforce crew/date scope in database policies so all job read paths share the same access boundary.
 - Crew managers may dispatch only within their enabled crew/date scope; recurring generation remains office-only to avoid generating outside authorized dates.
+- Route stop order is stored per job (route_order) and computed client-side from cached property/crew coordinates; geocoding runs in an authenticated server function via OpenStreetMap so no paid map key is needed.
+- Disabling a company (subscription_status = suspended) is enforced in is_member/has_company_role so every RLS path locks out; only platform admins may change subscription status or trial dates (trigger).
+- Customer portal writes go only through security-definer portal_* RPCs; companies act on service_requests directly under office RLS.

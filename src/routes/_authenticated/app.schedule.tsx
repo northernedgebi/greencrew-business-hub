@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, Plus, MapPin, Play, Check, X, Receipt, Pencil, RefreshCw } from "lucide-react";
+import { MonthCalendar } from "@/components/month-calendar";
 import { ScheduleDatePicker } from "@/components/schedule-date-picker";
 import { WEEKDAYS } from "@/lib/scheduling";
 import { getDay, parseISO } from "date-fns";
@@ -28,26 +29,29 @@ function Schedule() {
   const { role } = useWorkspace();
   const restricted = isCrewUser(role);
   const showTabs = !restricted && can(role, "jobs.manage");
-  const [tab, setTab] = useState<"visits" | "recurring">("visits");
+  const [tab, setTab] = useState<"visits" | "month" | "recurring">("visits");
+  const [openDay, setOpenDay] = useState<string | undefined>(undefined);
   return (
     <>
       {showTabs && (
         <div className="mb-4 flex gap-2" role="tablist">
           <Button variant={tab === "visits" ? "default" : "outline"} onClick={() => setTab("visits")}>Visits</Button>
+          <Button variant={tab === "month" ? "default" : "outline"} onClick={() => setTab("month")}>Month</Button>
           <Button variant={tab === "recurring" ? "default" : "outline"} onClick={() => setTab("recurring")}>Recurring plans</Button>
         </div>
       )}
-      {(!showTabs || tab === "visits") && <Visits />}
+      {(!showTabs || tab === "visits") && <Visits key={openDay ?? "today"} initialDay={openDay} />}
+      {showTabs && tab === "month" && <MonthCalendar onOpenDay={(d) => { setOpenDay(d); setTab("visits"); }} />}
       {showTabs && tab === "recurring" && <RecurringSection />}
     </>
   );
 }
 
-function Visits() {
+function Visits({ initialDay }: { initialDay?: string | undefined }) {
   const { companyId, role, current } = useWorkspace();
   const restricted = isCrewUser(role);
   const qc = useQueryClient();
-  const [day, setDay] = useState(iso(new Date()));
+  const [day, setDay] = useState(initialDay ?? iso(new Date()));
   const selectedDay = restricted && current?.schedule_visible_from && current.schedule_visible_until
     ? day < current.schedule_visible_from ? current.schedule_visible_from : day > current.schedule_visible_until ? current.schedule_visible_until : day
     : day;
@@ -64,11 +68,11 @@ function Visits() {
     enabled: visibleDay,
     queryFn: async () => {
       const { data, error } = await supabase.from("jobs")
-        .select("id, title, scheduled_date, status, price, start_time, notes, invoice_id, customer_id, property_id, crew_id, customer:customers(name, phone), property:properties(address, city, zip, gate_code), crew:crews(name)")
+        .select("id, title, scheduled_date, status, price, start_time, notes, invoice_id, customer_id, property_id, crew_id, route_order, customer:customers(name, phone), property:properties(address, city, zip, gate_code), crew:crews(name)")
         .eq("company_id", companyId).eq("scheduled_date", selectedDay);
       if (error) throw error;
-      // Simple route order: by start time, then ZIP, then street address.
-      return (data ?? []).sort((a, b) => (a.start_time ?? "99").localeCompare(b.start_time ?? "99") || (a.property?.zip ?? "").localeCompare(b.property?.zip ?? "") || (a.property?.address ?? "").localeCompare(b.property?.address ?? ""));
+      // Saved route order first (Routes page), then start time, ZIP, street.
+      return (data ?? []).sort((a, b) => (a.route_order ?? 9999) - (b.route_order ?? 9999) || (a.start_time ?? "99").localeCompare(b.start_time ?? "99") || (a.property?.zip ?? "").localeCompare(b.property?.zip ?? "") || (a.property?.address ?? "").localeCompare(b.property?.address ?? ""));
     },
   });
 

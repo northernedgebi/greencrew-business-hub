@@ -1,0 +1,1 @@
+CREATE POLICY "users read own membership" ON public.company_members FOR SELECT TO authenticated USING (user_id = auth.uid());

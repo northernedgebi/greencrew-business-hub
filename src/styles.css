@@ -122,3 +122,7 @@
 @utility pb-safe {
   padding-bottom: env(safe-area-inset-bottom);
 }
+
+.route-pin { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9999px; background: var(--primary); color: var(--primary-foreground); font-weight: 700; font-size: 13px; border: 2px solid var(--card); box-shadow: 0 2px 6px oklch(0 0 0 / 0.3); }
+.route-pin-start { background: var(--accent); color: var(--foreground); }
+.route-line { stroke: var(--primary); }
