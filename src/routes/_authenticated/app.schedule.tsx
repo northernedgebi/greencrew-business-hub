@@ -2,19 +2,22 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Plus, MapPin, Play, Check, X, Receipt, Pencil } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, MapPin, Play, Check, X, Receipt, Pencil, RefreshCw } from "lucide-react";
 import { ScheduleDatePicker } from "@/components/schedule-date-picker";
+import { WEEKDAYS } from "@/lib/scheduling";
+import { getDay, parseISO } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { money, useWorkspace } from "@/lib/workspace";
 import { can } from "@/lib/permissions";
 import { canSeeCrewDate, isCrewUser } from "@/lib/crew-access";
+import { Switch } from "@/components/ui/switch";
 import { Card, Empty, PageHeader, Spinner, StatusBadge } from "@/components/app-ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
-export const Route = createFileRoute("/_authenticated/app/schedule")({ component: Schedule, head: () => ({ meta: [{ title: "Schedule & Dispatch | LawnOffice" }, { name: "description", content: "Assign crews, edit lawn cuts, and move scheduled visits in LawnOffice." }, { property: "og:title", content: "Schedule & Dispatch | LawnOffice" }, { property: "og:description", content: "Manage landscaping visits and crew assignments." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }) });
+export const Route = createFileRoute("/_authenticated/app/schedule")({ component: Schedule, head: () => ({ meta: [{ title: "Schedule & Recurring | LawnOffice" }, { name: "description", content: "Assign crews, edit lawn cuts, manage recurring plans, and move scheduled visits in LawnOffice." }, { property: "og:title", content: "Schedule & Recurring | LawnOffice" }, { property: "og:description", content: "Manage landscaping visits, crews and recurring schedules." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }) });
 
 const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const addDays = (s: string, n: number) => { const d = new Date(s + "T00:00"); d.setDate(d.getDate() + n); return iso(d); };
@@ -22,6 +25,25 @@ const addDays = (s: string, n: number) => { const d = new Date(s + "T00:00"); d.
 type Status = "scheduled" | "in_progress" | "completed" | "cancelled";
 
 function Schedule() {
+  const { role } = useWorkspace();
+  const restricted = isCrewUser(role);
+  const showTabs = !restricted && can(role, "jobs.manage");
+  const [tab, setTab] = useState<"visits" | "recurring">("visits");
+  return (
+    <>
+      {showTabs && (
+        <div className="mb-4 flex gap-2" role="tablist">
+          <Button variant={tab === "visits" ? "default" : "outline"} onClick={() => setTab("visits")}>Visits</Button>
+          <Button variant={tab === "recurring" ? "default" : "outline"} onClick={() => setTab("recurring")}>Recurring plans</Button>
+        </div>
+      )}
+      {(!showTabs || tab === "visits") && <Visits />}
+      {showTabs && tab === "recurring" && <RecurringSection />}
+    </>
+  );
+}
+
+function Visits() {
   const { companyId, role, current } = useWorkspace();
   const restricted = isCrewUser(role);
   const qc = useQueryClient();
