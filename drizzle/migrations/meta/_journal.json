@@ -36,6 +36,13 @@
       "when": 1792958495015,
       "tag": "0004_read_only_role_access",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792958509723,
+      "tag": "0005_read_only_cannot_post_messages",
+      "breakpoints": true
     }
   ]
 }
