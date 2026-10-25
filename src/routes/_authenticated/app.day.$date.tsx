@@ -8,7 +8,7 @@ import { can } from "@/lib/permissions";
 import { Card, Empty, PageHeader, Spinner, StatusBadge } from "@/components/app-ui";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/_authenticated/app/schedule/$date_")({
+export const Route = createFileRoute("/_authenticated/app/day/$date")({
   component: DayPage,
   head: () => ({ meta: [{ title: "Day Schedule | LawnOffice" }, { name: "description", content: "See what is booked for the day, crew by crew, in LawnOffice." }, { property: "og:title", content: "Day Schedule | LawnOffice" }, { property: "og:description", content: "See what is booked for the day, crew by crew." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
 });
