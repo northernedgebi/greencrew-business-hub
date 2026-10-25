@@ -1,0 +1,4 @@
+CREATE POLICY "members read company logo" ON storage.objects FOR SELECT TO authenticated USING (bucket_id='company-logos' AND public.is_member(((storage.foldername(name))[1])::uuid));
+CREATE POLICY "owner uploads company logo" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id='company-logos' AND public.has_company_role(((storage.foldername(name))[1])::uuid, ARRAY['owner']::public.company_role[]));
+CREATE POLICY "owner updates company logo" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id='company-logos' AND public.has_company_role(((storage.foldername(name))[1])::uuid, ARRAY['owner']::public.company_role[]));
+CREATE POLICY "owner deletes company logo" ON storage.objects FOR DELETE TO authenticated USING (bucket_id='company-logos' AND public.has_company_role(((storage.foldername(name))[1])::uuid, ARRAY['owner']::public.company_role[]));
