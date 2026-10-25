@@ -85,6 +85,13 @@
       "when": 1792959538375,
       "tag": "0011_members_read_own_membership",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792959685301,
+      "tag": "0012_customer_portal_requests",
+      "breakpoints": true
     }
   ]
 }
