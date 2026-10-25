@@ -78,6 +78,13 @@
       "when": 1792959520588,
       "tag": "0010_platform_admin_suspend",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792959538375,
+      "tag": "0011_members_read_own_membership",
+      "breakpoints": true
     }
   ]
 }
