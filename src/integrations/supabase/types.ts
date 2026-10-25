@@ -21,11 +21,13 @@ export type Database = {
           created_by: string
           email: string | null
           id: string
+          logo_url: string | null
           name: string
           phone: string | null
           plan: string
           subscription_status: string
           trial_ends_at: string
+          website: string | null
         }
         Insert: {
           address?: string | null
@@ -33,11 +35,13 @@ export type Database = {
           created_by: string
           email?: string | null
           id?: string
+          logo_url?: string | null
           name: string
           phone?: string | null
           plan?: string
           subscription_status?: string
           trial_ends_at?: string
+          website?: string | null
         }
         Update: {
           address?: string | null
@@ -45,11 +49,13 @@ export type Database = {
           created_by?: string
           email?: string | null
           id?: string
+          logo_url?: string | null
           name?: string
           phone?: string | null
           plan?: string
           subscription_status?: string
           trial_ends_at?: string
+          website?: string | null
         }
         Relationships: []
       }
