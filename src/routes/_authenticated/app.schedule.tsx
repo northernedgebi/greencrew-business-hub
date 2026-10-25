@@ -218,13 +218,13 @@ function CrewBoard() {
             const candidates = (poolQ.data ?? []).filter((j) => j.crew_id !== r.id || j.scheduled_date !== day);
             return (
               <Card key={r.id} className="flex flex-col">
-                <div className="flex items-start justify-between gap-2">
+                <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-2">
                   <div>
                     <h2 className="font-bold">{r.name}</h2>
-                    <p className="text-sm text-muted-foreground">{total} booked · {done} done · {left} left</p>
+                    <p className="whitespace-nowrap text-sm text-muted-foreground">{total} booked · {done} done · {left} left</p>
                   </div>
                   {r.id !== "none" && (
-                    <div className="flex shrink-0 gap-2">
+                    <div className="ml-auto flex shrink-0 gap-2">
                       <AddStop day={day} candidates={candidates} crewName={r.name} busy={move.isPending} onMove={(id) => move.mutate({ id, crewId: r.id })} />
                       <NewJob day={day} crew={r.id} />
                     </div>
