@@ -48,7 +48,7 @@ function DayPage() {
   });
 
   const setStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+    mutationFn: async ({ id, status }: { id: string; status: JobStatus }) => {
       const { error } = await supabase.from("jobs").update({ status, completed_at: status === "completed" ? new Date().toISOString() : null }).eq("id", id);
       if (error) throw error;
     },
