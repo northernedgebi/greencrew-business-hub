@@ -20,6 +20,7 @@ import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAppEstimatesRouteImport } from './routes/_authenticated/app.estimates'
 import { Route as AuthenticatedAppRecurringRouteImport } from './routes/_authenticated/app.recurring'
 import { Route as AuthenticatedAppReportsRouteImport } from './routes/_authenticated/app.reports'
+import { Route as AuthenticatedAppRequestsRouteImport } from './routes/_authenticated/app.requests'
 import { Route as AuthenticatedAppRoutesRouteImport } from './routes/_authenticated/app.routes'
 import { Route as AuthenticatedAppScheduleRouteImport } from './routes/_authenticated/app.schedule'
 import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app.settings'
@@ -85,6 +86,12 @@ const AuthenticatedAppReportsRoute = AuthenticatedAppReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAppRequestsRoute =
+  AuthenticatedAppRequestsRouteImport.update({
+    id: '/requests',
+    path: '/requests',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppRoutesRoute = AuthenticatedAppRoutesRouteImport.update({
   id: '/routes',
   path: '/routes',
@@ -142,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/app/estimates': typeof AuthenticatedAppEstimatesRoute
   '/app/recurring': typeof AuthenticatedAppRecurringRoute
   '/app/reports': typeof AuthenticatedAppReportsRoute
+  '/app/requests': typeof AuthenticatedAppRequestsRoute
   '/app/routes': typeof AuthenticatedAppRoutesRoute
   '/app/schedule': typeof AuthenticatedAppScheduleRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
@@ -161,6 +169,7 @@ export interface FileRoutesByTo {
   '/app/estimates': typeof AuthenticatedAppEstimatesRoute
   '/app/recurring': typeof AuthenticatedAppRecurringRoute
   '/app/reports': typeof AuthenticatedAppReportsRoute
+  '/app/requests': typeof AuthenticatedAppRequestsRoute
   '/app/routes': typeof AuthenticatedAppRoutesRoute
   '/app/schedule': typeof AuthenticatedAppScheduleRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
@@ -183,6 +192,7 @@ export interface FileRoutesById {
   '/_authenticated/app/estimates': typeof AuthenticatedAppEstimatesRoute
   '/_authenticated/app/recurring': typeof AuthenticatedAppRecurringRoute
   '/_authenticated/app/reports': typeof AuthenticatedAppReportsRoute
+  '/_authenticated/app/requests': typeof AuthenticatedAppRequestsRoute
   '/_authenticated/app/routes': typeof AuthenticatedAppRoutesRoute
   '/_authenticated/app/schedule': typeof AuthenticatedAppScheduleRoute
   '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
@@ -205,6 +215,7 @@ export interface FileRouteTypes {
     | '/app/estimates'
     | '/app/recurring'
     | '/app/reports'
+    | '/app/requests'
     | '/app/routes'
     | '/app/schedule'
     | '/app/settings'
@@ -224,6 +235,7 @@ export interface FileRouteTypes {
     | '/app/estimates'
     | '/app/recurring'
     | '/app/reports'
+    | '/app/requests'
     | '/app/routes'
     | '/app/schedule'
     | '/app/settings'
@@ -245,6 +257,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/estimates'
     | '/_authenticated/app/recurring'
     | '/_authenticated/app/reports'
+    | '/_authenticated/app/requests'
     | '/_authenticated/app/routes'
     | '/_authenticated/app/schedule'
     | '/_authenticated/app/settings'
@@ -342,6 +355,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppReportsRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/requests': {
+      id: '/_authenticated/app/requests'
+      path: '/requests'
+      fullPath: '/app/requests'
+      preLoaderRoute: typeof AuthenticatedAppRequestsRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/routes': {
       id: '/_authenticated/app/routes'
       path: '/routes'
@@ -405,6 +425,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppEstimatesRoute: typeof AuthenticatedAppEstimatesRoute
   AuthenticatedAppRecurringRoute: typeof AuthenticatedAppRecurringRoute
   AuthenticatedAppReportsRoute: typeof AuthenticatedAppReportsRoute
+  AuthenticatedAppRequestsRoute: typeof AuthenticatedAppRequestsRoute
   AuthenticatedAppRoutesRoute: typeof AuthenticatedAppRoutesRoute
   AuthenticatedAppScheduleRoute: typeof AuthenticatedAppScheduleRoute
   AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
@@ -420,6 +441,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppEstimatesRoute: AuthenticatedAppEstimatesRoute,
   AuthenticatedAppRecurringRoute: AuthenticatedAppRecurringRoute,
   AuthenticatedAppReportsRoute: AuthenticatedAppReportsRoute,
+  AuthenticatedAppRequestsRoute: AuthenticatedAppRequestsRoute,
   AuthenticatedAppRoutesRoute: AuthenticatedAppRoutesRoute,
   AuthenticatedAppScheduleRoute: AuthenticatedAppScheduleRoute,
   AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,

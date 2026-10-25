@@ -85,6 +85,7 @@ function CustomerDetail() {
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="space-y-3">
           {c.phone && <a href={`tel:${c.phone}`} className="flex items-center gap-2 font-medium"><Phone className="h-4 w-4 text-primary" />{c.phone}</a>}
+          <p className="text-xs text-muted-foreground">{c.portal_user_id ? "Customer portal: connected" : c.email ? "Customer portal: they can sign up with this email to see visits and bills" : "Add an email so this customer can use the portal"}</p>
           {c.email && <a href={`mailto:${c.email}`} className="flex items-center gap-2 break-all font-medium"><Mail className="h-4 w-4 text-primary" />{c.email}</a>}
           <div className="rounded-xl bg-secondary p-3"><p className="text-xs uppercase text-muted-foreground">Open balance</p><p className="font-display text-2xl font-extrabold">{money(balance)}</p></div>
         </Card>
