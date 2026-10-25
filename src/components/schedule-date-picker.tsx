@@ -6,7 +6,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { dateOnWeekday, localDate, WEEKDAYS } from "@/lib/scheduling";
 
-export function ScheduleDatePicker({ value, onChange, label = "Date", min, max }: { value: string; onChange: (value: string) => void; label?: string; min?: string; max?: string }) {
+export function ScheduleDatePicker({ value, onChange, label = "Date", min, max }: { value: string; onChange: (value: string) => void; label?: string | undefined; min?: string | undefined; max?: string | undefined }) {
   const [open, setOpen] = useState(false);
   const selected = parseISO(value);
   const allowed = (date: string) => (!min || date >= min) && (!max || date <= max);
