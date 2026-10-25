@@ -106,7 +106,7 @@ function Dashboard() {
           <h2 className="font-bold">Crew productivity this month</h2>
           {d.productivity.length === 0 && <p className="mt-2 text-sm text-muted-foreground">No completed visits yet.</p>}
           <ul className="mt-2 space-y-2 text-sm">
-            {d.productivity.map((c) => <li key={c.name} className="flex justify-between"><span>{c.name}</span><span className="text-muted-foreground">{c.jobs} visits{showMoney ? ` · ${money(c.revenue)}` : ""}</span></li>)}
+            {d.productivity.map((c) => <li key={c.name} className="flex justify-between"><span>{c.name}</span><span className="text-muted-foreground">{c.jobs} {c.jobs === 1 ? "visit" : "visits"}{showMoney ? ` · ${money(c.revenue)}` : ""}</span></li>)}
           </ul>
         </Card>
         <Card>
