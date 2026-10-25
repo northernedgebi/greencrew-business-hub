@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
-  LayoutDashboard, Users, CalendarDays, Receipt, UsersRound, Settings, LogOut, Shield, MoreHorizontal, FileText, BarChart3, Map as MapIcon,
+  LayoutDashboard, Users, CalendarDays, Receipt, UsersRound, Settings, LogOut, Shield, MoreHorizontal, FileText, BarChart3, Map as MapIcon, Inbox,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/lib/workspace";
@@ -28,6 +28,7 @@ const NAV: NavItem[] = [
   { to: "/app/routes", label: "Routes", icon: MapIcon, mobile: true },
   { to: "/app/customers", label: "Customers", icon: Users, mobile: true },
   { to: "/app/invoices", label: "Invoices", icon: Receipt, perm: "billing.manage", mobile: true },
+  { to: "/app/requests", label: "Requests", icon: Inbox, perm: "billing.manage" },
   { to: "/app/estimates", label: "Estimates", icon: FileText, perm: "dashboard.financials" },
   { to: "/app/reports", label: "Reports", icon: BarChart3, perm: "dashboard.financials" },
   { to: "/app/team", label: "Team & Crews", icon: UsersRound, perm: "crews.manage" },
