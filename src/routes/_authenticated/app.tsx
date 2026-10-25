@@ -25,7 +25,7 @@ type NavItem = { to: string; label: string; icon: typeof Users; perm?: Permissio
 const NAV: NavItem[] = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, mobile: true },
   { to: "/app/schedule", label: "Schedule", icon: CalendarDays, mobile: true },
-  { to: "/app/routes", label: "Routes", icon: MapIcon },
+  { to: "/app/routes", label: "Routes", icon: MapIcon, mobile: true },
   { to: "/app/customers", label: "Customers", icon: Users, mobile: true },
   { to: "/app/invoices", label: "Invoices", icon: Receipt, perm: "billing.manage", mobile: true },
   { to: "/app/estimates", label: "Estimates", icon: FileText, perm: "dashboard.financials" },

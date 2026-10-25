@@ -26,9 +26,9 @@ export const Route = createFileRoute("/_authenticated/app/routes")({
 
 const sel = "h-11 w-full rounded-xl border bg-background px-3 text-sm";
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
-const JOB_COLS = "id, title, status, route_order, start_time, scheduled_date, crew_id, property_id, customer:customers(name), property:properties(id, address, city, state, zip, lat, lng)";
+const JOB_COLS = "id, title, status, notes, route_order, start_time, scheduled_date, crew_id, property_id, customer:customers(name), property:properties(id, address, city, state, zip, lat, lng, gate_code, notes)";
 
-type Job = { id: string; title: string; status: string; route_order: number | null; property_id: string | null; customer: { name: string } | null; property: { id: string; address: string; city: string | null; state: string | null; zip: string | null; lat: number | null; lng: number | null } | null };
+type Job = { id: string; title: string; status: string; notes: string | null; route_order: number | null; property_id: string | null; customer: { name: string } | null; property: { id: string; address: string; city: string | null; state: string | null; zip: string | null; lat: number | null; lng: number | null; gate_code: string | null; notes: string | null } | null };
 type Crew = { id: string; name: string; start_address: string | null; start_lat: number | null; start_lng: number | null };
 
 const fullAddress = (p: NonNullable<Job["property"]>) => [p.address, p.city, p.state, p.zip].filter(Boolean).join(", ");
@@ -133,7 +133,7 @@ function Routes() {
 
   return (
     <>
-      <PageHeader title="Crew routes" subtitle="Best stop order for each crew, on a map." action={manage && activeCrew ? <Button disabled={busy || !jobs.data?.length} onClick={() => run(() => optimize(day, activeCrew))}><RouteIcon />{busy ? "Working…" : "Optimize route"}</Button> : undefined} />
+      <PageHeader title={restricted ? "My route" : "Crew routes"} subtitle={restricted ? "Go to stops in this order. Tap a stop for notes and directions." : "Best stop order for each crew, on a map."} action={manage && activeCrew ? <Button disabled={busy || !jobs.data?.length} onClick={() => run(() => optimize(day, activeCrew))}><RouteIcon />{busy ? "Working…" : "Optimize route"}</Button> : undefined} />
       <Card className="mb-4">
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5"><Label>Day</Label>
@@ -159,6 +159,10 @@ function Routes() {
                     <p className="truncate font-semibold">{j.customer?.name}</p>
                     <p className="truncate text-sm text-muted-foreground">{j.property ? fullAddress(j.property) : "No address"}</p>
                     <div className="mt-1 flex items-center gap-2 text-xs"><span className="truncate">{j.title}</span><StatusBadge status={j.status} /></div>
+                    {j.property?.gate_code && <p className="mt-1.5 text-sm"><span className="font-semibold">Gate code:</span> {j.property.gate_code}</p>}
+                    {j.notes && <p className="mt-1.5 whitespace-pre-wrap rounded-lg bg-secondary px-2.5 py-1.5 text-sm"><span className="font-semibold">Visit notes:</span> {j.notes}</p>}
+                    {j.property?.notes && <p className="mt-1.5 whitespace-pre-wrap rounded-lg bg-muted px-2.5 py-1.5 text-sm"><span className="font-semibold">Property notes:</span> {j.property.notes}</p>}
+                    {j.property && <a className="mt-2 inline-flex h-10 items-center gap-1.5 rounded-xl border px-3 text-sm font-semibold" target="_blank" rel="noreferrer" href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(fullAddress(j.property))}`}><MapPin className="h-4 w-4" />Directions</a>}
                   </div>
                   {manage && (
                     <div className="flex shrink-0 flex-col gap-1">

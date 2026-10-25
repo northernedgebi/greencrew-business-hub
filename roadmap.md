@@ -8,3 +8,4 @@
 
 - [x] Crew routes: optimize order, map, move stops between days/crews
 - [ ] Monthly calendar with drag-and-drop moves
+- [ ] Crew-friendly route view with notes per stop
