@@ -934,6 +934,7 @@ export type Database = {
       }
       is_manager: { Args: { _company: string }; Returns: boolean }
       is_member: { Args: { _company: string }; Returns: boolean }
+      is_member_any: { Args: { _company: string }; Returns: boolean }
       is_office: { Args: { _company: string }; Returns: boolean }
       recalc_invoice: { Args: { _id: string }; Returns: undefined }
     }

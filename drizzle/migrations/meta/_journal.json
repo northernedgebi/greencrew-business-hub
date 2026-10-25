@@ -71,6 +71,13 @@
       "when": 1792959277863,
       "tag": "0009_crew_routes",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792959520588,
+      "tag": "0010_platform_admin_suspend",
+      "breakpoints": true
     }
   ]
 }
