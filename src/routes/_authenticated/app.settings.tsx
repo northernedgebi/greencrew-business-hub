@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/lib/workspace";
 import { can, ROLE_LABELS } from "@/lib/permissions";
+import { uploadCompanyLogo, useCompanyLogo } from "@/lib/company-logo";
 import { Card, PageHeader, Spinner } from "@/components/app-ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

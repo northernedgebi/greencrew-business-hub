@@ -10,6 +10,7 @@ import { useWorkspace } from "@/lib/workspace";
 import { can, ROLE_LABELS, type Permission } from "@/lib/permissions";
 import { Logo, PLANS } from "@/components/marketing";
 import { Spinner } from "@/components/app-ui";
+import { uploadCompanyLogo } from "@/lib/company-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
