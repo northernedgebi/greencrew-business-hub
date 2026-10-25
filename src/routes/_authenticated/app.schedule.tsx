@@ -29,19 +29,21 @@ function Schedule() {
   const { role } = useWorkspace();
   const restricted = isCrewUser(role);
   const showTabs = !restricted && can(role, "jobs.manage");
-  const [tab, setTab] = useState<"visits" | "month" | "recurring">("visits");
+  const [tab, setTab] = useState<"visits" | "month" | "crew" | "recurring">("visits");
   const [openDay, setOpenDay] = useState<string | undefined>(undefined);
   return (
     <>
       {showTabs && (
         <div className="mb-4 flex gap-2" role="tablist">
           <Button variant={tab === "visits" ? "default" : "outline"} onClick={() => setTab("visits")}>Visits</Button>
+          <Button variant={tab === "crew" ? "default" : "outline"} onClick={() => setTab("crew")}>Crew board</Button>
           <Button variant={tab === "month" ? "default" : "outline"} onClick={() => setTab("month")}>Month</Button>
           <Button variant={tab === "recurring" ? "default" : "outline"} onClick={() => setTab("recurring")}>Recurring plans</Button>
         </div>
       )}
       {(!showTabs || tab === "visits") && <Visits key={openDay ?? "today"} initialDay={openDay} />}
       {showTabs && tab === "month" && <MonthCalendar onOpenDay={(d) => { setOpenDay(d); setTab("visits"); }} />}
+      {showTabs && tab === "crew" && <CrewBoard />}
       {showTabs && tab === "recurring" && <RecurringSection />}
     </>
   );
@@ -156,6 +158,127 @@ function Visits({ initialDay }: { initialDay?: string | undefined }) {
   );
 }
 
+type BoardJob = { id: string; title: string; status: string; start_time: string | null; scheduled_date: string; crew_id: string | null; customer: { name: string } | null; crew: { name: string } | null };
+
+/** Per-crew day board: booked / done / left for each crew, with quick ways to add stops to a crew that is ahead. */
+function CrewBoard() {
+  const { companyId } = useWorkspace();
+  const qc = useQueryClient();
+  const [day, setDay] = useState(iso(new Date()));
+
+  const crews = useQuery({ queryKey: ["crews", companyId], queryFn: async () => (await supabase.from("crews").select("id, name").eq("company_id", companyId).order("name")).data ?? [] });
+  const dayQ = useQuery({
+    queryKey: ["crew-board", companyId, day],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("jobs").select("id, title, status, start_time, scheduled_date, crew_id, customer:customers(name), crew:crews(name)").eq("company_id", companyId).eq("scheduled_date", day).neq("status", "cancelled").order("route_order", { nullsFirst: false }).order("start_time");
+      if (error) throw error;
+      return (data ?? []) as unknown as BoardJob[];
+    },
+  });
+  const poolQ = useQuery({
+    queryKey: ["crew-board-pool", companyId, day],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("jobs").select("id, title, status, start_time, scheduled_date, crew_id, customer:customers(name), crew:crews(name)").eq("company_id", companyId).in("status", ["scheduled", "in_progress"]).order("scheduled_date").limit(200);
+      if (error) throw error;
+      return (data ?? []) as unknown as BoardJob[];
+    },
+  });
+
+  function refresh() {
+    qc.invalidateQueries({ queryKey: ["crew-board", companyId] });
+    qc.invalidateQueries({ queryKey: ["jobs", companyId] });
+    qc.invalidateQueries({ queryKey: ["route-jobs", companyId] });
+    qc.invalidateQueries({ queryKey: ["dashboard", companyId] });
+  }
+
+  const move = useMutation({
+    mutationFn: async ({ id, crewId }: { id: string; crewId: string }) => {
+      const { error } = await supabase.from("jobs").update({ scheduled_date: day, crew_id: crewId, route_order: null }).eq("company_id", companyId).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Stop added to the route"); refresh(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const jobs = dayQ.data ?? [];
+  const rows = [
+    ...(crews.data ?? []).map((c) => ({ id: c.id, name: c.name, jobs: jobs.filter((j) => j.crew_id === c.id) })),
+    { id: "none", name: "Unassigned", jobs: jobs.filter((j) => !j.crew_id) },
+  ];
+
+  return (
+    <>
+      <PageHeader title="Crew board" subtitle={`${jobs.length} stops booked · ${new Date(day + "T00:00").toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}`} action={<div className="max-w-52"><ScheduleDatePicker value={day} onChange={setDay} label="Board date" /></div>} />
+      {dayQ.isLoading || crews.isLoading ? <Spinner /> : (
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {rows.map((r) => {
+            const total = r.jobs.length;
+            const done = r.jobs.filter((j) => j.status === "completed").length;
+            const left = r.jobs.filter((j) => j.status !== "completed").length;
+            const candidates = (poolQ.data ?? []).filter((j) => j.crew_id !== r.id || j.scheduled_date !== day);
+            return (
+              <Card key={r.id} className="flex flex-col">
+                <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-2">
+                  <div>
+                    <h2 className="font-bold">{r.name}</h2>
+                    <p className="whitespace-nowrap text-sm text-muted-foreground">{total} booked · {done} done · {left} left</p>
+                  </div>
+                  {r.id !== "none" && (
+                    <div className="ml-auto flex shrink-0 gap-2">
+                      <AddStop day={day} candidates={candidates} crewName={r.name} busy={move.isPending} onMove={(id) => move.mutate({ id, crewId: r.id })} />
+                      <NewJob day={day} crew={r.id} />
+                    </div>
+                  )}
+                </div>
+                {total > 0 && (
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full rounded-full bg-forest transition-all" style={{ width: `${Math.round((done / total) * 100)}%` }} />
+                  </div>
+                )}
+                <ul className="mt-3 space-y-1.5 text-sm">
+                  {r.jobs.map((j) => (
+                    <li key={j.id} className="flex items-center justify-between gap-2">
+                      <span className="min-w-0 truncate">{j.start_time && <span className="text-muted-foreground">{j.start_time.slice(0, 5)} </span>}{j.customer?.name ?? j.title}</span>
+                      {j.status === "completed" ? <Check className="h-4 w-4 shrink-0 text-primary" /> : j.status === "in_progress" ? <Play className="h-4 w-4 shrink-0 text-warning" /> : null}
+                    </li>
+                  ))}
+                  {total === 0 && <li className="text-muted-foreground">Nothing booked yet.</li>}
+                </ul>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+}
+
+function AddStop({ day, candidates, crewName, busy, onMove }: { day: string; candidates: BoardJob[]; crewName: string; busy: boolean; onMove: (id: string) => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild><Button variant="outline" size="sm"><Plus />Add stop</Button></DialogTrigger>
+      <DialogContent className="max-h-[80vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Add a stop to {crewName}</DialogTitle></DialogHeader>
+        <p className="text-sm text-muted-foreground">Upcoming visits from other days and today's stops on other crews. Pick one and it moves onto {crewName}'s route for {new Date(day + "T00:00").toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}.</p>
+        {candidates.length === 0 ? <p className="text-sm text-muted-foreground">No other scheduled visits right now.</p> : (
+          <ul className="divide-y">
+            {candidates.map((j) => (
+              <li key={j.id} className="flex items-center justify-between gap-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{j.customer?.name ?? j.title}</p>
+                  <p className="text-xs text-muted-foreground">{new Date(j.scheduled_date + "T00:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })} · {j.crew?.name ?? "Unassigned"}</p>
+                </div>
+                <Button size="sm" disabled={busy} onClick={() => { onMove(j.id); setOpen(false); }}>Move here</Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function useCustomerOptions(companyId: string) {
   return useQuery({
     queryKey: ["customer-options", companyId],
@@ -165,14 +288,14 @@ export function useCustomerOptions(companyId: string) {
 
 type EditableJob = { id: string; customer_id: string; property_id: string | null; crew_id: string | null; title: string; scheduled_date: string; start_time: string | null; price: number; notes: string | null; invoice_id: string | null };
 
-function NewJob({ day, job, onSaved }: { day: string; job?: EditableJob; onSaved?: (day: string) => void }) {
+function NewJob({ day, job, crew, onSaved }: { day: string; job?: EditableJob; crew?: string; onSaved?: (day: string) => void }) {
   const { companyId, role, current } = useWorkspace();
   const restricted = isCrewUser(role);
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const customers = useCustomerOptions(companyId);
   const crews = useQuery({ queryKey: ["crews", companyId], queryFn: async () => (await supabase.from("crews").select("id, name").eq("company_id", companyId).order("name")).data ?? [] });
-  const initial = () => ({ customer_id: job?.customer_id ?? "", property_id: job?.property_id ?? "", crew_id: job?.crew_id ?? (restricted ? current?.crew_id ?? "" : ""), title: job?.title ?? "Lawn mowing", scheduled_date: job?.scheduled_date ?? day, start_time: job?.start_time?.slice(0, 5) ?? "", price: String(job?.price ?? 45), notes: job?.notes ?? "" });
+  const initial = () => ({ customer_id: job?.customer_id ?? "", property_id: job?.property_id ?? "", crew_id: job?.crew_id ?? crew ?? (restricted ? current?.crew_id ?? "" : ""), title: job?.title ?? "Lawn mowing", scheduled_date: job?.scheduled_date ?? day, start_time: job?.start_time?.slice(0, 5) ?? "", price: String(job?.price ?? 45), notes: job?.notes ?? "" });
   const [f, setF] = useState(initial);
   const props = customers.data?.find((c) => c.id === f.customer_id)?.properties ?? [];
   const m = useMutation({
