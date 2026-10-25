@@ -891,6 +891,7 @@ export type Database = {
         Args: { _company: string; _property: string }
         Returns: boolean
       }
+      can_read_company: { Args: { _company: string }; Returns: boolean }
       create_company: {
         Args: { _name: string; _phone?: string; _plan?: string }
         Returns: string
@@ -920,7 +921,12 @@ export type Database = {
     }
     Enums: {
       app_role: "super_admin"
-      company_role: "owner" | "office_manager" | "crew_manager" | "technician"
+      company_role:
+        | "owner"
+        | "office_manager"
+        | "crew_manager"
+        | "technician"
+        | "read_only"
       invoice_status: "draft" | "sent" | "paid" | "partial" | "void" | "overdue"
       job_status: "scheduled" | "in_progress" | "completed" | "cancelled"
       recurrence: "weekly" | "biweekly" | "monthly"
@@ -1052,7 +1058,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["super_admin"],
-      company_role: ["owner", "office_manager", "crew_manager", "technician"],
+      company_role: [
+        "owner",
+        "office_manager",
+        "crew_manager",
+        "technician",
+        "read_only",
+      ],
       invoice_status: ["draft", "sent", "paid", "partial", "void", "overdue"],
       job_status: ["scheduled", "in_progress", "completed", "cancelled"],
       recurrence: ["weekly", "biweekly", "monthly"],

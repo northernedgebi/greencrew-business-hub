@@ -22,3 +22,11 @@ describe("role permissions", () => {
     expect(INVITABLE_ROLES).not.toContain("owner");
   });
 });
+
+describe("read-only role", () => {
+  it("can view financials but cannot change anything", () => {
+    expect(can("read_only", "dashboard.financials")).toBe(true);
+    for (const p of ["customers.manage", "jobs.manage", "jobs.updateStatus", "team.manage", "billing.manage"] as const)
+      expect(can("read_only", p)).toBe(false);
+  });
+});

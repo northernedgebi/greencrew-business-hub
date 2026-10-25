@@ -1,0 +1,8 @@
+CREATE OR REPLACE FUNCTION public.can_read_company(_company uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$ SELECT public.has_company_role(_company, ARRAY['owner','office_manager','read_only']::public.company_role[]) $$;
+REVOKE ALL ON FUNCTION public.can_read_company(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.can_read_company(uuid) TO authenticated, service_role;
+ALTER POLICY "restrict job schedule visibility" ON public.jobs USING (public.can_read_company(company_id) OR public.can_access_crew_job(company_id,crew_id,scheduled_date) OR public.has_role(auth.uid(),'super_admin') OR EXISTS(SELECT 1 FROM public.customers c WHERE c.id=jobs.customer_id AND c.portal_user_id=auth.uid()));
+ALTER POLICY "restrict customer crew visibility" ON public.customers USING (public.can_read_company(company_id) OR public.can_access_job_customer(company_id,id) OR portal_user_id=auth.uid() OR public.has_role(auth.uid(),'super_admin'));
+ALTER POLICY "restrict property crew visibility" ON public.properties USING (public.can_read_company(company_id) OR public.can_access_job_property(company_id,id) OR public.has_role(auth.uid(),'super_admin'));
+ALTER POLICY "restrict recurring crew visibility" ON public.recurring_plans USING (public.can_read_company(company_id) OR public.has_role(auth.uid(),'super_admin'));
+ALTER POLICY "tech updates jobs" ON public.jobs USING (public.has_company_role(company_id, ARRAY['technician','crew_manager']::public.company_role[]) AND public.can_access_crew_job(company_id,crew_id,scheduled_date)) WITH CHECK (public.has_company_role(company_id, ARRAY['technician','crew_manager']::public.company_role[]) AND public.can_access_crew_job(company_id,crew_id,scheduled_date));

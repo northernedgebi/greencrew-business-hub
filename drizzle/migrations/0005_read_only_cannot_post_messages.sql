@@ -1,0 +1,1 @@
+ALTER POLICY "members message" ON public.messages WITH CHECK (public.is_member(company_id) AND NOT public.has_company_role(company_id, ARRAY['read_only']::public.company_role[]));

@@ -1,4 +1,4 @@
-export type CompanyRole = "owner" | "office_manager" | "crew_manager" | "technician";
+export type CompanyRole = "owner" | "office_manager" | "crew_manager" | "technician" | "read_only";
 
 export type Permission =
   | "dashboard.financials"
@@ -33,6 +33,7 @@ const MATRIX: Record<CompanyRole, Permission[]> = {
   ],
   crew_manager: ["jobs.manage", "jobs.updateStatus", "crews.manage"],
   technician: ["jobs.updateStatus"],
+  read_only: ["dashboard.financials"],
 };
 
 export function can(role: CompanyRole | null | undefined, perm: Permission): boolean {
@@ -42,9 +43,10 @@ export function can(role: CompanyRole | null | undefined, perm: Permission): boo
 
 export const ROLE_LABELS: Record<CompanyRole, string> = {
   owner: "Owner",
-  office_manager: "Office Manager",
+  office_manager: "Office Administrator",
   crew_manager: "Crew Manager",
-  technician: "Field Technician",
+  technician: "Crew Member",
+  read_only: "Read-Only User",
 };
 
-export const INVITABLE_ROLES: CompanyRole[] = ["office_manager", "crew_manager", "technician"];
+export const INVITABLE_ROLES: CompanyRole[] = ["office_manager", "crew_manager", "technician", "read_only"];
