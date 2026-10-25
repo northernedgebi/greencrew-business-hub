@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/lib/workspace";
-import { Card, Empty, PageHeader, Spinner, StatusBadge } from "@/components/app-ui";
+import { Card, Empty, PageHeader, Spinner } from "@/components/app-ui";
 import { Logo, PLANS } from "@/components/marketing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -106,7 +106,7 @@ function Admin() {
                 {list.map((c) => (
                   <div key={c.id} className="flex flex-col gap-3 p-4 text-sm lg:flex-row lg:items-center lg:justify-between">
                     <div className="min-w-0">
-                      <p className="flex items-center gap-2 font-semibold">{c.name}<StatusBadge status={c.subscription_status === "suspended" ? "cancelled" : c.subscription_status === "active" ? "active" : "scheduled"} /><span className="text-xs font-normal capitalize text-muted-foreground">{c.subscription_status.replace("_", " ")}</span></p>
+                      <p className="flex items-center gap-2 font-semibold">{c.name}<span className={`rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${c.subscription_status === "suspended" ? "bg-destructive/15 text-destructive" : c.subscription_status === "active" ? "bg-success/15 text-primary" : "bg-secondary"}`}>{c.subscription_status === "suspended" ? "disabled" : c.subscription_status.replace("_", " ")}</span></p>
                       <p className="text-muted-foreground">{c.owner?.full_name ?? "Owner"} · {c.owner?.email ?? c.email ?? "no email"}{c.phone ? ` · ${c.phone}` : ""}</p>
                       <p className="text-xs text-muted-foreground">Joined {new Date(c.created_at).toLocaleDateString()} · {c.users} users · {c.customers} customers · {c.jobs} visits{c.subscription_status === "trialing" ? ` · trial ends ${new Date(c.trial_ends_at).toLocaleDateString()}` : ""} · {usd(planPrice(c.plan))}/mo</p>
                     </div>

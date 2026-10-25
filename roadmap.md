@@ -7,7 +7,7 @@
 - [x] Step 5: Estimates and reports pages.
 
 - [x] Crew routes: optimize order, map, move stops between days/crews
-- [ ] Monthly calendar with drag-and-drop moves
-- [ ] Crew-friendly route view with notes per stop
-- [ ] Platform admin: companies list, disable/enable, new signups, revenue (MRR)
-- [ ] Customer portal: see schedule, request reschedule (company approves), bills & payments, send notes/requests, company quotes them, customer approves, company schedules
+- [x] Monthly calendar with drag-and-drop moves
+- [x] Crew-friendly route view with notes per stop
+- [x] Platform admin: companies list, disable/enable, new signups, revenue (MRR)
+- [x] Customer portal: see schedule, request reschedule (company approves), bills & payments, send notes/requests, company quotes them, customer approves, company schedules
