@@ -920,7 +920,12 @@ export type Database = {
     }
     Enums: {
       app_role: "super_admin"
-      company_role: "owner" | "office_manager" | "crew_manager" | "technician"
+      company_role:
+        | "owner"
+        | "office_manager"
+        | "crew_manager"
+        | "technician"
+        | "read_only"
       invoice_status: "draft" | "sent" | "paid" | "partial" | "void" | "overdue"
       job_status: "scheduled" | "in_progress" | "completed" | "cancelled"
       recurrence: "weekly" | "biweekly" | "monthly"
@@ -1052,7 +1057,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["super_admin"],
-      company_role: ["owner", "office_manager", "crew_manager", "technician"],
+      company_role: [
+        "owner",
+        "office_manager",
+        "crew_manager",
+        "technician",
+        "read_only",
+      ],
       invoice_status: ["draft", "sent", "paid", "partial", "void", "overdue"],
       job_status: ["scheduled", "in_progress", "completed", "cancelled"],
       recurrence: ["weekly", "biweekly", "monthly"],
