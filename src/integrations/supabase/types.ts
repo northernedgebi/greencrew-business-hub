@@ -58,25 +58,34 @@ export type Database = {
           accepted_at: string | null
           company_id: string
           created_at: string
+          crew_id: string | null
           email: string
           id: string
           role: Database["public"]["Enums"]["company_role"]
+          schedule_visible_from: string | null
+          schedule_visible_until: string | null
         }
         Insert: {
           accepted_at?: string | null
           company_id: string
           created_at?: string
+          crew_id?: string | null
           email: string
           id?: string
           role: Database["public"]["Enums"]["company_role"]
+          schedule_visible_from?: string | null
+          schedule_visible_until?: string | null
         }
         Update: {
           accepted_at?: string | null
           company_id?: string
           created_at?: string
+          crew_id?: string | null
           email?: string
           id?: string
           role?: Database["public"]["Enums"]["company_role"]
+          schedule_visible_from?: string | null
+          schedule_visible_until?: string | null
         }
         Relationships: [
           {
@@ -86,28 +95,44 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "company_invites_crew_id_fkey"
+            columns: ["crew_id"]
+            isOneToOne: false
+            referencedRelation: "crews"
+            referencedColumns: ["id"]
+          },
         ]
       }
       company_members: {
         Row: {
           company_id: string
           created_at: string
+          crew_id: string | null
           id: string
           role: Database["public"]["Enums"]["company_role"]
+          schedule_visible_from: string | null
+          schedule_visible_until: string | null
           user_id: string
         }
         Insert: {
           company_id: string
           created_at?: string
+          crew_id?: string | null
           id?: string
           role: Database["public"]["Enums"]["company_role"]
+          schedule_visible_from?: string | null
+          schedule_visible_until?: string | null
           user_id: string
         }
         Update: {
           company_id?: string
           created_at?: string
+          crew_id?: string | null
           id?: string
           role?: Database["public"]["Enums"]["company_role"]
+          schedule_visible_from?: string | null
+          schedule_visible_until?: string | null
           user_id?: string
         }
         Relationships: [
@@ -116,6 +141,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_members_crew_id_fkey"
+            columns: ["crew_id"]
+            isOneToOne: false
+            referencedRelation: "crews"
             referencedColumns: ["id"]
           },
         ]
@@ -847,6 +879,18 @@ export type Database = {
     }
     Functions: {
       accept_my_invites: { Args: never; Returns: number }
+      can_access_crew_job: {
+        Args: { _company: string; _crew: string; _date: string }
+        Returns: boolean
+      }
+      can_access_job_customer: {
+        Args: { _company: string; _customer: string }
+        Returns: boolean
+      }
+      can_access_job_property: {
+        Args: { _company: string; _property: string }
+        Returns: boolean
+      }
       create_company: {
         Args: { _name: string; _phone?: string; _plan?: string }
         Returns: string
