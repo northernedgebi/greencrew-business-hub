@@ -43,7 +43,7 @@ function Schedule() {
         </div>
       )}
       {(!showTabs || tab === "visits") && <Visits key={openDay ?? "today"} initialDay={openDay} />}
-      {showTabs && tab === "month" && <MonthCalendar onOpenDay={(d) => navigate({ to: "/app/schedule/$date_", params: { date: d } })} />}
+      {showTabs && tab === "month" && <MonthCalendar onOpenDay={(d) => navigate({ to: "/app/schedule/$date", params: { date: d } })} />}
       {showTabs && tab === "crew" && <CrewBoard />}
       {showTabs && tab === "recurring" && <RecurringSection />}
     </>

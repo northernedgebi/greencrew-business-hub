@@ -13,8 +13,10 @@ export const Route = createFileRoute("/_authenticated/app/schedule/$date_")({
   head: () => ({ meta: [{ title: "Day Schedule | LawnOffice" }, { name: "description", content: "See what is booked for the day, crew by crew, in LawnOffice." }, { property: "og:title", content: "Day Schedule | LawnOffice" }, { property: "og:description", content: "See what is booked for the day, crew by crew." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
 });
 
+type JobStatus = "scheduled" | "in_progress" | "completed" | "cancelled";
+
 type DayJob = {
-  id: string; title: string; status: string; price: number; start_time: string | null; route_order: number | null;
+  id: string; title: string; status: JobStatus; price: number; start_time: string | null; route_order: number | null;
   customer: { name: string } | null; crew_id: string | null; crew: { name: string } | null;
   property: { address: string | null; city: string | null; zip: string | null; gate_code: string | null } | null;
 };
