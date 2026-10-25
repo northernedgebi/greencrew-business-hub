@@ -2,8 +2,9 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { CompanyRole } from "@/lib/permissions";
+import type { CrewAccess } from "@/lib/crew-access";
 
-export type Membership = {
+export type Membership = CrewAccess & {
   company_id: string;
   role: CompanyRole;
   company: { id: string; name: string; plan: string; subscription_status: string; trial_ends_at: string };
@@ -49,14 +50,15 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     queryKey: ["workspace", user?.id],
     enabled: !!user,
     queryFn: async () => {
+      if (!user) throw new Error("Sign in required");
       await supabase.rpc("accept_my_invites");
       const [m, r, c] = await Promise.all([
         supabase
           .from("company_members")
-          .select("company_id, role, company:companies(id, name, plan, subscription_status, trial_ends_at)")
-          .eq("user_id", user!.id),
-        supabase.from("user_roles").select("role").eq("user_id", user!.id),
-        supabase.from("customers").select("id").eq("portal_user_id", user!.id).limit(1),
+          .select("company_id, role, crew_id, schedule_visible_from, schedule_visible_until, company:companies(id, name, plan, subscription_status, trial_ends_at)")
+          .eq("user_id", user.id),
+        supabase.from("user_roles").select("role").eq("user_id", user.id),
+        supabase.from("customers").select("id").eq("portal_user_id", user.id).limit(1),
       ]);
       if (m.error) throw m.error;
       return {

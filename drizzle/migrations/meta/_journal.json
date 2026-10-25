@@ -15,6 +15,13 @@
       "when": 1792718730745,
       "tag": "0001_retain_recurring_occurrence_when_moving_visits",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792955016242,
+      "tag": "0002_crew_user_schedule_date_access",
+      "breakpoints": true
     }
   ]
 }

@@ -9,8 +9,10 @@ import { can, INVITABLE_ROLES, ROLE_LABELS, type CompanyRole } from "@/lib/permi
 import { Card, PageHeader, Spinner } from "@/components/app-ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CrewAccessFields } from "@/components/crew-access-fields";
+import { isCrewUser, type CrewAccess } from "@/lib/crew-access";
 
-export const Route = createFileRoute("/_authenticated/app/team")({ component: Team });
+export const Route = createFileRoute("/_authenticated/app/team")({ component: Team, head: () => ({ meta: [{ title: "Team & Crew Access | LawnOffice" }, { name: "description", content: "Manage LawnOffice invitations, crews and schedule access dates." }, { property: "og:title", content: "Team & Crew Access | LawnOffice" }, { property: "og:description", content: "Assign team members to crews and enable their schedule dates." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }) });
 
 function Team() {
   const { companyId, role, userId } = useWorkspace();
@@ -21,8 +23,8 @@ function Team() {
     queryKey: key,
     queryFn: async () => {
       const [members, invites, crews, employees] = await Promise.all([
-        supabase.from("company_members").select("id, user_id, role").eq("company_id", companyId),
-        office ? supabase.from("company_invites").select("*").eq("company_id", companyId).is("accepted_at", null) : Promise.resolve({ data: [] as { id: string; email: string; role: CompanyRole }[] }),
+        supabase.from("company_members").select("id, user_id, role, crew_id, schedule_visible_from, schedule_visible_until").eq("company_id", companyId),
+        office ? supabase.from("company_invites").select("*").eq("company_id", companyId).is("accepted_at", null) : Promise.resolve({ data: [] as ({ id: string; email: string; role: CompanyRole } & CrewAccess)[] }),
         supabase.from("crews").select("id, name").eq("company_id", companyId).order("name"),
         supabase.from("employees").select("id, name, phone, title, crew_id, active").eq("company_id", companyId).order("name"),
       ]);
@@ -36,10 +38,11 @@ function Team() {
       };
     },
   });
-  const [inv, setInv] = useState({ email: "", role: "technician" as CompanyRole });
+  const emptyAccess: CrewAccess = { crew_id: null, schedule_visible_from: null, schedule_visible_until: null };
+  const [inv, setInv] = useState({ email: "", role: "technician" as CompanyRole, ...emptyAccess });
   const [crewName, setCrewName] = useState("");
   const [emp, setEmp] = useState({ name: "", phone: "", title: "", crew_id: "" });
-  const refresh = () => { qc.invalidateQueries({ queryKey: key }); qc.invalidateQueries({ queryKey: ["crews", companyId] }); };
+  const refresh = () => { qc.invalidateQueries({ queryKey: key }); qc.invalidateQueries({ queryKey: ["crews", companyId] }); qc.invalidateQueries({ queryKey: ["workspace"] }); qc.invalidateQueries({ queryKey: ["jobs", companyId] }); qc.invalidateQueries({ queryKey: ["dashboard", companyId] }); };
   async function run(p: PromiseLike<{ error: { message: string } | null }>, ok?: string) {
     const { error } = await p;
     if (error) { toast.error(error.message); return false; }
@@ -59,7 +62,7 @@ function Team() {
           <p className="mb-3 text-sm text-muted-foreground">People who sign in. Invited users join when they create an account with the invited email.</p>
           <div className="divide-y">
             {q.data.members.map((m) => (
-              <div key={m.id} className="flex items-center gap-2 py-2.5 text-sm">
+              <div key={m.id} className="py-2.5 text-sm"><div className="flex flex-wrap items-center gap-2">
                 <div className="min-w-0 flex-1"><p className="truncate font-semibold">{m.profile?.full_name || m.profile?.email || "User"}</p><p className="truncate text-muted-foreground">{m.profile?.email}</p></div>
                 {office && m.role !== "owner" && m.user_id !== userId ? (
                   <>
@@ -69,19 +72,22 @@ function Team() {
                     <button className="p-2 text-muted-foreground" onClick={() => confirm("Remove access?") && run(supabase.from("company_members").delete().eq("id", m.id))}><Trash2 className="h-4 w-4" /></button>
                   </>
                 ) : <span className="text-muted-foreground">{ROLE_LABELS[m.role as CompanyRole]}</span>}
-              </div>
+              </div>{office && isCrewUser(m.role) && <EditCrewAccess key={`${m.id}-${m.crew_id}-${m.schedule_visible_from}-${m.schedule_visible_until}`} access={m} crews={q.data.crews} prefix={`member-${m.id}`} onSave={(access) => run(supabase.from("company_members").update(access).eq("company_id", companyId).eq("id", m.id), "Crew access updated")} />}</div>
             ))}
             {q.data.invites.map((i) => (
-              <div key={i.id} className="flex items-center gap-2 py-2.5 text-sm">
+              <div key={i.id} className="py-2.5 text-sm"><div className="flex items-center gap-2">
                 <div className="flex-1"><p className="font-semibold">{i.email}</p><p className="text-muted-foreground">Invite pending · {ROLE_LABELS[i.role]}</p></div>
                 <button className="p-2 text-muted-foreground" onClick={() => run(supabase.from("company_invites").delete().eq("id", i.id))}><Trash2 className="h-4 w-4" /></button>
-              </div>
+              </div>{office && isCrewUser(i.role) && <EditCrewAccess key={`${i.id}-${i.crew_id}-${i.schedule_visible_from}-${i.schedule_visible_until}`} access={i} crews={q.data.crews} prefix={`invite-${i.id}`} onSave={(access) => run(supabase.from("company_invites").update(access).eq("company_id", companyId).eq("id", i.id), "Invite access updated")} />}</div>
             ))}
           </div>
           {office && (
-            <form className="mt-3 flex flex-col gap-2 sm:flex-row" onSubmit={async (e) => { e.preventDefault(); if (await run(supabase.from("company_invites").insert({ company_id: companyId, email: inv.email.trim().toLowerCase(), role: inv.role }), "Invite saved")) setInv({ ...inv, email: "" }); }}>
+            <form className="mt-3 space-y-3" onSubmit={async (e) => { e.preventDefault(); if (await run(supabase.from("company_invites").insert({ company_id: companyId, email: inv.email.trim().toLowerCase(), role: inv.role, ...(isCrewUser(inv.role) ? { crew_id: inv.crew_id, schedule_visible_from: inv.crew_id ? inv.schedule_visible_from : null, schedule_visible_until: inv.crew_id ? inv.schedule_visible_until : null } : emptyAccess) }), "Invite saved")) setInv({ email: "", role: "technician", ...emptyAccess }); }}>
+              <div className="flex flex-col gap-2 sm:flex-row">
               <Input className="h-11 flex-1" type="email" required placeholder="email@company.com" value={inv.email} onChange={(e) => setInv({ ...inv, email: e.target.value })} />
               <select className={sel} value={inv.role} onChange={(e) => setInv({ ...inv, role: e.target.value as CompanyRole })}>{INVITABLE_ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}</select>
+              </div>
+              {isCrewUser(inv.role) && <CrewAccessFields value={inv} onChange={(access) => setInv({ ...inv, ...access })} crews={q.data.crews} prefix="new-invite" />}
               <Button type="submit">Invite</Button>
             </form>
           )}
@@ -123,4 +129,13 @@ function Team() {
       </div>
     </>
   );
+}
+
+function EditCrewAccess({ access, crews, prefix, onSave }: { access: CrewAccess; crews: { id: string; name: string }[]; prefix: string; onSave: (value: CrewAccess) => Promise<boolean> }) {
+  const [value, setValue] = useState<CrewAccess>({ crew_id: access.crew_id, schedule_visible_from: access.schedule_visible_from, schedule_visible_until: access.schedule_visible_until });
+  const [busy, setBusy] = useState(false);
+  return <form className="mt-3 space-y-2 border-t pt-3" onSubmit={async (e) => { e.preventDefault(); setBusy(true); try { await onSave(value.crew_id ? value : { crew_id: null, schedule_visible_from: null, schedule_visible_until: null }); } finally { setBusy(false); } }}>
+    <CrewAccessFields value={value} onChange={setValue} crews={crews} prefix={prefix} />
+    <Button type="submit" size="sm" variant="outline" disabled={busy}>{busy ? "Saving…" : "Save crew access"}</Button>
+  </form>;
 }
