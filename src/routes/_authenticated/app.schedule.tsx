@@ -29,6 +29,7 @@ function Schedule() {
   const { role } = useWorkspace();
   const restricted = isCrewUser(role);
   const showTabs = !restricted && can(role, "jobs.manage");
+  const navigate = useNavigate();
   const [tab, setTab] = useState<"visits" | "month" | "crew" | "recurring">("visits");
   const [openDay, setOpenDay] = useState<string | undefined>(undefined);
   return (
