@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -29,6 +29,7 @@ function Schedule() {
   const { role } = useWorkspace();
   const restricted = isCrewUser(role);
   const showTabs = !restricted && can(role, "jobs.manage");
+  const navigate = useNavigate();
   const [tab, setTab] = useState<"visits" | "month" | "crew" | "recurring">("visits");
   const [openDay, setOpenDay] = useState<string | undefined>(undefined);
   return (
@@ -42,7 +43,7 @@ function Schedule() {
         </div>
       )}
       {(!showTabs || tab === "visits") && <Visits key={openDay ?? "today"} initialDay={openDay} />}
-      {showTabs && tab === "month" && <MonthCalendar onOpenDay={(d) => { setOpenDay(d); setTab("visits"); }} />}
+      {showTabs && tab === "month" && <MonthCalendar onOpenDay={(d) => navigate({ to: "/app/day/$date", params: { date: d } })} />}
       {showTabs && tab === "crew" && <CrewBoard />}
       {showTabs && tab === "recurring" && <RecurringSection />}
     </>

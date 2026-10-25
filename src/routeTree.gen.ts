@@ -27,6 +27,7 @@ import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAppTeamRouteImport } from './routes/_authenticated/app.team'
 import { Route as AuthenticatedAppCustomersIndexRouteImport } from './routes/_authenticated/app.customers.index'
 import { Route as AuthenticatedAppCustomersIdRouteImport } from './routes/_authenticated/app.customers.$id'
+import { Route as AuthenticatedAppDayDateRouteImport } from './routes/_authenticated/app.day.$date'
 import { Route as AuthenticatedAppInvoicesIndexRouteImport } from './routes/_authenticated/app.invoices.index'
 import { Route as AuthenticatedAppInvoicesIdRouteImport } from './routes/_authenticated/app.invoices.$id'
 
@@ -126,6 +127,11 @@ const AuthenticatedAppCustomersIdRoute =
     path: '/customers/$id',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppDayDateRoute = AuthenticatedAppDayDateRouteImport.update({
+  id: '/day/$date',
+  path: '/day/$date',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const AuthenticatedAppInvoicesIndexRoute =
   AuthenticatedAppInvoicesIndexRouteImport.update({
     id: '/invoices/',
@@ -156,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/app/team': typeof AuthenticatedAppTeamRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/app/customers/$id': typeof AuthenticatedAppCustomersIdRoute
+  '/app/day/$date': typeof AuthenticatedAppDayDateRoute
   '/app/invoices/$id': typeof AuthenticatedAppInvoicesIdRoute
   '/app/customers/': typeof AuthenticatedAppCustomersIndexRoute
   '/app/invoices/': typeof AuthenticatedAppInvoicesIndexRoute
@@ -176,6 +183,7 @@ export interface FileRoutesByTo {
   '/app/team': typeof AuthenticatedAppTeamRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/app/customers/$id': typeof AuthenticatedAppCustomersIdRoute
+  '/app/day/$date': typeof AuthenticatedAppDayDateRoute
   '/app/invoices/$id': typeof AuthenticatedAppInvoicesIdRoute
   '/app/customers': typeof AuthenticatedAppCustomersIndexRoute
   '/app/invoices': typeof AuthenticatedAppInvoicesIndexRoute
@@ -199,6 +207,7 @@ export interface FileRoutesById {
   '/_authenticated/app/team': typeof AuthenticatedAppTeamRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/app/customers/$id': typeof AuthenticatedAppCustomersIdRoute
+  '/_authenticated/app/day/$date': typeof AuthenticatedAppDayDateRoute
   '/_authenticated/app/invoices/$id': typeof AuthenticatedAppInvoicesIdRoute
   '/_authenticated/app/customers/': typeof AuthenticatedAppCustomersIndexRoute
   '/_authenticated/app/invoices/': typeof AuthenticatedAppInvoicesIndexRoute
@@ -222,6 +231,7 @@ export interface FileRouteTypes {
     | '/app/team'
     | '/app/'
     | '/app/customers/$id'
+    | '/app/day/$date'
     | '/app/invoices/$id'
     | '/app/customers/'
     | '/app/invoices/'
@@ -242,6 +252,7 @@ export interface FileRouteTypes {
     | '/app/team'
     | '/app'
     | '/app/customers/$id'
+    | '/app/day/$date'
     | '/app/invoices/$id'
     | '/app/customers'
     | '/app/invoices'
@@ -264,6 +275,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/team'
     | '/_authenticated/app/'
     | '/_authenticated/app/customers/$id'
+    | '/_authenticated/app/day/$date'
     | '/_authenticated/app/invoices/$id'
     | '/_authenticated/app/customers/'
     | '/_authenticated/app/invoices/'
@@ -404,6 +416,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppCustomersIdRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/day/$date': {
+      id: '/_authenticated/app/day/$date'
+      path: '/day/$date'
+      fullPath: '/app/day/$date'
+      preLoaderRoute: typeof AuthenticatedAppDayDateRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/invoices/': {
       id: '/_authenticated/app/invoices/'
       path: '/invoices'
@@ -432,6 +451,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppTeamRoute: typeof AuthenticatedAppTeamRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
   AuthenticatedAppCustomersIdRoute: typeof AuthenticatedAppCustomersIdRoute
+  AuthenticatedAppDayDateRoute: typeof AuthenticatedAppDayDateRoute
   AuthenticatedAppInvoicesIdRoute: typeof AuthenticatedAppInvoicesIdRoute
   AuthenticatedAppCustomersIndexRoute: typeof AuthenticatedAppCustomersIndexRoute
   AuthenticatedAppInvoicesIndexRoute: typeof AuthenticatedAppInvoicesIndexRoute
@@ -448,6 +468,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppTeamRoute: AuthenticatedAppTeamRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
   AuthenticatedAppCustomersIdRoute: AuthenticatedAppCustomersIdRoute,
+  AuthenticatedAppDayDateRoute: AuthenticatedAppDayDateRoute,
   AuthenticatedAppInvoicesIdRoute: AuthenticatedAppInvoicesIdRoute,
   AuthenticatedAppCustomersIndexRoute: AuthenticatedAppCustomersIndexRoute,
   AuthenticatedAppInvoicesIndexRoute: AuthenticatedAppInvoicesIndexRoute,
