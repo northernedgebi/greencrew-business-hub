@@ -29,6 +29,13 @@
       "when": 1792958479944,
       "tag": "0003_add_read_only_role",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792958495015,
+      "tag": "0004_read_only_role_access",
+      "breakpoints": true
     }
   ]
 }
