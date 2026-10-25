@@ -52,6 +52,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     queryFn: async () => {
       if (!user) throw new Error("Sign in required");
       await supabase.rpc("accept_my_invites");
+      await supabase.rpc("link_my_customer_accounts");
       const [m, r, c] = await Promise.all([
         supabase
           .from("company_members")
