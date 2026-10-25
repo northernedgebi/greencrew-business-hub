@@ -32,7 +32,7 @@ export default function RouteMap({ start, stops }: { start: { lat: number; lng: 
         .bindPopup(`${s.n}. ${s.label.replace(/</g, "&lt;")}`).addTo(g);
     }
     if (start && stops.length) pts.push([start.lat, start.lng]);
-    if (pts.length > 1) L.polyline(pts, { color: "var(--color-primary)", weight: 4, opacity: 0.8 }).addTo(g);
+    if (pts.length > 1) L.polyline(pts, { className: "route-line", weight: 4, opacity: 0.85 }).addTo(g);
     if (pts.length) m.fitBounds(L.latLngBounds(pts as L.LatLngTuple[]).pad(0.2), { maxZoom: 15 });
     setTimeout(() => m.invalidateSize(), 50);
   }, [start, stops]);
