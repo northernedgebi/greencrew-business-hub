@@ -64,10 +64,10 @@ function Admin() {
               {([
                 ["Monthly revenue (MRR)", usd(stats.mrr), "Paying companies"],
                 ["Yearly run rate", usd(stats.mrr * 12), "MRR × 12"],
-                ["Trial pipeline", usd(stats.trialMrr), `${stats.byStatus.trialing ?? 0} trialing`],
+                ["Trial pipeline", usd(stats.trialMrr), `${stats.byStatus["trialing"] ?? 0} trialing`],
                 ["New this month", String(stats.newThisMonth), `${stats.newLast30} in last 30 days`],
-                ["Companies", String(stats.total), `${stats.byStatus.active ?? 0} active`],
-                ["Disabled", String(stats.byStatus.suspended ?? 0), `${stats.byStatus.cancelled ?? 0} cancelled`],
+                ["Companies", String(stats.total), `${stats.byStatus["active"] ?? 0} active`],
+                ["Disabled", String(stats.byStatus["suspended"] ?? 0), `${stats.byStatus["cancelled"] ?? 0} cancelled`],
                 ["Trials ending ≤ 7 days", String(stats.trialsEndingSoon), "Follow up to convert"],
                 ["Users", String(stats.users), `${stats.customers} customers managed`],
               ] as const).map(([l, v, s]) => (
