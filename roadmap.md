@@ -10,3 +10,4 @@
 - [ ] Monthly calendar with drag-and-drop moves
 - [ ] Crew-friendly route view with notes per stop
 - [ ] Platform admin: companies list, disable/enable, new signups, revenue (MRR)
+- [ ] Customer portal: see schedule, request reschedule (company approves), bills & payments, send notes/requests, company quotes them, customer approves, company schedules
