@@ -13,7 +13,7 @@ export function PageHeader({ title, subtitle, action }: { title: string; subtitl
   );
 }
 
-export function Empty({ title, text, action }: { title: string; text?: string; action?: ReactNode }) {
+export function Empty({ title, text, action }: { title: string; text?: string | undefined; action?: ReactNode }) {
   return (
     <div className="rounded-2xl border border-dashed bg-card p-10 text-center">
       <p className="font-display text-lg font-bold">{title}</p>
