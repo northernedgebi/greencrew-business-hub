@@ -17,7 +17,9 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedPortalRouteImport } from './routes/_authenticated/portal'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
+import { Route as AuthenticatedAppEstimatesRouteImport } from './routes/_authenticated/app.estimates'
 import { Route as AuthenticatedAppRecurringRouteImport } from './routes/_authenticated/app.recurring'
+import { Route as AuthenticatedAppReportsRouteImport } from './routes/_authenticated/app.reports'
 import { Route as AuthenticatedAppScheduleRouteImport } from './routes/_authenticated/app.schedule'
 import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app.settings'
 import { Route as AuthenticatedAppTeamRouteImport } from './routes/_authenticated/app.team'
@@ -65,12 +67,23 @@ const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAppEstimatesRoute =
+  AuthenticatedAppEstimatesRouteImport.update({
+    id: '/estimates',
+    path: '/estimates',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppRecurringRoute =
   AuthenticatedAppRecurringRouteImport.update({
     id: '/recurring',
     path: '/recurring',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppReportsRoute = AuthenticatedAppReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const AuthenticatedAppScheduleRoute =
   AuthenticatedAppScheduleRouteImport.update({
     id: '/schedule',
@@ -120,7 +133,9 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/portal': typeof AuthenticatedPortalRoute
+  '/app/estimates': typeof AuthenticatedAppEstimatesRoute
   '/app/recurring': typeof AuthenticatedAppRecurringRoute
+  '/app/reports': typeof AuthenticatedAppReportsRoute
   '/app/schedule': typeof AuthenticatedAppScheduleRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/team': typeof AuthenticatedAppTeamRoute
@@ -136,7 +151,9 @@ export interface FileRoutesByTo {
   '/pricing': typeof PricingRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/portal': typeof AuthenticatedPortalRoute
+  '/app/estimates': typeof AuthenticatedAppEstimatesRoute
   '/app/recurring': typeof AuthenticatedAppRecurringRoute
+  '/app/reports': typeof AuthenticatedAppReportsRoute
   '/app/schedule': typeof AuthenticatedAppScheduleRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/team': typeof AuthenticatedAppTeamRoute
@@ -155,7 +172,9 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/portal': typeof AuthenticatedPortalRoute
+  '/_authenticated/app/estimates': typeof AuthenticatedAppEstimatesRoute
   '/_authenticated/app/recurring': typeof AuthenticatedAppRecurringRoute
+  '/_authenticated/app/reports': typeof AuthenticatedAppReportsRoute
   '/_authenticated/app/schedule': typeof AuthenticatedAppScheduleRoute
   '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
   '/_authenticated/app/team': typeof AuthenticatedAppTeamRoute
@@ -174,7 +193,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/app'
     | '/portal'
+    | '/app/estimates'
     | '/app/recurring'
+    | '/app/reports'
     | '/app/schedule'
     | '/app/settings'
     | '/app/team'
@@ -190,7 +211,9 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/admin'
     | '/portal'
+    | '/app/estimates'
     | '/app/recurring'
+    | '/app/reports'
     | '/app/schedule'
     | '/app/settings'
     | '/app/team'
@@ -208,7 +231,9 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/app'
     | '/_authenticated/portal'
+    | '/_authenticated/app/estimates'
     | '/_authenticated/app/recurring'
+    | '/_authenticated/app/reports'
     | '/_authenticated/app/schedule'
     | '/_authenticated/app/settings'
     | '/_authenticated/app/team'
@@ -284,11 +309,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/estimates': {
+      id: '/_authenticated/app/estimates'
+      path: '/estimates'
+      fullPath: '/app/estimates'
+      preLoaderRoute: typeof AuthenticatedAppEstimatesRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/recurring': {
       id: '/_authenticated/app/recurring'
       path: '/recurring'
       fullPath: '/app/recurring'
       preLoaderRoute: typeof AuthenticatedAppRecurringRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/reports': {
+      id: '/_authenticated/app/reports'
+      path: '/reports'
+      fullPath: '/app/reports'
+      preLoaderRoute: typeof AuthenticatedAppReportsRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
     '/_authenticated/app/schedule': {
@@ -344,7 +383,9 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAppRouteChildren {
+  AuthenticatedAppEstimatesRoute: typeof AuthenticatedAppEstimatesRoute
   AuthenticatedAppRecurringRoute: typeof AuthenticatedAppRecurringRoute
+  AuthenticatedAppReportsRoute: typeof AuthenticatedAppReportsRoute
   AuthenticatedAppScheduleRoute: typeof AuthenticatedAppScheduleRoute
   AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
   AuthenticatedAppTeamRoute: typeof AuthenticatedAppTeamRoute
@@ -356,7 +397,9 @@ interface AuthenticatedAppRouteChildren {
 }
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
+  AuthenticatedAppEstimatesRoute: AuthenticatedAppEstimatesRoute,
   AuthenticatedAppRecurringRoute: AuthenticatedAppRecurringRoute,
+  AuthenticatedAppReportsRoute: AuthenticatedAppReportsRoute,
   AuthenticatedAppScheduleRoute: AuthenticatedAppScheduleRoute,
   AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,
   AuthenticatedAppTeamRoute: AuthenticatedAppTeamRoute,
