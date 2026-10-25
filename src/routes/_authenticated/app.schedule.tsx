@@ -64,11 +64,11 @@ function Visits() {
     enabled: visibleDay,
     queryFn: async () => {
       const { data, error } = await supabase.from("jobs")
-        .select("id, title, scheduled_date, status, price, start_time, notes, invoice_id, customer_id, property_id, crew_id, customer:customers(name, phone), property:properties(address, city, zip, gate_code), crew:crews(name)")
+        .select("id, title, scheduled_date, status, price, start_time, notes, invoice_id, customer_id, property_id, crew_id, route_order, customer:customers(name, phone), property:properties(address, city, zip, gate_code), crew:crews(name)")
         .eq("company_id", companyId).eq("scheduled_date", selectedDay);
       if (error) throw error;
-      // Simple route order: by start time, then ZIP, then street address.
-      return (data ?? []).sort((a, b) => (a.start_time ?? "99").localeCompare(b.start_time ?? "99") || (a.property?.zip ?? "").localeCompare(b.property?.zip ?? "") || (a.property?.address ?? "").localeCompare(b.property?.address ?? ""));
+      // Saved route order first (Routes page), then start time, ZIP, street.
+      return (data ?? []).sort((a, b) => (a.route_order ?? 9999) - (b.route_order ?? 9999) || (a.start_time ?? "99").localeCompare(b.start_time ?? "99") || (a.property?.zip ?? "").localeCompare(b.property?.zip ?? "") || (a.property?.address ?? "").localeCompare(b.property?.address ?? ""));
     },
   });
 
