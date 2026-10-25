@@ -18,7 +18,8 @@ function Dashboard() {
   const q = useQuery({
     queryKey: ["dashboard", companyId, today],
     queryFn: async () => {
-      const [todayJobs, monthDone, customers, plans, payments, invoices, upcoming] = await Promise.all([
+      const weekEnd = iso(new Date(Date.now() + 7 * 864e5));
+      const [todayJobs, monthDone, customers, plans, payments, invoices, upcoming, todayCrew, recurringWeek, doneByCrew, recentMsgs, newCustomers] = await Promise.all([
         supabase.from("jobs").select("id", { count: "exact", head: true }).eq("company_id", companyId).eq("scheduled_date", today).neq("status", "cancelled"),
         supabase.from("jobs").select("id", { count: "exact", head: true }).eq("company_id", companyId).eq("status", "completed").gte("scheduled_date", monthStart),
         supabase.from("customers").select("id", { count: "exact", head: true }).eq("company_id", companyId).eq("status", "active"),
@@ -26,7 +27,25 @@ function Dashboard() {
         supabase.from("payments").select("amount").eq("company_id", companyId).gte("paid_at", monthStart),
         supabase.from("invoices").select("total, amount_paid, status").eq("company_id", companyId).in("status", ["sent", "partial", "overdue"]),
         supabase.from("jobs").select("id, title, scheduled_date, status, customer:customers(name), crew:crews(name)").eq("company_id", companyId).gte("scheduled_date", today).neq("status", "cancelled").order("scheduled_date").limit(8),
+        supabase.from("jobs").select("status, crew:crews(id, name, color)").eq("company_id", companyId).eq("scheduled_date", today).neq("status", "cancelled"),
+        supabase.from("jobs").select("id", { count: "exact", head: true }).eq("company_id", companyId).not("recurring_plan_id", "is", null).gte("scheduled_date", today).lte("scheduled_date", weekEnd).neq("status", "cancelled"),
+        supabase.from("jobs").select("price, crew:crews(id, name)").eq("company_id", companyId).eq("status", "completed").gte("scheduled_date", monthStart),
+        supabase.from("messages").select("id, body, direction, created_at, customer:customers(name)").eq("company_id", companyId).order("created_at", { ascending: false }).limit(5),
+        supabase.from("customers").select("id", { count: "exact", head: true }).eq("company_id", companyId).gte("created_at", monthStart),
       ]);
+      type CrewRef = { id: string; name: string; color?: string | null } | null;
+      const crewToday = new Map<string, { name: string; total: number; done: number }>();
+      for (const j of todayCrew.data ?? []) {
+        const c = j.crew as CrewRef; const k = c?.id ?? "none";
+        const e = crewToday.get(k) ?? { name: c?.name ?? "Unassigned", total: 0, done: 0 };
+        e.total++; if (j.status === "completed") e.done++; crewToday.set(k, e);
+      }
+      const prod = new Map<string, { name: string; jobs: number; revenue: number }>();
+      for (const j of doneByCrew.data ?? []) {
+        const c = j.crew as CrewRef; const k = c?.id ?? "none";
+        const e = prod.get(k) ?? { name: c?.name ?? "Unassigned", jobs: 0, revenue: 0 };
+        e.jobs++; e.revenue += Number(j.price); prod.set(k, e);
+      }
       const mrr = (plans.data ?? []).reduce((s, p) => s + Number(p.price) * (p.frequency === "weekly" ? 4.33 : p.frequency === "biweekly" ? 2.17 : 1), 0);
       return {
         todayJobs: todayJobs.count ?? 0,
@@ -37,6 +56,11 @@ function Dashboard() {
         collected: (payments.data ?? []).reduce((s, p) => s + Number(p.amount), 0),
         outstanding: (invoices.data ?? []).reduce((s, i) => s + Number(i.total) - Number(i.amount_paid), 0),
         upcoming: upcoming.data ?? [],
+        recurringWeek: recurringWeek.count ?? 0,
+        newCustomers: newCustomers.count ?? 0,
+        crewToday: [...crewToday.values()],
+        productivity: [...prod.values()].sort((a, b) => b.jobs - a.jobs),
+        activity: recentMsgs.data ?? [],
       };
     },
   });
@@ -48,6 +72,8 @@ function Dashboard() {
     { label: "Completed this month", value: d.monthDone },
     { label: "Active customers", value: d.customers },
     { label: "Recurring plans", value: d.plans },
+    { label: "Recurring visits next 7 days", value: d.recurringWeek },
+    { label: "New customers this month", value: d.newCustomers },
     ...(showMoney
       ? [
           { label: "Collected this month", value: money(d.collected) },
@@ -67,6 +93,29 @@ function Dashboard() {
             <p className="mt-2 font-display text-2xl font-extrabold sm:text-3xl">{k.value}</p>
           </Card>
         ))}
+      </div>
+      <div className="mt-8 grid gap-4 lg:grid-cols-3">
+        <Card>
+          <h2 className="font-bold">Crews today</h2>
+          {d.crewToday.length === 0 && <p className="mt-2 text-sm text-muted-foreground">No crews scheduled today.</p>}
+          <ul className="mt-2 space-y-2 text-sm">
+            {d.crewToday.map((c) => <li key={c.name} className="flex justify-between"><span>{c.name}</span><span className="text-muted-foreground">{c.done}/{c.total} done</span></li>)}
+          </ul>
+        </Card>
+        <Card>
+          <h2 className="font-bold">Crew productivity this month</h2>
+          {d.productivity.length === 0 && <p className="mt-2 text-sm text-muted-foreground">No completed visits yet.</p>}
+          <ul className="mt-2 space-y-2 text-sm">
+            {d.productivity.map((c) => <li key={c.name} className="flex justify-between"><span>{c.name}</span><span className="text-muted-foreground">{c.jobs} visits{showMoney ? ` · ${money(c.revenue)}` : ""}</span></li>)}
+          </ul>
+        </Card>
+        <Card>
+          <h2 className="font-bold">Customer activity</h2>
+          {d.activity.length === 0 && <p className="mt-2 text-sm text-muted-foreground">No recent notes or messages.</p>}
+          <ul className="mt-2 space-y-2 text-sm">
+            {d.activity.map((m) => <li key={m.id} className="min-w-0"><p className="truncate"><span className="font-semibold">{(m.customer as { name: string } | null)?.name}</span> · {m.body}</p><p className="text-xs text-muted-foreground">{new Date(m.created_at).toLocaleString()}</p></li>)}
+          </ul>
+        </Card>
       </div>
       <div className="mt-8 flex items-center justify-between">
         <h2 className="text-xl font-bold">Upcoming visits</h2>
