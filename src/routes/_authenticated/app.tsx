@@ -122,32 +122,48 @@ function Onboarding() {
   const ws = useWorkspace();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [extra, setExtra] = useState({ address: "", email: "", website: "" });
+  const [logo, setLogo] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [plan, setPlan] = useState("starter");
   useEffect(() => {
     const p = sessionStorage.getItem("lawnoffice.plan");
     if (p) setPlan(p);
   }, []);
+  useEffect(() => { if (ws.email) setExtra((x) => (x.email ? x : { ...x, email: ws.email ?? "" })); }, [ws.email]);
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     const { data, error } = await supabase.rpc("create_company", { _name: name, ...(phone ? { _phone: phone } : {}), _plan: plan });
+    if (error) { setBusy(false); return toast.error(error.message); }
+    const id = data as string;
+    const upd = await supabase.from("companies").update({
+      address: extra.address.trim() || null, email: extra.email.trim() || null, website: extra.website.trim() || null,
+    }).eq("id", id);
+    if (upd.error) toast.error(upd.error.message);
+    if (logo) await uploadCompanyLogo(id, logo).catch((err: Error) => toast.error(`Logo not saved: ${err.message}`));
     setBusy(false);
-    if (error) return toast.error(error.message);
-    ws.setCompany(data as string);
+    ws.setCompany(id);
     ws.refetch();
     toast.success("Your workspace is ready");
   }
 
   return (
-    <div className="grid min-h-screen place-items-center bg-hero px-4">
+    <div className="grid min-h-screen place-items-center bg-hero px-4 py-8">
       <form onSubmit={create} className="w-full max-w-md space-y-4 rounded-2xl bg-card p-6 shadow-2xl sm:p-8">
         <Logo />
         <h1 className="pt-4 text-2xl font-bold">Set up your company</h1>
         <p className="text-sm text-muted-foreground">You'll be the owner of this workspace. If a company invited you, ask them to send the invite to {ws.email}.</p>
         <div className="space-y-1.5"><Label>Company name</Label><Input className="h-12" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Green Acres Lawn Care" /></div>
-        <div className="space-y-1.5"><Label>Business phone</Label><Input className="h-12" value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
+        <div className="space-y-1.5"><Label>Business address</Label><Input className="h-12" value={extra.address} onChange={(e) => setExtra({ ...extra, address: e.target.value })} /></div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5"><Label>Business phone</Label><Input className="h-12" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
+          <div className="space-y-1.5"><Label>Business email</Label><Input className="h-12" type="email" value={extra.email} onChange={(e) => setExtra({ ...extra, email: e.target.value })} /></div>
+        </div>
+        <div className="space-y-1.5"><Label>Website</Label><Input className="h-12" type="url" placeholder="https://" value={extra.website} onChange={(e) => setExtra({ ...extra, website: e.target.value })} /></div>
+        <div className="space-y-1.5"><Label>Logo (optional, up to 2 MB)</Label><Input className="h-12 pt-3" type="file" accept="image/*" onChange={(e) => setLogo(e.target.files?.[0] ?? null)} /></div>
+        <p className="text-sm text-muted-foreground">Primary administrator: <span className="font-medium text-foreground">{ws.email}</span></p>
         <div className="space-y-1.5"><Label>Plan</Label>
           <div className="grid grid-cols-3 gap-2">
             {PLANS.map((p) => (

@@ -16,8 +16,9 @@ function Settings() {
   const ws = useWorkspace();
   const owner = can(ws.role, "company.settings");
   const q = useQuery({ queryKey: ["company", ws.companyId], queryFn: async () => (await supabase.from("companies").select("*").eq("id", ws.companyId).single()).data });
-  const [f, setF] = useState({ name: "", phone: "", email: "", address: "" });
-  useEffect(() => { if (q.data) setF({ name: q.data.name, phone: q.data.phone ?? "", email: q.data.email ?? "", address: q.data.address ?? "" }); }, [q.data]);
+  const [f, setF] = useState({ name: "", phone: "", email: "", address: "", website: "" });
+  useEffect(() => { if (q.data) setF({ name: q.data.name, phone: q.data.phone ?? "", email: q.data.email ?? "", address: q.data.address ?? "", website: q.data.website ?? "" }); }, [q.data]);
+  const logo = useCompanyLogo(q.data?.logo_url);
   if (q.isLoading || !q.data) return <Spinner />;
 
   async function save(e: React.FormEvent) {
@@ -27,14 +28,25 @@ function Settings() {
     toast.success("Saved");
     ws.refetch();
   }
+  async function changeLogo(file: File | undefined) {
+    if (!file) return;
+    try { await uploadCompanyLogo(ws.companyId, file); toast.success("Logo updated"); q.refetch(); }
+    catch (err) { toast.error((err as Error).message); }
+  }
   return (
     <>
       <PageHeader title="Settings" subtitle={`Your role: ${ws.role ? ROLE_LABELS[ws.role] : ""}`} />
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <h2 className="mb-3 font-bold">Company profile</h2>
+          <div className="mb-4 flex items-center gap-4">
+            <div className="grid h-16 w-16 place-items-center overflow-hidden rounded-xl border bg-muted">
+              {logo.data ? <img src={logo.data} alt="Company logo" className="h-full w-full object-contain" /> : <span className="text-xs text-muted-foreground">No logo</span>}
+            </div>
+            {owner && <Input className="h-11 pt-2.5" type="file" accept="image/*" onChange={(e) => changeLogo(e.target.files?.[0])} />}
+          </div>
           <form onSubmit={save} className="space-y-3">
-            {(["name", "phone", "email", "address"] as const).map((k) => (
+            {(["name", "phone", "email", "address", "website"] as const).map((k) => (
               <div key={k} className="space-y-1.5"><Label className="capitalize">{k}</Label><Input className="h-11" disabled={!owner} value={f[k]} onChange={(e) => setF({ ...f, [k]: e.target.value })} /></div>
             ))}
             {owner && <Button type="submit">Save changes</Button>}
