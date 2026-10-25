@@ -219,6 +219,9 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          start_address: string | null
+          start_lat: number | null
+          start_lng: number | null
         }
         Insert: {
           color?: string | null
@@ -226,6 +229,9 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          start_address?: string | null
+          start_lat?: number | null
+          start_lng?: number | null
         }
         Update: {
           color?: string | null
@@ -233,6 +239,9 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          start_address?: string | null
+          start_lat?: number | null
+          start_lng?: number | null
         }
         Relationships: [
           {
@@ -528,6 +537,7 @@ export type Database = {
           property_id: string | null
           recurrence_date: string | null
           recurring_plan_id: string | null
+          route_order: number | null
           scheduled_date: string
           start_time: string | null
           status: Database["public"]["Enums"]["job_status"]
@@ -546,6 +556,7 @@ export type Database = {
           property_id?: string | null
           recurrence_date?: string | null
           recurring_plan_id?: string | null
+          route_order?: number | null
           scheduled_date: string
           start_time?: string | null
           status?: Database["public"]["Enums"]["job_status"]
@@ -564,6 +575,7 @@ export type Database = {
           property_id?: string | null
           recurrence_date?: string | null
           recurring_plan_id?: string | null
+          route_order?: number | null
           scheduled_date?: string
           start_time?: string | null
           status?: Database["public"]["Enums"]["job_status"]
