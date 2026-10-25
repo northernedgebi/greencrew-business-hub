@@ -7,6 +7,7 @@ import { ScheduleDatePicker } from "@/components/schedule-date-picker";
 import { supabase } from "@/integrations/supabase/client";
 import { money, useWorkspace } from "@/lib/workspace";
 import { can } from "@/lib/permissions";
+import { canSeeCrewDate, isCrewUser } from "@/lib/crew-access";
 import { Card, Empty, PageHeader, Spinner, StatusBadge } from "@/components/app-ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,22 +22,28 @@ const addDays = (s: string, n: number) => { const d = new Date(s + "T00:00"); d.
 type Status = "scheduled" | "in_progress" | "completed" | "cancelled";
 
 function Schedule() {
-  const { companyId, role } = useWorkspace();
+  const { companyId, role, current } = useWorkspace();
+  const restricted = isCrewUser(role);
   const qc = useQueryClient();
   const [day, setDay] = useState(iso(new Date()));
+  const selectedDay = restricted && current?.schedule_visible_from && current.schedule_visible_until
+    ? day < current.schedule_visible_from ? current.schedule_visible_from : day > current.schedule_visible_until ? current.schedule_visible_until : day
+    : day;
+  const visibleDay = !restricted || canSeeCrewDate(current, selectedDay);
   const [crewFilter, setCrewFilter] = useState("all");
-  const week = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(day, i - 3)), [day]);
+  const week = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(selectedDay, i - 3)), [selectedDay]);
 
   const crews = useQuery({
     queryKey: ["crews", companyId],
     queryFn: async () => (await supabase.from("crews").select("id, name").eq("company_id", companyId).order("name")).data ?? [],
   });
   const q = useQuery({
-    queryKey: ["jobs", companyId, day],
+    queryKey: ["jobs", companyId, selectedDay, current?.crew_id, current?.schedule_visible_from, current?.schedule_visible_until],
+    enabled: visibleDay,
     queryFn: async () => {
       const { data, error } = await supabase.from("jobs")
         .select("id, title, scheduled_date, status, price, start_time, notes, invoice_id, customer_id, property_id, crew_id, customer:customers(name, phone), property:properties(address, city, zip, gate_code), crew:crews(name)")
-        .eq("company_id", companyId).eq("scheduled_date", day);
+        .eq("company_id", companyId).eq("scheduled_date", selectedDay);
       if (error) throw error;
       // Simple route order: by start time, then ZIP, then street address.
       return (data ?? []).sort((a, b) => (a.start_time ?? "99").localeCompare(b.start_time ?? "99") || (a.property?.zip ?? "").localeCompare(b.property?.zip ?? "") || (a.property?.address ?? "").localeCompare(b.property?.address ?? ""));
@@ -67,30 +74,31 @@ function Schedule() {
 
   return (
     <>
-      <PageHeader title="Schedule & dispatch" subtitle={`${jobs.length} stops · ${money(dayTotal)}`} action={can(role, "jobs.manage") && <NewJob day={day} />} />
-      <div className="mb-4 max-w-sm"><ScheduleDatePicker value={day} onChange={setDay} label="Schedule date" /></div>
+      <PageHeader title={restricted ? "My crew schedule" : "Schedule & dispatch"} subtitle={restricted ? `${jobs.length} stops` : `${jobs.length} stops · ${money(dayTotal)}`} action={visibleDay && can(role, "jobs.manage") && <NewJob day={selectedDay} />} />
+      {restricted && <p className="mb-4 text-sm text-muted-foreground">{current?.crew_id && current.schedule_visible_from && current.schedule_visible_until ? `Enabled dates: ${current.schedule_visible_from} through ${current.schedule_visible_until}` : "Schedule access is paused. No crew or date range is enabled."}</p>}
+      {visibleDay && <><div className="mb-4 max-w-sm"><ScheduleDatePicker value={selectedDay} onChange={setDay} label="Schedule date" min={restricted ? current?.schedule_visible_from ?? undefined : undefined} max={restricted ? current?.schedule_visible_until ?? undefined : undefined} /></div>
       <div className="mb-4 flex items-center gap-2">
-        <Button variant="outline" size="icon" aria-label="Previous week" onClick={() => setDay(addDays(day, -7))}><ChevronLeft /></Button>
+        <Button variant="outline" size="icon" aria-label="Previous week" disabled={restricted && !!current?.schedule_visible_from && selectedDay <= current.schedule_visible_from} onClick={() => setDay(addDays(selectedDay, -7))}><ChevronLeft /></Button>
         <div className="grid flex-1 grid-cols-7 gap-1">
           {week.map((d) => {
             const dt = new Date(d + "T00:00");
             return (
-              <Button variant={d === day ? "default" : "ghost"} key={d} onClick={() => setDay(d)} className={`h-auto flex-col gap-0 rounded-md px-0 py-2 text-center ${d === day ? "" : "bg-card"} ${d === iso(new Date()) && d !== day ? "ring-2 ring-lime" : ""}`}>
+              <Button variant={d === selectedDay ? "default" : "ghost"} key={d} disabled={restricted && !canSeeCrewDate(current, d)} onClick={() => setDay(d)} className={`h-auto flex-col gap-0 rounded-md px-0 py-2 text-center ${d === selectedDay ? "" : "bg-card"} ${d === iso(new Date()) && d !== selectedDay ? "ring-2 ring-lime" : ""}`}>
                 <span className="block text-[10px] uppercase opacity-70">{dt.toLocaleDateString(undefined, { weekday: "short" })}</span>
                 <span className="font-display text-lg font-bold">{dt.getDate()}</span>
               </Button>
             );
           })}
         </div>
-        <Button variant="outline" size="icon" aria-label="Next week" onClick={() => setDay(addDays(day, 7))}><ChevronRight /></Button>
+        <Button variant="outline" size="icon" aria-label="Next week" disabled={restricted && !!current?.schedule_visible_until && selectedDay >= current.schedule_visible_until} onClick={() => setDay(addDays(selectedDay, 7))}><ChevronRight /></Button>
       </div>
-      <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+      {!restricted && <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
         {[{ id: "all", name: "All crews" }, ...(crews.data ?? []), { id: "none", name: "Unassigned" }].map((c) => (
           <Button key={c.id} variant={crewFilter === c.id ? "secondary" : "outline"} onClick={() => setCrewFilter(c.id)} className="h-11 shrink-0">{c.name}</Button>
         ))}
-      </div>
+      </div>}</>}
 
-      {q.isLoading ? <Spinner /> : jobs.length === 0 ? <Empty title="No visits this day" text="Create a job or generate visits from recurring plans." /> : (
+      {!visibleDay ? <Empty title="No schedule dates enabled" /> : q.isLoading ? <Spinner /> : jobs.length === 0 ? <Empty title="No visits this day" text={restricted ? undefined : "Create a job or generate visits from recurring plans."} /> : (
         <div className="space-y-3">
           {jobs.map((j, idx) => (
             <Card key={j.id}>
@@ -108,7 +116,7 @@ function Schedule() {
                 </div>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
-                {can(role, "jobs.manage") && j.status !== "completed" && j.status !== "cancelled" && <NewJob day={day} job={j} onSaved={setDay} />}
+                {can(role, "jobs.manage") && j.status !== "completed" && j.status !== "cancelled" && <NewJob day={selectedDay} job={j} onSaved={setDay} />}
                 {j.status === "scheduled" && <Button size="sm" variant="secondary" onClick={() => setStatus.mutate({ id: j.id, status: "in_progress" })}><Play />Start</Button>}
                 {(j.status === "scheduled" || j.status === "in_progress") && <Button size="sm" onClick={() => setStatus.mutate({ id: j.id, status: "completed" })}><Check />Complete</Button>}
                 {j.status !== "cancelled" && j.status !== "completed" && can(role, "jobs.manage") && <Button size="sm" variant="ghost" onClick={() => setStatus.mutate({ id: j.id, status: "cancelled" })}><X />Cancel</Button>}
@@ -132,12 +140,13 @@ export function useCustomerOptions(companyId: string) {
 type EditableJob = { id: string; customer_id: string; property_id: string | null; crew_id: string | null; title: string; scheduled_date: string; start_time: string | null; price: number; notes: string | null; invoice_id: string | null };
 
 function NewJob({ day, job, onSaved }: { day: string; job?: EditableJob; onSaved?: (day: string) => void }) {
-  const { companyId } = useWorkspace();
+  const { companyId, role, current } = useWorkspace();
+  const restricted = isCrewUser(role);
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const customers = useCustomerOptions(companyId);
   const crews = useQuery({ queryKey: ["crews", companyId], queryFn: async () => (await supabase.from("crews").select("id, name").eq("company_id", companyId).order("name")).data ?? [] });
-  const initial = () => ({ customer_id: job?.customer_id ?? "", property_id: job?.property_id ?? "", crew_id: job?.crew_id ?? "", title: job?.title ?? "Lawn mowing", scheduled_date: job?.scheduled_date ?? day, start_time: job?.start_time?.slice(0, 5) ?? "", price: String(job?.price ?? 45), notes: job?.notes ?? "" });
+  const initial = () => ({ customer_id: job?.customer_id ?? "", property_id: job?.property_id ?? "", crew_id: job?.crew_id ?? (restricted ? current?.crew_id ?? "" : ""), title: job?.title ?? "Lawn mowing", scheduled_date: job?.scheduled_date ?? day, start_time: job?.start_time?.slice(0, 5) ?? "", price: String(job?.price ?? 45), notes: job?.notes ?? "" });
   const [f, setF] = useState(initial);
   const props = customers.data?.find((c) => c.id === f.customer_id)?.properties ?? [];
   const m = useMutation({
@@ -169,12 +178,12 @@ function NewJob({ day, job, onSaved }: { day: string; job?: EditableJob; onSaved
             <select className={sel} value={f.property_id} onChange={(e) => setF({ ...f, property_id: e.target.value })}>{props.map((p) => <option key={p.id} value={p.id}>{p.address}</option>)}</select></div>}
           <div className="space-y-1.5"><Label>Service</Label><Input className="h-11" required value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5"><Label>Date / weekday</Label><ScheduleDatePicker value={f.scheduled_date} onChange={(scheduled_date) => setF({ ...f, scheduled_date })} label="Visit date" /></div>
+            <div className="space-y-1.5"><Label>Date / weekday</Label><ScheduleDatePicker value={f.scheduled_date} onChange={(scheduled_date) => setF({ ...f, scheduled_date })} label="Visit date" min={restricted ? current?.schedule_visible_from ?? undefined : undefined} max={restricted ? current?.schedule_visible_until ?? undefined : undefined} /></div>
             <div className="space-y-1.5"><Label>Time</Label><Input className="h-11" type="time" value={f.start_time} onChange={(e) => setF({ ...f, start_time: e.target.value })} /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5"><Label>Crew</Label>
-              <select className={sel} value={f.crew_id} onChange={(e) => setF({ ...f, crew_id: e.target.value })}><option value="">Unassigned</option>{crews.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+              <select className={sel} disabled={restricted} value={f.crew_id} onChange={(e) => setF({ ...f, crew_id: e.target.value })}>{!restricted && <option value="">Unassigned</option>}{crews.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
             <div className="space-y-1.5"><Label>Price ($)</Label><Input className="h-11" type="number" min="0" step="0.01" value={f.price} onChange={(e) => setF({ ...f, price: e.target.value })} /></div>
           </div>
           <div className="space-y-1.5"><Label>Notes for crew</Label><Input className="h-11" value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} /></div>
