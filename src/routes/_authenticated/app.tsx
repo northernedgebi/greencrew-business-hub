@@ -46,6 +46,14 @@ function AppLayout() {
 
   if (ws.loading) return <Spinner />;
   if (ws.memberships.length === 0) return ws.isPortalCustomer ? <Spinner /> : <Onboarding />;
+  if (ws.current?.company.subscription_status === "suspended" && !ws.isSuperAdmin) return (
+    <div className="grid min-h-screen place-items-center p-6 text-center">
+      <div className="max-w-sm"><Logo /><h1 className="mt-6 font-display text-2xl font-bold">Account disabled</h1>
+        <p className="mt-2 text-muted-foreground">{ws.current.company.name} has been disabled. Please contact LawnOffice support to restore access.</p>
+        {ws.memberships.length > 1 && <Button className="mt-4" variant="outline" onClick={() => ws.setCompany(ws.memberships.find((m) => m.company_id !== ws.companyId)!.company_id)}>Switch company</Button>}
+        <Button className="mt-4 ml-2" onClick={async () => { qc.clear(); await supabase.auth.signOut(); navigate({ to: "/auth", replace: true }); }}>Sign out</Button></div>
+    </div>
+  );
 
   const items = NAV.filter((n) => !n.perm || can(ws.role, n.perm));
   const isActive = (to: string) => (to === "/app" ? pathname === "/app" || pathname === "/app/" : pathname.startsWith(to));
