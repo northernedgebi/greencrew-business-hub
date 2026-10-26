@@ -7,7 +7,7 @@ describe("billGroups", () => {
   it("combined mode puts every visit on one bill", () => {
     const groups = billGroups([visit("a", "p1", "1 Main St"), visit("b", "p2", "2 Oak Ave")], "combined");
     expect(groups).toHaveLength(1);
-    expect(groups[0].visits.map((v) => v.id)).toEqual(["a", "b"]);
+    expect(groups[0]!.visits.map((v) => v.id)).toEqual(["a", "b"]);
   });
 
   it("per-property mode makes one bill per address", () => {
@@ -20,7 +20,7 @@ describe("billGroups", () => {
   it("keeps visits without an address together in per-property mode", () => {
     const groups = billGroups([visit("a", null, null), visit("b", null, null)], "per_property");
     expect(groups).toHaveLength(1);
-    expect(groups[0].address).toBeNull();
+    expect(groups[0]!.address).toBeNull();
   });
 
   it("returns no groups when nothing is billable", () => {

@@ -18,3 +18,4 @@
 - [x] New customer: residential/commercial type, EIN for commercial, city/state, gate code
 - [ ] Reports: total revenue, paid by month/year, commercial vs residential breakout, revenue by service type
 - [ ] Multi-address billing: per-customer choice of separate bill per address or one combined bill with per-address breakouts
+- [ ] Seasonal service schedules: optional date-range window per recurring service (e.g. May 1 - Oct 31); visits only generated inside the window
