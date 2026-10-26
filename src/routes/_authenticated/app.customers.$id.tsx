@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CustomerServices } from "@/components/customer-services";
+import { customerYearTotals } from "@/lib/customer-services";
+import { localDate } from "@/lib/scheduling";
 import { CustomerAccountControls } from "@/components/customer-account-controls";
 import { DeleteRecord } from "@/components/delete-record";
 
@@ -27,17 +29,25 @@ function CustomerDetail() {
   const q = useQuery({
     queryKey: key,
     queryFn: async () => {
-      const [c, props, jobs, invoices, notes, account] = await Promise.all([
+      const yearStart = `${new Date().getFullYear()}-01-01`;
+      const [c, props, jobs, invoices, notes, account, plans, yearJobs] = await Promise.all([
         supabase.from("customers").select("*").eq("id", id).single(),
         supabase.from("properties").select("*").eq("customer_id", id).order("created_at"),
         supabase.from("jobs").select("id, title, scheduled_date, status, price").eq("customer_id", id).order("scheduled_date", { ascending: false }).limit(20),
         supabase.from("invoices").select("id, number, total, amount_paid, status, issue_date").eq("customer_id", id).order("issue_date", { ascending: false }),
         supabase.from("messages").select("id, body, created_at, channel").eq("customer_id", id).order("created_at", { ascending: false }),
         supabase.rpc("customer_account_state", { _customer: id }),
+        supabase.from("recurring_plans").select("service, frequency, price, times_per_year, active").eq("company_id", companyId).eq("customer_id", id).eq("active", true),
+        supabase.from("jobs").select("price").eq("company_id", companyId).eq("customer_id", id).is("recurring_plan_id", null).neq("status", "cancelled").gte("scheduled_date", yearStart),
       ]);
       if (c.error) throw c.error;
       if (account.error) throw account.error;
-      return { c: c.data, account: account.data?.[0], props: props.data ?? [], jobs: jobs.data ?? [], invoices: invoices.data ?? [], notes: notes.data ?? [] };
+      const invoiceIds = (invoices.data ?? []).filter((i) => i.status !== "void").map((i) => i.id);
+      const payments = invoiceIds.length
+        ? await supabase.from("payments").select("amount").in("invoice_id", invoiceIds).gte("paid_at", yearStart)
+        : { data: [] as { amount: number }[], error: null };
+      if (payments.error) throw payments.error;
+      return { c: c.data, account: account.data?.[0], props: props.data ?? [], jobs: jobs.data ?? [], invoices: invoices.data ?? [], notes: notes.data ?? [], plans: plans.data ?? [], yearJobs: yearJobs.data ?? [], payments: payments.data ?? [] };
     },
     refetchInterval: 60000,
   });
