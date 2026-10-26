@@ -22,3 +22,26 @@ export function nearbyServices(jobs: NearbyJob[], today: string) {
     return lawn ? [{ service, lawn }] : [];
   });
 }
+
+export type ServicePlanForSummary = { service: string; price: number; frequency: ServiceFrequency; active: boolean };
+export type ServiceSummaryRow = { name: string; frequency: ServiceFrequency; prices: number[]; count: number };
+
+export function summarizeCustomerServices(plans: ServicePlanForSummary[], oneTime: { title: string; price: number }[] = []): ServiceSummaryRow[] {
+  const rows = new Map<string, ServiceSummaryRow>();
+  const add = (name: string, frequency: ServiceFrequency, price: number) => {
+    const key = name.trim().toLowerCase();
+    if (!key) return;
+    const row = rows.get(key) ?? { name: name.trim(), frequency, prices: [], count: 0 };
+    row.prices.push(price);
+    row.count += 1;
+    if (frequency !== "once") row.frequency = frequency;
+    rows.set(key, row);
+  };
+  for (const p of plans) add(p.service, p.frequency, Number(p.price));
+  for (const v of oneTime) add(v.title, "once", Number(v.price));
+  return [...rows.values()];
+}
+
+export function customerMonthlyValue(plans: ServicePlanForSummary[]) {
+  return plans.reduce((sum, p) => sum + monthlyServiceValue(Number(p.price), p.frequency), 0);
+}

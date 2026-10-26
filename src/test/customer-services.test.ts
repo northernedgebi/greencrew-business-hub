@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_SERVICE, FREQUENCIES, monthlyServiceValue, nearbyServices, newServiceForm, servicePayload, type NearbyJob } from "@/lib/customer-services";
+import { DEFAULT_SERVICE, FREQUENCIES, monthlyServiceValue, nearbyServices, newServiceForm, servicePayload, summarizeCustomerServices, type NearbyJob } from "@/lib/customer-services";
 
 const job = (id: string, kind: string, date: string, overrides: Partial<NearbyJob> = {}): NearbyJob => ({ id, title: id, service_kind: kind, scheduled_date: date, status: "scheduled", customer_id: "customer", property_id: "property", crew_id: "crew", ...overrides });
 describe("customer services", () => {

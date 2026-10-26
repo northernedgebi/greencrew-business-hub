@@ -6,7 +6,7 @@ import { addDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { money, useWorkspace } from "@/lib/workspace";
 import { can } from "@/lib/permissions";
-import { newServiceForm, servicePayload, type ServiceForm } from "@/lib/customer-services";
+import { FREQUENCIES, customerMonthlyValue, newServiceForm, servicePayload, summarizeCustomerServices, type ServiceForm } from "@/lib/customer-services";
 import { localDate } from "@/lib/scheduling";
 import { CustomerServiceFields } from "@/components/customer-service-fields";
 import { NearbyServiceSuggestions } from "@/components/nearby-service-suggestions";
