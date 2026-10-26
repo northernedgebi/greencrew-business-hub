@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_SERVICE, FREQUENCIES, monthlyServiceValue, nearbyServices, type NearbyJob } from "@/lib/customer-services";
+import { DEFAULT_SERVICE, FREQUENCIES, monthlyServiceValue, nearbyServices, newServiceForm, servicePayload, type NearbyJob } from "@/lib/customer-services";
 
 const job = (id: string, kind: string, date: string, overrides: Partial<NearbyJob> = {}): NearbyJob => ({ id, title: id, service_kind: kind, scheduled_date: date, status: "scheduled", customer_id: "customer", property_id: "property", crew_id: "crew", ...overrides });
 describe("customer services", () => {
+  it("sends the local calendar timezone and the valid $100 price when adding a yearly service", () => {
+    expect(servicePayload({ ...newServiceForm(), title: "Sprinkler Blowout", frequency: "yearly", date: "2026-10-25", price: "100" }, "America/New_York")).toMatchObject({ date: "2026-10-25", price: 100, timezone: "America/New_York", frequency: "yearly" });
+  });
   it("defaults the initial service to lawn maintenance", () => expect(DEFAULT_SERVICE).toBe("Lawn maintenance"));
   it("supports yearly services", () => expect(FREQUENCIES.map(f => f.value)).toContain("yearly"));
   it("spreads yearly charges across twelve months", () => expect(monthlyServiceValue(120, "yearly")).toBe(10));
