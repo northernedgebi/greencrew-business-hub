@@ -26,11 +26,15 @@ function InvoiceDetail() {
     queryFn: async () => {
       const [inv, items, pays] = await Promise.all([
         supabase.from("invoices").select("*, customer:customers(id, name, email)").eq("id", id).single(),
-        supabase.from("invoice_items").select("*, job:jobs(property:properties(address))").eq("invoice_id", id),
+        supabase.from("invoice_items").select("*").eq("invoice_id", id),
         supabase.from("payments").select("*").eq("invoice_id", id).order("paid_at"),
       ]);
       if (inv.error) throw inv.error;
-      return { inv: inv.data, items: items.data ?? [], pays: pays.data ?? [] };
+      const jobIds = [...new Set((items.data ?? []).map((i) => i.job_id).filter((x): x is string => !!x))];
+      const jobRows = jobIds.length ? await supabase.from("jobs").select("id, property:properties(address)").in("id", jobIds) : { data: [], error: null };
+      if (jobRows.error) throw jobRows.error;
+      const addrByJob = new Map((jobRows.data ?? []).map((j) => [j.id, (j.property as { address: string } | null)?.address ?? null]));
+      return { inv: inv.data, items: (items.data ?? []).map((i) => ({ ...i, address: i.job_id ? addrByJob.get(i.job_id) ?? null : null })), pays: pays.data ?? [] };
     },
   });
   const [item, setItem] = useState({ description: "", quantity: "1", unit_price: "" });
@@ -51,7 +55,7 @@ function InvoiceDetail() {
   const itemGroups = (() => {
     const map = new Map<string, { address: string | null; items: typeof items }>();
     for (const it of items) {
-      const addr = (it.job as { property: { address: string } | null } | null)?.property?.address ?? null;
+      const addr = it.address;
       const key = addr ?? "other";
       const g = map.get(key) ?? { address: addr, items: [] };
       g.items.push(it);
