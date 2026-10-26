@@ -1034,10 +1034,12 @@ export type Database = {
         Args: { _company: string; _until: string }
         Returns: number
       }
-      generate_service_visits: {
-        Args: { _plan: string; _until: string }
-        Returns: number
-      }
+      generate_service_visits:
+        | { Args: { _plan: string; _until: string }; Returns: number }
+        | {
+            Args: { _plan: string; _today: string; _until: string }
+            Returns: number
+          }
       has_company_role: {
         Args: {
           _company: string

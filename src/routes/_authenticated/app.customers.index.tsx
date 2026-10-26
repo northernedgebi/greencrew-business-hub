@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { CustomerServiceFields } from "@/components/customer-service-fields";
-import { newServiceForm } from "@/lib/customer-services";
+import { newServiceForm, servicePayload } from "@/lib/customer-services";
 
 export const Route = createFileRoute("/_authenticated/app/customers/")({ component: Customers, head: () => ({ meta: [{ title: "Customers & Services | LawnOffice" }, { name: "description", content: "Manage customers, properties and scheduled landscaping services." }, { property: "og:title", content: "Customers & Services | LawnOffice" }, { property: "og:description", content: "Customer records and landscaping service schedules." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }) });
 
@@ -66,7 +66,7 @@ function NewCustomer() {
   const crews = useQuery({ queryKey: ["crews", companyId], queryFn: async () => { const { data, error } = await supabase.from("crews").select("id,name").eq("company_id", companyId); if (error) throw error; return data ?? []; } });
   const m = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.rpc("create_customer_with_service", { _company: companyId, _customer: { name: f.name, email: f.email, phone: f.phone }, _property: { address: f.address, city: f.city, state: f.state, zip: f.zip }, _service: { ...service, price: Number(service.price) } });
+      const { error } = await supabase.rpc("create_customer_with_service", { _company: companyId, _customer: { name: f.name, email: f.email, phone: f.phone }, _property: { address: f.address, city: f.city, state: f.state, zip: f.zip }, _service: servicePayload(service) });
       if (error) throw error;
     },
     onSuccess: () => {

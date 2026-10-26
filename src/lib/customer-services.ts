@@ -7,6 +7,9 @@ export type ServiceFrequency = "once" | "weekly" | "biweekly" | "monthly" | "yea
 export type ServiceForm = { title: string; kind: string; frequency: ServiceFrequency; date: string; price: string; crew_id: string; notes: string };
 export const newServiceForm = (): ServiceForm => ({ title: DEFAULT_SERVICE, kind: "lawn", frequency: "weekly", date: localDate(new Date()), price: "", crew_id: "", notes: "" });
 export const FREQUENCIES: { value: ServiceFrequency; label: string }[] = [{ value: "once", label: "One time" }, { value: "weekly", label: "Weekly" }, { value: "biweekly", label: "Every 2 weeks" }, { value: "monthly", label: "Monthly" }, { value: "yearly", label: "Yearly" }];
+export function servicePayload(service: ServiceForm, timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone) {
+  return { ...service, price: Number(service.price), timezone: timeZone };
+}
 export function monthlyServiceValue(price: number, frequency: Exclude<ServiceFrequency, "once">) {
   return price * (frequency === "weekly" ? 4.33 : frequency === "biweekly" ? 2.17 : frequency === "yearly" ? 1 / 12 : 1);
 }

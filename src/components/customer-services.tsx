@@ -6,7 +6,7 @@ import { addDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { money, useWorkspace } from "@/lib/workspace";
 import { can } from "@/lib/permissions";
-import { newServiceForm, type ServiceForm } from "@/lib/customer-services";
+import { newServiceForm, servicePayload, type ServiceForm } from "@/lib/customer-services";
 import { localDate } from "@/lib/scheduling";
 import { CustomerServiceFields } from "@/components/customer-service-fields";
 import { NearbyServiceSuggestions } from "@/components/nearby-service-suggestions";
@@ -40,7 +40,7 @@ export function CustomerServices({ customerId, properties }: { customerId: strin
       if (error) throw error;
     } else {
       if (planId) throw new Error("Add a separate one-time service instead");
-      const { error } = await supabase.rpc("add_customer_service", { _company: companyId, _customer: customerId, _service: { ...f, price: Number(f.price), property_id: property } });
+      const { error } = await supabase.rpc("add_customer_service", { _company: companyId, _customer: customerId, _service: { ...servicePayload(f), property_id: property } });
       if (error) throw error;
     }
   }, onSuccess: () => { toast.success(planId ? "Service updated for future visits" : "Service added and scheduled"); qc.invalidateQueries(); setOpen(false); }, onError: e => toast.error(e.message) });
