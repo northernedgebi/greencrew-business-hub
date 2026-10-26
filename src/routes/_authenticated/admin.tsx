@@ -113,7 +113,7 @@ function Admin() {
                     <div className="flex flex-wrap gap-2">
                       <select aria-label={`Plan for ${c.name}`} className={sel} value={c.plan} onChange={(e) => update(c.id, { plan: e.target.value }, "Plan updated")}>{PLANS.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
                       <select aria-label={`Status for ${c.name}`} className={sel} value={c.subscription_status} onChange={(e) => update(c.id, { subscription_status: e.target.value }, "Status updated")}>{STATUSES.map((s) => <option key={s} value={s}>{s.replace("_", " ")}</option>)}</select>
-                      {c.subscription_status === "trialing" && <Button size="sm" variant="outline" className="h-10" onClick={() => { const d = new Date(Math.max(Date.now(), new Date(c.trial_ends_at).getTime())); d.setDate(d.getDate() + 14); void update(c.id, { trial_ends_at: d.toISOString() }, "Trial extended 14 days"); }}>+14 day trial</Button>}
+                      <TrialExtender onExtend={(days) => { const d = new Date(Math.max(Date.now(), new Date(c.trial_ends_at).getTime())); d.setDate(d.getDate() + days); void update(c.id, { trial_ends_at: d.toISOString() }, `Trial extended ${days} days`); }} />
                       {c.subscription_status === "suspended"
                         ? <Button size="sm" className="h-10" onClick={() => update(c.id, { subscription_status: "active" }, `${c.name} re-enabled`)}>Enable</Button>
                         : <Button size="sm" variant="destructive" className="h-10" onClick={() => confirm(`Disable ${c.name}? Their team will be locked out until re-enabled.`) && update(c.id, { subscription_status: "suspended" }, `${c.name} disabled`)}>Disable</Button>}
