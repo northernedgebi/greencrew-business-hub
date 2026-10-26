@@ -7,6 +7,7 @@ import { MonthCalendar } from "@/components/month-calendar";
 import { NearbyServiceSuggestions } from "@/components/nearby-service-suggestions";
 import { ScheduleDatePicker } from "@/components/schedule-date-picker";
 import { WEEKDAYS } from "@/lib/scheduling";
+import { seasonLabel } from "@/lib/customer-services";
 import { getDay, parseISO } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { money, useWorkspace } from "@/lib/workspace";
