@@ -155,6 +155,13 @@
       "when": 1792981744541,
       "tag": "0021_customer_accounts_view_type_ein",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1792981926889,
+      "tag": "0022_customer_billing_mode",
+      "breakpoints": true
     }
   ]
 }

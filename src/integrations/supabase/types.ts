@@ -268,6 +268,7 @@ export type Database = {
       }
       customers: {
         Row: {
+          billing_mode: string
           company_id: string
           created_at: string
           customer_type: string
@@ -283,6 +284,7 @@ export type Database = {
           status: string
         }
         Insert: {
+          billing_mode?: string
           company_id: string
           created_at?: string
           customer_type?: string
@@ -298,6 +300,7 @@ export type Database = {
           status?: string
         }
         Update: {
+          billing_mode?: string
           company_id?: string
           created_at?: string
           customer_type?: string
