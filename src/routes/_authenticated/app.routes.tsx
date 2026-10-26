@@ -29,6 +29,7 @@ const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(
 const JOB_COLS = "id, title, status, notes, route_order, start_time, scheduled_date, crew_id, property_id, customer:customers(name), property:properties(id, address, city, state, zip, lat, lng, gate_code, notes)";
 
 type Job = { id: string; title: string; status: string; notes: string | null; route_order: number | null; property_id: string | null; customer: { name: string } | null; property: { id: string; address: string; city: string | null; state: string | null; zip: string | null; lat: number | null; lng: number | null; gate_code: string | null; notes: string | null } | null };
+type Group = { key: string; name: string; property: Job["property"]; jobs: Job[]; order: number };
 type Crew = { id: string; name: string; start_address: string | null; start_lat: number | null; start_lng: number | null };
 
 const fullAddress = (p: NonNullable<Job["property"]>) => [p.address, p.city, p.state, p.zip].filter(Boolean).join(", ");
@@ -104,11 +105,11 @@ function Routes() {
   }
 
   async function nudge(index: number, dir: -1 | 1) {
-    const list = jobs.data ?? [];
-    const other = list[index + dir];
+    const gs = [...groups];
+    const other = gs[index + dir];
     if (!other) return;
-    const reordered = [...list];
-    [reordered[index], reordered[index + dir]] = [reordered[index + dir]!, reordered[index]!];
+    [gs[index], gs[index + dir]] = [gs[index + dir]!, gs[index]!];
+    const reordered = gs.flatMap((g) => g.jobs);
     await run(async () => {
       const res = await Promise.all(reordered.map((j, i) => supabase.from("jobs").update({ route_order: i + 1 }).eq("company_id", companyId).eq("id", j.id)));
       const bad = res.find((r) => r.error); if (bad?.error) throw bad.error;
@@ -127,7 +128,18 @@ function Routes() {
   }
 
   const start: Point | null = crew?.start_lat != null && crew.start_lng != null ? { lat: crew.start_lat, lng: crew.start_lng } : null;
-  const mapStops: MapStop[] = useMemo(() => (jobs.data ?? []).flatMap((j, i) => j.property?.lat != null && j.property.lng != null ? [{ id: j.id, n: i + 1, lat: j.property.lat, lng: j.property.lng, label: `${j.customer?.name ?? ""} — ${j.property.address}` }] : []), [jobs.data]);
+  const groups: Group[] = useMemo(() => {
+    const map = new Map<string, Group>();
+    for (const j of jobs.data ?? []) {
+      const key = `${j.property?.id ?? "none"}|${j.customer?.name ?? j.id}`;
+      const g = map.get(key) ?? { key, name: j.customer?.name ?? "", property: j.property, jobs: [], order: 9999 };
+      g.jobs.push(j);
+      g.order = Math.min(g.order, j.route_order ?? 9999);
+      map.set(key, g);
+    }
+    return [...map.values()].map((g) => ({ ...g, jobs: g.jobs.sort(sortJobs) })).sort((a, b) => a.order - b.order);
+  }, [jobs.data]);
+  const mapStops: MapStop[] = useMemo(() => groups.flatMap((g, i) => g.property?.lat != null && g.property.lng != null ? [{ id: g.key, n: i + 1, lat: g.property.lat, lng: g.property.lng, label: `${g.name} — ${g.property.address}` }] : []), [groups]);
   const km = routeDistanceKm(start, mapStops);
   const missingCount = (jobs.data?.length ?? 0) - mapStops.length;
 
@@ -150,27 +162,35 @@ function Routes() {
       {!crews.data ? <Spinner /> : !activeCrew ? <Empty title="No crews yet" text="Create a crew on the Team & Crews page to plan routes." /> : !visible ? <Empty title="Not available" text="This day is outside your enabled schedule dates." /> : jobs.isLoading ? <Spinner /> : !jobs.data?.length ? <Empty title="No stops this day" text="Assign visits to this crew on the Schedule page." /> : (
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">{jobs.data.length} stops{mapStops.length > 0 ? ` · about ${(km * 0.621).toFixed(1)} mi straight-line` : ""}{missingCount > 0 ? ` · ${missingCount} not on the map yet${manage ? " (press Optimize route)" : ""}` : ""}</p>
-            {jobs.data.map((j, i) => (
-              <Card key={j.id} className="!p-3">
+            <p className="text-sm text-muted-foreground">{groups.length} {groups.length === 1 ? "stop" : "stops"} · {jobs.data.length} {jobs.data.length === 1 ? "visit" : "visits"}{mapStops.length > 0 ? ` · about ${(km * 0.621).toFixed(1)} mi straight-line` : ""}{missingCount > 0 ? ` · ${missingCount} not on the map yet${manage ? " (press Optimize route)" : ""}` : ""}</p>
+            {groups.map((g, i) => (
+              <Card key={g.key} className="!p-3">
                 <div className="flex items-start gap-3">
                   <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary font-bold text-primary-foreground">{i + 1}</span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold">{j.customer?.name}</p>
-                    <p className="truncate text-sm text-muted-foreground">{j.property ? fullAddress(j.property) : "No address"}</p>
-                    <div className="mt-1 flex items-center gap-2 text-xs"><span className="truncate">{j.title}</span><StatusBadge status={j.status} /></div>
-                    {j.property?.gate_code && <p className="mt-1.5 text-sm"><span className="font-semibold">Gate code:</span> {j.property.gate_code}</p>}
-                    {j.notes && <p className="mt-1.5 whitespace-pre-wrap rounded-lg bg-secondary px-2.5 py-1.5 text-sm"><span className="font-semibold">Visit notes:</span> {j.notes}</p>}
-                    {j.property?.notes && <p className="mt-1.5 whitespace-pre-wrap rounded-lg bg-muted px-2.5 py-1.5 text-sm"><span className="font-semibold">Property notes:</span> {j.property.notes}</p>}
-                    {j.property && <a className="mt-2 inline-flex h-10 items-center gap-1.5 rounded-xl border px-3 text-sm font-semibold" target="_blank" rel="noreferrer" href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(fullAddress(j.property))}`}><MapPin className="h-4 w-4" />Directions</a>}
+                    <p className="truncate font-semibold">{g.name}</p>
+                    <p className="truncate text-sm text-muted-foreground">{g.property ? fullAddress(g.property) : "No address"}</p>
+                    {g.property?.gate_code && <p className="mt-1.5 text-sm"><span className="font-semibold">Gate code:</span> {g.property.gate_code}</p>}
+                    {g.property?.notes && <p className="mt-1.5 whitespace-pre-wrap rounded-lg bg-muted px-2.5 py-1.5 text-sm"><span className="font-semibold">Property notes:</span> {g.property.notes}</p>}
+                    <div className="mt-2 space-y-1.5">
+                      {g.jobs.map((j) => (
+                        <div key={j.id} className="rounded-lg bg-secondary/60 px-2.5 py-1.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex min-w-0 items-center gap-2 text-sm"><span className="truncate font-medium">{j.title}</span><StatusBadge status={j.status} /></div>
+                            {manage && <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" aria-label={`Move ${j.title} to another day`} disabled={busy || j.status === "completed"} onClick={() => setMoving(j)}><ArrowRightLeft className="h-4 w-4" /></Button>}
+                          </div>
+                          {j.notes && <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground"><span className="font-semibold">Visit notes:</span> {j.notes}</p>}
+                        </div>
+                      ))}
+                    </div>
+                    {g.property && <a className="mt-2 inline-flex h-10 items-center gap-1.5 rounded-xl border px-3 text-sm font-semibold" target="_blank" rel="noreferrer" href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(fullAddress(g.property))}`}><MapPin className="h-4 w-4" />Directions</a>}
                   </div>
                   {manage && (
                     <div className="flex shrink-0 flex-col gap-1">
                       <div className="flex gap-1">
                         <Button size="icon" variant="outline" className="h-9 w-9" aria-label="Move up" disabled={busy || i === 0} onClick={() => nudge(i, -1)}><ArrowUp /></Button>
-                        <Button size="icon" variant="outline" className="h-9 w-9" aria-label="Move down" disabled={busy || i === jobs.data.length - 1} onClick={() => nudge(i, 1)}><ArrowDown /></Button>
+                        <Button size="icon" variant="outline" className="h-9 w-9" aria-label="Move down" disabled={busy || i === groups.length - 1} onClick={() => nudge(i, 1)}><ArrowDown /></Button>
                       </div>
-                      <Button size="sm" variant="secondary" disabled={busy || j.status === "completed"} onClick={() => setMoving(j)}><ArrowRightLeft />Move</Button>
                     </div>
                   )}
                 </div>
