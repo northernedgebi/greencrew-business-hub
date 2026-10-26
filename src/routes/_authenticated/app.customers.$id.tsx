@@ -85,6 +85,13 @@ function CustomerDetail() {
       <Link to="/app/customers" className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-muted-foreground"><ArrowLeft className="h-4 w-4" />Customers</Link>
       <PageHeader title={c.name} action={<div className="flex gap-2"><StatusBadge status={account?.effective_status ?? c.status} />{manage && <DeleteRecord table="customers" id={id} name={c.name} description="This customer and all their properties, services, visits, estimates, contracts, notes, requests, invoices, and payment records will be permanently removed." onDeleted={() => navigate({ to: "/app/customers" })} />}</div>} />
       {account?.inactivity_reason && <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-destructive"><p className="font-semibold">{account.inactivity_reason}</p><p className="text-sm">{account.effective_status === "on_hold" ? `${money(account.overdue_balance)} overdue. Service is on hold until the overdue balance meets the billing rule.` : "Service is inactive until your office reactivates this customer."}</p></div>}
+      {seeMoney && (
+        <div className="mb-4 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border bg-card p-4"><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">All services per year</p><p className="font-display text-2xl font-extrabold">{money(totals.yearlyServices)}</p><p className="text-xs text-muted-foreground">Active services + this year's one-time work</p></div>
+          <div className="rounded-xl border bg-card p-4"><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Paid in {year}</p><p className="font-display text-2xl font-extrabold text-primary">{money(totals.paidThisYear)}</p><p className="text-xs text-muted-foreground">Payments received since Jan 1</p></div>
+          <div className="rounded-xl border bg-card p-4"><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Left for {year}</p><p className="font-display text-2xl font-extrabold">{money(totals.leftForYear)}</p><p className="text-xs text-muted-foreground">Yearly services minus what's been paid</p></div>
+        </div>
+      )}
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="space-y-3">
           {c.phone && <a href={`tel:${c.phone}`} className="flex items-center gap-2 font-medium"><Phone className="h-4 w-4 text-primary" />{c.phone}</a>}
