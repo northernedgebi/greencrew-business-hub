@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Trash2, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/lib/workspace";
 import { can, INVITABLE_ROLES, ROLE_LABELS, type CompanyRole } from "@/lib/permissions";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CrewAccessFields } from "@/components/crew-access-fields";
 import { isCrewUser, type CrewAccess } from "@/lib/crew-access";
+import { DeleteRecord } from "@/components/delete-record";
 
 export const Route = createFileRoute("/_authenticated/app/team")({ component: Team, head: () => ({ meta: [{ title: "Team & Crew Access | LawnOffice" }, { name: "description", content: "Manage LawnOffice invitations, crews and schedule access dates." }, { property: "og:title", content: "Team & Crew Access | LawnOffice" }, { property: "og:description", content: "Assign team members to crews and enable their schedule dates." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }) });
 
@@ -69,7 +70,7 @@ function Team() {
                     <select className={sel} value={m.role} onChange={(e) => run(supabase.from("company_members").update({ role: e.target.value as CompanyRole }).eq("id", m.id), "Role updated")}>
                       {INVITABLE_ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
                     </select>
-                    <button className="p-2 text-muted-foreground" onClick={() => confirm("Remove access?") && run(supabase.from("company_members").delete().eq("id", m.id))}><Trash2 className="h-4 w-4" /></button>
+                    <DeleteRecord table="company_members" id={m.id} name={m.profile?.full_name || "team member"} description="This person loses access to this company. Their account and existing work records stay." />
                   </>
                 ) : <span className="text-muted-foreground">{ROLE_LABELS[m.role as CompanyRole]}</span>}
               </div>{office && isCrewUser(m.role) && <EditCrewAccess key={`${m.id}-${m.crew_id}-${m.schedule_visible_from}-${m.schedule_visible_until}`} access={m} crews={q.data.crews} prefix={`member-${m.id}`} onSave={(access) => run(supabase.from("company_members").update(access).eq("company_id", companyId).eq("id", m.id), "Crew access updated")} />}</div>
@@ -77,7 +78,7 @@ function Team() {
             {q.data.invites.map((i) => (
               <div key={i.id} className="py-2.5 text-sm"><div className="flex items-center gap-2">
                 <div className="flex-1"><p className="font-semibold">{i.email}</p><p className="text-muted-foreground">Invite pending · {ROLE_LABELS[i.role]}</p></div>
-                <button className="p-2 text-muted-foreground" onClick={() => run(supabase.from("company_invites").delete().eq("id", i.id))}><Trash2 className="h-4 w-4" /></button>
+                {office && <DeleteRecord table="company_invites" id={i.id} name={`invite for ${i.email}`} description="This pending invitation will be removed and cannot be accepted." />}
               </div>{office && isCrewUser(i.role) && <EditCrewAccess key={`${i.id}-${i.crew_id}-${i.schedule_visible_from}-${i.schedule_visible_until}`} access={i} crews={q.data.crews} prefix={`invite-${i.id}`} onSave={(access) => run(supabase.from("company_invites").update(access).eq("company_id", companyId).eq("id", i.id), "Invite access updated")} />}</div>
             ))}
           </div>
@@ -99,7 +100,7 @@ function Team() {
             {q.data.crews.map((c) => (
               <div key={c.id} className="rounded-xl bg-secondary p-2.5">
                 <div className="flex items-center justify-between text-sm font-semibold">{c.name}
-                  <button aria-label={`Delete ${c.name}`} onClick={() => confirm("Delete crew?") && run(supabase.from("crews").delete().eq("id", c.id))}><Trash2 className="h-3.5 w-3.5" /></button></div>
+                  {can(role, "crews.manage") && <DeleteRecord table="crews" id={c.id} name={c.name} description="This crew will be removed. Its visits, plans, and employees become unassigned, and crew-linked user access is cleared." />}</div>
                 <form className="mt-2 flex gap-2" onSubmit={(e) => { e.preventDefault(); const v = String(new FormData(e.currentTarget).get("start") ?? "").trim(); void run(supabase.from("crews").update({ start_address: v || null, start_lat: null, start_lng: null }).eq("company_id", companyId).eq("id", c.id), "Route start saved"); }}>
                   <Input name="start" className="h-10 bg-background" placeholder="Route start address (yard / shop)" defaultValue={(c as { start_address?: string | null }).start_address ?? ""} />
                   <Button type="submit" size="sm" variant="outline" className="h-10">Save</Button>
@@ -120,7 +121,7 @@ function Team() {
                 <select className={sel} value={e.crew_id ?? ""} onChange={(ev) => run(supabase.from("employees").update({ crew_id: ev.target.value || null }).eq("id", e.id))}>
                   <option value="">No crew</option>{q.data.crews.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
-                <button className="p-2 text-muted-foreground" onClick={() => confirm("Remove employee?") && run(supabase.from("employees").delete().eq("id", e.id))}><Trash2 className="h-4 w-4" /></button>
+                {can(role, "crews.manage") && <DeleteRecord table="employees" id={e.id} name={e.name} description="This employee record will be removed. App sign-in access and existing job records stay unchanged." />}
               </div>
             ))}
           </div>

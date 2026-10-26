@@ -21,3 +21,4 @@
 - Service creation sends the calendar's IANA time zone; validate dates and generate initial occurrences in that zone so local today is not rejected after UTC midnight.
 - Generate recurrence dates from the original start plus occurrence index, not by incrementing the previous date, to preserve month/year anchors and original occurrence deduplication after moves.
 - Derive customer billing holds through the security-definer customer_account_state function and security-invoker customer_accounts view; enforce service start/dispatch and generation through database guards, keeping manual inactivity separate so payments never clear cancellations and date-based holds cannot go stale.
+- Use the shared DeleteRecord confirmation for company record deletion with explicit related-record consequences, tenant-scoped RLS writes, returned-row verification, and cache invalidation; keep existing bookings when deleting recurring plans to preserve dispatched and completed work.
