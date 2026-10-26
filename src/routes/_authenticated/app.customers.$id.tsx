@@ -13,6 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { CustomerServices } from "@/components/customer-services";
 import { customerYearTotals } from "@/lib/customer-services";
 import { localDate } from "@/lib/scheduling";
+import { billGroups, billLineDescription, type BillingMode } from "@/lib/billing";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CustomerAccountControls } from "@/components/customer-account-controls";
 import { DeleteRecord } from "@/components/delete-record";
 
@@ -30,7 +32,7 @@ function CustomerDetail() {
     queryKey: key,
     queryFn: async () => {
       const yearStart = `${new Date().getFullYear()}-01-01`;
-      const [c, props, jobs, invoices, notes, account, plans, yearJobs] = await Promise.all([
+      const [c, props, jobs, invoices, notes, account, plans, yearJobs, unbilledJobs] = await Promise.all([
         supabase.from("customers").select("*").eq("id", id).single(),
         supabase.from("properties").select("*").eq("customer_id", id).order("created_at"),
         supabase.from("jobs").select("id, title, scheduled_date, status, price").eq("customer_id", id).order("scheduled_date", { ascending: false }).limit(20),
@@ -39,6 +41,7 @@ function CustomerDetail() {
         supabase.rpc("customer_account_state", { _customer: id }),
         supabase.from("recurring_plans").select("service, frequency, price, times_per_year, active").eq("company_id", companyId).eq("customer_id", id).eq("active", true),
         supabase.from("jobs").select("price").eq("company_id", companyId).eq("customer_id", id).is("recurring_plan_id", null).neq("status", "cancelled").gte("scheduled_date", yearStart),
+        supabase.from("jobs").select("id, title, scheduled_date, price, property_id, property:properties(address)").eq("company_id", companyId).eq("customer_id", id).eq("status", "completed").is("invoice_id", null).order("scheduled_date"),
       ]);
       if (c.error) throw c.error;
       if (account.error) throw account.error;
@@ -47,7 +50,8 @@ function CustomerDetail() {
         ? await supabase.from("payments").select("amount").in("invoice_id", invoiceIds).gte("paid_at", yearStart)
         : { data: [] as { amount: number }[], error: null };
       if (payments.error) throw payments.error;
-      return { c: c.data, account: account.data?.[0], props: props.data ?? [], jobs: jobs.data ?? [], invoices: invoices.data ?? [], notes: notes.data ?? [], plans: plans.data ?? [], yearJobs: yearJobs.data ?? [], payments: payments.data ?? [] };
+      const unbilled = (unbilledJobs.data ?? []).map((j) => ({ id: j.id, title: j.title, scheduled_date: j.scheduled_date, price: Number(j.price), property_id: j.property_id, address: (j.property as { address: string } | null)?.address ?? null }));
+      return { c: c.data, account: account.data?.[0], props: props.data ?? [], jobs: jobs.data ?? [], invoices: invoices.data ?? [], notes: notes.data ?? [], plans: plans.data ?? [], yearJobs: yearJobs.data ?? [], payments: payments.data ?? [], unbilled };
     },
     refetchInterval: 60000,
   });
@@ -72,9 +76,37 @@ function CustomerDetail() {
     onSuccess: () => { setNote(""); refresh(); },
     onError: (e) => toast.error(e.message),
   });
+  const saveBillingMode = useMutation({
+    mutationFn: async (mode: BillingMode) => {
+      const { error } = await supabase.from("customers").update({ billing_mode: mode }).eq("id", id).eq("company_id", companyId);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Billing preference saved"); refresh(); },
+    onError: (e) => toast.error(e.message),
+  });
+  const billVisits = useMutation({
+    mutationFn: async () => {
+      const data = q.data;
+      if (!data) return;
+      const mode = (data.c.billing_mode ?? "combined") as BillingMode;
+      const groups = billGroups(data.unbilled, mode);
+      for (const g of groups) {
+        const inv = await supabase.from("invoices").insert({ company_id: companyId, customer_id: id, status: "sent" }).select("id").single();
+        if (inv.error) throw inv.error;
+        const items = g.visits.map((v) => ({ company_id: companyId, invoice_id: inv.data.id, description: billLineDescription(v, mode), quantity: 1, unit_price: v.price, job_id: v.id }));
+        const it = await supabase.from("invoice_items").insert(items);
+        if (it.error) throw it.error;
+        const link = await supabase.from("jobs").update({ invoice_id: inv.data.id }).in("id", g.visits.map((v) => v.id));
+        if (link.error) throw link.error;
+      }
+      return groups.length;
+    },
+    onSuccess: (n) => { toast.success(n === 1 ? "Bill created" : `${n} bills created, one per address`); refresh(); qc.invalidateQueries({ queryKey: ["invoices", companyId] }); },
+    onError: (e) => toast.error(e.message),
+  });
 
   if (q.isLoading || !q.data) return <Spinner />;
-  const { c, account, props, jobs, invoices, notes, plans, yearJobs, payments } = q.data;
+  const { c, account, props, jobs, invoices, notes, plans, yearJobs, payments, unbilled } = q.data;
   const balance = invoices.filter((i) => i.status !== "void" && i.status !== "draft").reduce((s, i) => s + Number(i.total) - Number(i.amount_paid), 0);
   const year = new Date().getFullYear();
   const totals = customerYearTotals(plans, yearJobs, payments);
@@ -83,7 +115,7 @@ function CustomerDetail() {
   return (
     <>
       <Link to="/app/customers" className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-muted-foreground"><ArrowLeft className="h-4 w-4" />Customers</Link>
-      <PageHeader title={c.name} action={<div className="flex gap-2"><StatusBadge status={account?.effective_status ?? c.status} />{manage && <DeleteRecord table="customers" id={id} name={c.name} description="This customer and all their properties, services, visits, estimates, contracts, notes, requests, invoices, and payment records will be permanently removed." onDeleted={() => navigate({ to: "/app/customers" })} />}</div>} />
+      <PageHeader title={c.name} action={<div className="flex items-center gap-2">{c.customer_type === "commercial" && <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold">Commercial</span>}<StatusBadge status={account?.effective_status ?? c.status} />{manage && <DeleteRecord table="customers" id={id} name={c.name} description="This customer and all their properties, services, visits, estimates, contracts, notes, requests, invoices, and payment records will be permanently removed." onDeleted={() => navigate({ to: "/app/customers" })} />}</div>} />
       {account?.inactivity_reason && <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-destructive"><p className="font-semibold">{account.inactivity_reason}</p><p className="text-sm">{account.effective_status === "on_hold" ? `${money(account.overdue_balance)} overdue. Service is on hold until the overdue balance meets the billing rule.` : "Service is inactive until your office reactivates this customer."}</p></div>}
       {seeMoney && (
         <div className="mb-4 grid gap-3 sm:grid-cols-3">
@@ -97,6 +129,7 @@ function CustomerDetail() {
           {c.phone && <a href={`tel:${c.phone}`} className="flex items-center gap-2 font-medium"><Phone className="h-4 w-4 text-primary" />{c.phone}</a>}
           <p className="text-xs text-muted-foreground">{c.portal_user_id ? "Customer portal: connected" : c.email ? "Customer portal: they can sign up with this email to see visits and bills" : "Add an email so this customer can use the portal"}</p>
           {c.email && <a href={`mailto:${c.email}`} className="flex items-center gap-2 break-all font-medium"><Mail className="h-4 w-4 text-primary" />{c.email}</a>}
+          {c.customer_type === "commercial" && c.ein && <p className="text-sm text-muted-foreground">EIN: {c.ein}</p>}
           <div className="rounded-xl bg-secondary p-3"><p className="text-xs uppercase text-muted-foreground">Open balance</p><p className="font-display text-2xl font-extrabold">{money(balance)}</p></div>
           {manage && <CustomerAccountControls key={`${c.status}-${c.inactive_reason}-${c.overdue_hold_limit}`} customer={c} />}
         </Card>
@@ -123,6 +156,37 @@ function CustomerDetail() {
             </form>
           )}
         </Card>
+        {manage && (
+          <Card className="lg:col-span-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="font-bold">Billing</h2>
+              <Select value={c.billing_mode ?? "combined"} onValueChange={(v) => saveBillingMode.mutate(v as BillingMode)}>
+                <SelectTrigger className="h-11 w-full sm:w-80"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="combined">One bill, broken out by address</SelectItem>
+                  <SelectItem value="per_property">Separate bill for each address</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {unbilled.length === 0 ? (
+              <p className="mt-3 text-sm text-muted-foreground">No completed visits waiting to be billed.</p>
+            ) : (
+              <>
+                <div className="mt-3 divide-y rounded-xl border">
+                  {unbilled.map((v) => (
+                    <div key={v.id} className="flex items-center justify-between gap-2 px-3 py-2.5 text-sm">
+                      <span className="min-w-0 truncate"><span className="font-medium">{v.title}</span> <span className="text-muted-foreground">· {v.scheduled_date}{v.address ? ` · ${v.address}` : ""}</span></span>
+                      <span className="shrink-0 tabular-nums">{money(v.price)}</span>
+                    </div>
+                  ))}
+                </div>
+                <Button className="mt-3" disabled={billVisits.isPending} onClick={() => billVisits.mutate()}>
+                  {billGroups(unbilled, (c.billing_mode ?? "combined") as BillingMode).length > 1 ? `Create ${billGroups(unbilled, (c.billing_mode ?? "combined") as BillingMode).length} bills (one per address)` : "Create bill"} · {money(unbilled.reduce((s, v) => s + v.price, 0))}
+                </Button>
+              </>
+            )}
+          </Card>
+        )}
         <Card className="lg:col-span-2">
           <CustomerServices customerId={id} properties={props} />
           <h2 className="mb-3 font-bold">Recent jobs</h2>

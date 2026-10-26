@@ -1,0 +1,3 @@
+CREATE OR REPLACE VIEW public.customer_accounts WITH (security_invoker = true) AS
+SELECT c.id, c.company_id, c.name, c.email, c.phone, c.notes, c.status, c.portal_user_id, c.created_at, c.inactive_reason, c.overdue_hold_limit, a.effective_status, a.inactivity_reason, a.overdue_balance, c.customer_type, c.ein
+FROM public.customers c CROSS JOIN LATERAL public.customer_account_state(c.id) a(effective_status, inactivity_reason, overdue_balance);

@@ -30,7 +30,11 @@ function InvoiceDetail() {
         supabase.from("payments").select("*").eq("invoice_id", id).order("paid_at"),
       ]);
       if (inv.error) throw inv.error;
-      return { inv: inv.data, items: items.data ?? [], pays: pays.data ?? [] };
+      const jobIds = [...new Set((items.data ?? []).map((i) => i.job_id).filter((x): x is string => !!x))];
+      const jobRows = jobIds.length ? await supabase.from("jobs").select("id, property:properties(address)").in("id", jobIds) : { data: [], error: null };
+      if (jobRows.error) throw jobRows.error;
+      const addrByJob = new Map((jobRows.data ?? []).map((j) => [j.id, (j.property as { address: string } | null)?.address ?? null]));
+      return { inv: inv.data, items: (items.data ?? []).map((i) => ({ ...i, address: i.job_id ? addrByJob.get(i.job_id) ?? null : null })), pays: pays.data ?? [] };
     },
   });
   const [item, setItem] = useState({ description: "", quantity: "1", unit_price: "" });
@@ -48,6 +52,18 @@ function InvoiceDetail() {
   const { inv, items, pays } = q.data;
   const balance = Number(inv.total) - Number(inv.amount_paid);
   const locked = inv.status === "void";
+  const itemGroups = (() => {
+    const map = new Map<string, { address: string | null; items: typeof items }>();
+    for (const it of items) {
+      const addr = it.address;
+      const key = addr ?? "other";
+      const g = map.get(key) ?? { address: addr, items: [] };
+      g.items.push(it);
+      map.set(key, g);
+    }
+    return [...map.values()];
+  })();
+  const showAddresses = itemGroups.some((g) => g.address);
 
   return (
     <>
@@ -61,15 +77,25 @@ function InvoiceDetail() {
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <h2 className="mb-3 font-bold">Line items</h2>
-          <div className="divide-y">
-            {items.map((it) => (
-              <div key={it.id} className="flex items-center justify-between gap-2 py-2.5 text-sm">
-                <span className="flex-1">{it.description} <span className="text-muted-foreground">× {Number(it.quantity)}</span></span>
-                <span className="font-medium">{money(Number(it.quantity) * Number(it.unit_price))}</span>
-                {manage && !locked && <DeleteRecord table="invoice_items" id={it.id} name={it.description} description="This line item will be removed and the invoice total recalculated." />}
+          {itemGroups.map((g) => (
+            <div key={g.address ?? "other"} className="mb-4">
+              {showAddresses && (
+                <div className="mb-1 flex items-center justify-between rounded-lg bg-secondary px-3 py-2 text-sm">
+                  <span className="font-semibold">{g.address ?? "Other charges"}</span>
+                  <span className="tabular-nums text-muted-foreground">{money(g.items.reduce((s, it) => s + Number(it.quantity) * Number(it.unit_price), 0))}</span>
+                </div>
+              )}
+              <div className="divide-y">
+                {g.items.map((it) => (
+                  <div key={it.id} className="flex items-center justify-between gap-2 py-2.5 text-sm">
+                    <span className="flex-1">{it.description} <span className="text-muted-foreground">× {Number(it.quantity)}</span></span>
+                    <span className="font-medium">{money(Number(it.quantity) * Number(it.unit_price))}</span>
+                    {manage && !locked && <DeleteRecord table="invoice_items" id={it.id} name={it.description} description="This line item will be removed and the invoice total recalculated." />}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
           {!locked && (
             <form className="mt-3 grid grid-cols-6 gap-2" onSubmit={async (e) => { e.preventDefault(); if (await run(supabase.from("invoice_items").insert({ company_id: companyId, invoice_id: id, description: item.description, quantity: Number(item.quantity), unit_price: Number(item.unit_price) }))) setItem({ description: "", quantity: "1", unit_price: "" }); }}>
               <Input className="col-span-6 h-11 sm:col-span-3" placeholder="Description" required value={item.description} onChange={(e) => setItem({ ...item, description: e.target.value })} />

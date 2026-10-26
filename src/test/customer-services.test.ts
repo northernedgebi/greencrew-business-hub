@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_SERVICE, FREQUENCIES, customerYearTotals, monthlyServiceValue, nearbyServices, newServiceForm, servicePayload, summarizeCustomerServices, type NearbyJob } from "@/lib/customer-services";
+import { DEFAULT_SERVICE, FREQUENCIES, customerYearTotals, monthlyServiceValue, nearbyServices, newServiceForm, seasonLabel, servicePayload, summarizeCustomerServices, type NearbyJob } from "@/lib/customer-services";
 
 const job = (id: string, kind: string, date: string, overrides: Partial<NearbyJob> = {}): NearbyJob => ({ id, title: id, service_kind: kind, scheduled_date: date, status: "scheduled", customer_id: "customer", property_id: "property", crew_id: "crew", ...overrides });
 describe("customer services", () => {
@@ -45,5 +45,23 @@ describe("customerYearTotals", () => {
     );
     expect(totals.yearlyServices).toBe(120);
     expect(totals.leftForYear).toBe(0);
+  });
+});
+
+describe("service season windows", () => {
+  it("sends season dates as month-day only for repeating services", () => {
+    const payload = servicePayload({ ...newServiceForm(), frequency: "weekly", season_start: "2026-05-01", season_end: "2026-10-31" }, "UTC");
+    expect(payload.season_start).toBe("05-01");
+    expect(payload.season_end).toBe("10-31");
+  });
+
+  it("omits the season for one-time services and blank fields", () => {
+    expect(servicePayload({ ...newServiceForm(), frequency: "once", season_start: "2026-05-01", season_end: "2026-10-31" }, "UTC").season_start).toBeNull();
+    expect(servicePayload({ ...newServiceForm(), frequency: "weekly" }, "UTC").season_start).toBeNull();
+  });
+
+  it("labels the season for display", () => {
+    expect(seasonLabel("05-01", "10-31")).toBe("May 1 – Oct 31");
+    expect(seasonLabel(null, null)).toBeNull();
   });
 });

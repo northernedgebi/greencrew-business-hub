@@ -7,6 +7,7 @@ import { MonthCalendar } from "@/components/month-calendar";
 import { NearbyServiceSuggestions } from "@/components/nearby-service-suggestions";
 import { ScheduleDatePicker } from "@/components/schedule-date-picker";
 import { WEEKDAYS } from "@/lib/scheduling";
+import { seasonLabel } from "@/lib/customer-services";
 import { getDay, parseISO } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { money, useWorkspace } from "@/lib/workspace";
@@ -387,7 +388,7 @@ function RecurringSection() {
                   <p className="font-bold">{p.service} · <span className="capitalize">{p.frequency === "custom" ? `${p.times_per_year}× a year` : p.frequency}</span></p>
                   <p className="text-sm">{p.customer?.name}</p>
                   <p className="text-sm text-muted-foreground">{p.property?.address} · {p.crew?.name ?? "Unassigned"}</p>
-                  <p className="mt-1 text-sm font-medium">{p.frequency === "custom" ? `${p.times_per_year} times a year` : p.frequency === "yearly" ? `Every year on ${parseISO(p.start_date).toLocaleDateString(undefined, { month: "long", day: "numeric" })}` : p.frequency === "monthly" ? `Day ${parseISO(p.start_date).getDate()} of month` : WEEKDAYS[getDay(parseISO(p.start_date))]}</p>
+                  <p className="mt-1 text-sm font-medium">{p.frequency === "custom" ? `${p.times_per_year} times a year` : p.frequency === "yearly" ? `Every year on ${parseISO(p.start_date).toLocaleDateString(undefined, { month: "long", day: "numeric" })}` : p.frequency === "monthly" ? `Day ${parseISO(p.start_date).getDate()} of month` : WEEKDAYS[getDay(parseISO(p.start_date))]}{seasonLabel(p.season_start, p.season_end) ? ` · ${seasonLabel(p.season_start, p.season_end)}` : ""}</p>
                   <p className="mt-2 font-display text-xl font-bold">{money(p.price)}<span className="text-sm font-normal text-muted-foreground"> / visit · from {p.start_date}</span></p>
                 </div>
                 {office && <Switch aria-label={`Active plan for ${p.customer?.name}`} checked={p.active} onCheckedChange={(v) => toggle(p.id, v)} />}
@@ -401,7 +402,7 @@ function RecurringSection() {
   );
 }
 
-type EditablePlan = { id: string; customer_id: string; property_id: string; crew_id: string | null; service: string; frequency: Freq; times_per_year: number | null; price: number; start_date: string };
+type EditablePlan = { id: string; customer_id: string; property_id: string; crew_id: string | null; service: string; frequency: Freq; times_per_year: number | null; price: number; start_date: string; season_start: string | null; season_end: string | null };
 
 function NewPlan({ plan }: { plan?: EditablePlan }) {
   const { companyId } = useWorkspace();
@@ -409,14 +410,15 @@ function NewPlan({ plan }: { plan?: EditablePlan }) {
   const [open, setOpen] = useState(false);
   const customers = useCustomerOptions(companyId);
   const crews = useQuery({ queryKey: ["crews", companyId], queryFn: async () => (await supabase.from("crews").select("id, name").eq("company_id", companyId)).data ?? [] });
-  const initial = () => ({ customer_id: plan?.customer_id ?? "", property_id: plan?.property_id ?? "", crew_id: plan?.crew_id ?? "", service: plan?.service ?? "Weekly mowing", frequency: plan?.frequency ?? "weekly" as Freq, times_per_year: plan?.times_per_year ? String(plan.times_per_year) : "", price: String(plan?.price ?? 45), start_date: plan?.start_date ?? new Date().toLocaleDateString("en-CA") });
+  const initial = () => ({ customer_id: plan?.customer_id ?? "", property_id: plan?.property_id ?? "", crew_id: plan?.crew_id ?? "", service: plan?.service ?? "Weekly mowing", frequency: plan?.frequency ?? "weekly" as Freq, times_per_year: plan?.times_per_year ? String(plan.times_per_year) : "", price: String(plan?.price ?? 45), start_date: plan?.start_date ?? new Date().toLocaleDateString("en-CA"), season_start: plan?.season_start ? `2000-${plan.season_start}` : "", season_end: plan?.season_end ? `2000-${plan.season_end}` : "" });
   const [f, setF] = useState(initial);
   const props = customers.data?.find((c) => c.id === f.customer_id)?.properties ?? [];
   const m = useMutation({
     mutationFn: async () => {
       if (!f.property_id) throw new Error("This customer needs a property first");
       if (f.frequency === "custom") { const n = Number(f.times_per_year); if (!Number.isInteger(n) || n < 2 || n > 51) throw new Error("Choose how many times a year, between 2 and 51"); }
-      const payload = { company_id: companyId, customer_id: f.customer_id, property_id: f.property_id, crew_id: f.crew_id || null, service: f.service, frequency: f.frequency, times_per_year: f.frequency === "custom" ? Number(f.times_per_year) : null, price: Number(f.price), start_date: f.start_date };
+      if ((f.season_start && !f.season_end) || (!f.season_start && f.season_end)) throw new Error("Choose both a season start and season end, or neither");
+      const payload = { company_id: companyId, customer_id: f.customer_id, property_id: f.property_id, crew_id: f.crew_id || null, service: f.service, frequency: f.frequency, times_per_year: f.frequency === "custom" ? Number(f.times_per_year) : null, price: Number(f.price), start_date: f.start_date, season_start: f.season_start ? f.season_start.slice(5) : null, season_end: f.season_end ? f.season_end.slice(5) : null };
       const { error } = plan ? await supabase.from("recurring_plans").update(payload).eq("company_id", companyId).eq("id", plan.id).select("id").single() : await supabase.from("recurring_plans").insert({ ...payload, service_kind: /mow|lawn|grass|cut/i.test(f.service) ? "lawn" : "other" });
       if (error) throw error;
     },
@@ -444,6 +446,13 @@ function NewPlan({ plan }: { plan?: EditablePlan }) {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5"><Label>First visit / weekday</Label><ScheduleDatePicker value={f.start_date} onChange={(start_date) => setF({ ...f, start_date })} label="First visit date" /></div>
             <div className="space-y-1.5"><Label>Crew</Label><select className={sel} value={f.crew_id} onChange={(e) => setF({ ...f, crew_id: e.target.value })}><option value="">Unassigned</option>{crews.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+          </div>
+          <div className="space-y-1.5"><Label>Season (optional)</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <Input className="h-11" type="date" aria-label="Season start" value={f.season_start} onChange={(e) => setF({ ...f, season_start: e.target.value })} />
+              <Input className="h-11" type="date" aria-label="Season end" value={f.season_end} onChange={(e) => setF({ ...f, season_end: e.target.value })} />
+            </div>
+            <p className="text-xs text-muted-foreground">Only schedule between these months each year (e.g. May 1 – Oct 31). Blank = year-round.</p>
           </div>
           <Button type="submit" size="lg" className="w-full" disabled={m.isPending}>{m.isPending ? "Saving…" : plan ? "Save plan" : "Create plan"}</Button>
         </form>

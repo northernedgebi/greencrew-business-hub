@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CustomerServiceFields } from "@/components/customer-service-fields";
 import { newServiceForm, servicePayload } from "@/lib/customer-services";
 
@@ -22,7 +23,7 @@ function Customers() {
   const q = useQuery({
     queryKey: ["customers", companyId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("customer_accounts").select("id, name, email, phone, effective_status, inactivity_reason, properties(id, address)").eq("company_id", companyId).order("name");
+      const { data, error } = await supabase.from("customer_accounts").select("id, name, email, phone, customer_type, effective_status, inactivity_reason, properties(id, address)").eq("company_id", companyId).order("name");
       if (error) throw error;
       return (data ?? []).flatMap(c => c.id && c.name ? [{ ...c, id: c.id, name: c.name }] : []);
     },
@@ -45,7 +46,7 @@ function Customers() {
             <Link key={c.id} to="/app/customers/$id" params={{ id: c.id }} className="flex items-center gap-3 p-4 hover:bg-muted/50">
               <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-full font-bold ${c.effective_status === "active" ? "bg-success/20 text-primary ring-2 ring-success/40" : "bg-destructive/15 text-destructive ring-2 ring-destructive/40"}`}>{c.name[0]?.toUpperCase()}</div>
               <div className="min-w-0 flex-1">
-                <p className="truncate font-semibold">{c.name}</p>
+                <p className="truncate font-semibold">{c.name}{c.customer_type === "commercial" && <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold">Commercial</span>}</p>
                 <p className="truncate text-sm text-muted-foreground">{c.properties[0]?.address ?? "No property"}{c.properties.length > 1 ? ` +${c.properties.length - 1}` : ""}</p>
                 {c.inactivity_reason && <p className="text-xs text-destructive">{c.inactivity_reason}</p>}
               </div>
@@ -63,19 +64,19 @@ function NewCustomer() {
   const { companyId } = useWorkspace();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [f, setF] = useState({ name: "", email: "", phone: "", address: "", city: "", state: "", zip: "" });
+  const [f, setF] = useState({ name: "", email: "", phone: "", customer_type: "residential", ein: "", address: "", city: "", state: "", zip: "", gate_code: "" });
   const [service, setService] = useState(newServiceForm);
   const crews = useQuery({ queryKey: ["crews", companyId], queryFn: async () => { const { data, error } = await supabase.from("crews").select("id,name").eq("company_id", companyId); if (error) throw error; return data ?? []; } });
   const m = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.rpc("create_customer_with_service", { _company: companyId, _customer: { name: f.name, email: f.email, phone: f.phone }, _property: { address: f.address, city: f.city, state: f.state, zip: f.zip }, _service: servicePayload(service) });
+      const { error } = await supabase.rpc("create_customer_with_service", { _company: companyId, _customer: { name: f.name, email: f.email, phone: f.phone, customer_type: f.customer_type, ein: f.customer_type === "commercial" ? f.ein : "" }, _property: { address: f.address, city: f.city, state: f.state, zip: f.zip, gate_code: f.gate_code }, _service: servicePayload(service) });
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Customer added");
       qc.invalidateQueries();
       setOpen(false);
-      setF({ name: "", email: "", phone: "", address: "", city: "", state: "", zip: "" });
+      setF({ name: "", email: "", phone: "", customer_type: "residential", ein: "", address: "", city: "", state: "", zip: "", gate_code: "" });
       setService(newServiceForm());
     },
     onError: (e) => toast.error(e.message),
@@ -90,9 +91,21 @@ function NewCustomer() {
         <DialogHeader><DialogTitle>New customer</DialogTitle></DialogHeader>
         <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); m.mutate(); }}>
           {field("name", "Full name")}
+          <div className="space-y-1.5">
+            <Label htmlFor="customer-type">Customer type</Label>
+            <Select value={f.customer_type} onValueChange={(v) => setF({ ...f, customer_type: v })}>
+              <SelectTrigger id="customer-type" className="h-11"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="residential">Residential</SelectItem>
+                <SelectItem value="commercial">Company / Commercial</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {f.customer_type === "commercial" && field("ein", "EIN number (if available)")}
           <div className="grid gap-3 sm:grid-cols-2">{field("email", "Email", "email")}{field("phone", "Phone", "tel")}</div>
           {field("address", "Service address")}
           <div className="grid grid-cols-3 gap-3">{field("city", "City")}{field("state", "State")}{field("zip", "ZIP")}</div>
+          {field("gate_code", "Gate code (if any)")}
           <div className="border-t pt-4"><h3 className="mb-3 font-bold">Initial service</h3><CustomerServiceFields value={service} onChange={setService} crews={crews.data ?? []} /></div>
           <Button type="submit" size="lg" className="w-full" disabled={m.isPending}>Save customer</Button>
         </form>

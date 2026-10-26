@@ -14,3 +14,8 @@
 - [x] Crew-friendly route view with notes per stop
 - [x] Platform admin: companies list, disable/enable, new signups, revenue (MRR)
 - [x] Customer portal: see schedule, request reschedule (company approves), bills & payments, send notes/requests, company quotes them, customer approves, company schedules
+- [x] Customer yearly totals: all services per year, paid this year, left for year on customer page
+- [x] New customer: residential/commercial type, EIN for commercial, city/state, gate code
+- [x] Reports: total revenue, paid by month/year, commercial vs residential breakout, revenue by service type
+- [x] Multi-address billing: per-customer choice of separate bill per address or one combined bill with per-address breakouts
+- [x] Seasonal service schedules: optional month-day window per recurring service (e.g. May 1 - Oct 31); visits only generated inside the window
