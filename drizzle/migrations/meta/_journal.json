@@ -141,6 +141,13 @@
       "when": 1792981389423,
       "tag": "0019_custom_service_recurrence",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1792981711824,
+      "tag": "0020_customer_type_and_ein",
+      "breakpoints": true
     }
   ]
 }
