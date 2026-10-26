@@ -17,3 +17,4 @@
 - [x] Customer yearly totals: all services per year, paid this year, left for year on customer page
 - [x] New customer: residential/commercial type, EIN for commercial, city/state, gate code
 - [ ] Reports: total revenue, paid by month/year, commercial vs residential breakout, revenue by service type
+- [ ] Multi-address billing: per-customer choice of separate bill per address or one combined bill with per-address breakouts
