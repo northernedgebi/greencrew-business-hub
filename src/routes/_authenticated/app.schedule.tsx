@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DeleteRecord } from "@/components/delete-record";
 
 export const Route = createFileRoute("/_authenticated/app/schedule")({ component: Schedule, head: () => ({ meta: [{ title: "Schedule & Recurring | LawnOffice" }, { name: "description", content: "Assign crews, edit lawn cuts, manage recurring plans, and move scheduled visits in LawnOffice." }, { property: "og:title", content: "Schedule & Recurring | LawnOffice" }, { property: "og:description", content: "Manage landscaping visits, crews and recurring schedules." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }) });
 
@@ -152,6 +153,7 @@ function Visits({ initialDay }: { initialDay?: string | undefined }) {
                 {(j.status === "scheduled" || j.status === "in_progress") && <Button size="sm" onClick={() => setStatus.mutate({ id: j.id, status: "completed" })}><Check />Complete</Button>}
                 {j.status !== "cancelled" && j.status !== "completed" && can(role, "jobs.manage") && <Button size="sm" variant="ghost" onClick={() => setStatus.mutate({ id: j.id, status: "cancelled" })}><X />Cancel</Button>}
                 {j.status === "completed" && !j.invoice_id && can(role, "billing.manage") && <Button size="sm" variant="outline" onClick={() => invoiceJob({ ...j, price: Number(j.price) })}><Receipt />Invoice</Button>}
+                {can(role, "jobs.manage") && <DeleteRecord table="jobs" id={j.id} name={j.title} description="This visit will be removed from the schedule and route. Invoice charges stay unchanged. If it belongs to an active recurring plan, filling the schedule may recreate that occurrence; cancel the visit instead to skip it permanently." />}
               </div>
             </Card>
           ))}
@@ -390,7 +392,7 @@ function RecurringSection() {
                 </div>
                 {office && <Switch aria-label={`Active plan for ${p.customer?.name}`} checked={p.active} onCheckedChange={(v) => toggle(p.id, v)} />}
               </div>
-              {office && <div className="mt-3"><NewPlan plan={p} /></div>}
+              {office && <div className="mt-3 flex gap-2"><NewPlan plan={p} /><DeleteRecord table="recurring_plans" id={p.id} name={p.service} description="This plan stops generating new visits. Existing bookings and completed work stay; delete individual bookings separately." /></div>}
             </Card>
           ))}
         </div>

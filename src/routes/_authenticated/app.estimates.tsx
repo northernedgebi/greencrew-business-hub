@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DeleteRecord } from "@/components/delete-record";
 
 export const Route = createFileRoute("/_authenticated/app/estimates")({
   head: () => ({ meta: [{ title: "Estimates | LawnOffice" }, { name: "description", content: "Manage landscaping proposals, customer quotes and approvals." }, { property: "og:title", content: "Estimates | LawnOffice" }, { property: "og:description", content: "Manage landscaping proposals, customer quotes and approvals." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }),
@@ -59,6 +60,7 @@ function Estimates() {
               <div className="flex items-center gap-2">
                 <StatusBadge status={e.status} />
                 {manage && <select aria-label="Change status" className="h-10 rounded-md border bg-background px-2 text-sm capitalize" value={e.status} onChange={(ev) => setStatus(e.id, ev.target.value)}>{STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}</select>}
+                {manage && <DeleteRecord table="estimates" id={e.id} name={e.title} description="The estimate will be removed. Any linked customer request stays, but loses its quote link; scheduled work stays unchanged." />}
               </div>
             </div>
           ))}
