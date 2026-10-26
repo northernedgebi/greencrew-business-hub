@@ -41,7 +41,8 @@ const TONES: Record<string, string> = {
   accepted: "bg-success/15 text-primary",
   declined: "bg-destructive/15 text-destructive",
   active: "bg-success/15 text-primary",
-  inactive: "bg-muted text-muted-foreground",
+  inactive: "bg-destructive/15 text-destructive",
+  on_hold: "bg-destructive/15 text-destructive",
 };
 
 export function StatusBadge({ status }: { status: string }) {
