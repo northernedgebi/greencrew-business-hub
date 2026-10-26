@@ -32,7 +32,7 @@ function CustomerDetail() {
     queryKey: key,
     queryFn: async () => {
       const yearStart = `${new Date().getFullYear()}-01-01`;
-      const [c, props, jobs, invoices, notes, account, plans, yearJobs] = await Promise.all([
+      const [c, props, jobs, invoices, notes, account, plans, yearJobs, unbilledJobs] = await Promise.all([
         supabase.from("customers").select("*").eq("id", id).single(),
         supabase.from("properties").select("*").eq("customer_id", id).order("created_at"),
         supabase.from("jobs").select("id, title, scheduled_date, status, price").eq("customer_id", id).order("scheduled_date", { ascending: false }).limit(20),
@@ -50,7 +50,8 @@ function CustomerDetail() {
         ? await supabase.from("payments").select("amount").in("invoice_id", invoiceIds).gte("paid_at", yearStart)
         : { data: [] as { amount: number }[], error: null };
       if (payments.error) throw payments.error;
-      return { c: c.data, account: account.data?.[0], props: props.data ?? [], jobs: jobs.data ?? [], invoices: invoices.data ?? [], notes: notes.data ?? [], plans: plans.data ?? [], yearJobs: yearJobs.data ?? [], payments: payments.data ?? [] };
+      const unbilled = (unbilledJobs.data ?? []).map((j) => ({ id: j.id, title: j.title, scheduled_date: j.scheduled_date, price: Number(j.price), property_id: j.property_id, address: (j.property as { address: string } | null)?.address ?? null }));
+      return { c: c.data, account: account.data?.[0], props: props.data ?? [], jobs: jobs.data ?? [], invoices: invoices.data ?? [], notes: notes.data ?? [], plans: plans.data ?? [], yearJobs: yearJobs.data ?? [], payments: payments.data ?? [], unbilled };
     },
     refetchInterval: 60000,
   });
