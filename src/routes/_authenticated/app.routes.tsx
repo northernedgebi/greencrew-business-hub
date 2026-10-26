@@ -128,7 +128,18 @@ function Routes() {
   }
 
   const start: Point | null = crew?.start_lat != null && crew.start_lng != null ? { lat: crew.start_lat, lng: crew.start_lng } : null;
-  const mapStops: MapStop[] = useMemo(() => (jobs.data ?? []).flatMap((j, i) => j.property?.lat != null && j.property.lng != null ? [{ id: j.id, n: i + 1, lat: j.property.lat, lng: j.property.lng, label: `${j.customer?.name ?? ""} — ${j.property.address}` }] : []), [jobs.data]);
+  const groups: Group[] = useMemo(() => {
+    const map = new Map<string, Group>();
+    for (const j of jobs.data ?? []) {
+      const key = `${j.property?.id ?? "none"}|${j.customer?.name ?? j.id}`;
+      const g = map.get(key) ?? { key, name: j.customer?.name ?? "", property: j.property, jobs: [], order: 9999 };
+      g.jobs.push(j);
+      g.order = Math.min(g.order, j.route_order ?? 9999);
+      map.set(key, g);
+    }
+    return [...map.values()].map((g) => ({ ...g, jobs: g.jobs.sort(sortJobs) })).sort((a, b) => a.order - b.order);
+  }, [jobs.data]);
+  const mapStops: MapStop[] = useMemo(() => groups.flatMap((g, i) => g.property?.lat != null && g.property.lng != null ? [{ id: g.key, n: i + 1, lat: g.property.lat, lng: g.property.lng, label: `${g.name} — ${g.property.address}` }] : []), [groups]);
   const km = routeDistanceKm(start, mapStops);
   const missingCount = (jobs.data?.length ?? 0) - mapStops.length;
 
