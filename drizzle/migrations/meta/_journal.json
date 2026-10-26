@@ -92,6 +92,34 @@
       "when": 1792959685301,
       "tag": "0012_customer_portal_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792978425276,
+      "tag": "0013_annual_service_recurrence",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792978469910,
+      "tag": "0014_customer_service_scheduling",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1792978694976,
+      "tag": "0015_service_plan_notes_validation",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792978713159,
+      "tag": "0016_persist_recurring_service_notes",
+      "breakpoints": true
     }
   ]
 }

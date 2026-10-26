@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export const Route = createFileRoute("/_authenticated/app/invoices/$id")({ component: InvoiceDetail });
+export const Route = createFileRoute("/_authenticated/app/invoices/$id")({ head: () => ({ meta: [{ title: "Invoice Details | LawnOffice" }, { name: "description", content: "Review invoice items, customer balances and recorded payments." }, { property: "og:title", content: "Invoice Details | LawnOffice" }, { property: "og:description", content: "Review invoice items, customer balances and recorded payments." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }), component: InvoiceDetail });
 
 function InvoiceDetail() {
   const { id } = Route.useParams();

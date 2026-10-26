@@ -9,7 +9,7 @@ import { Card, Empty, PageHeader, Spinner, StatusBadge } from "@/components/app-
 import { Button } from "@/components/ui/button";
 import { useCustomerOptions } from "./app.schedule";
 
-export const Route = createFileRoute("/_authenticated/app/invoices/")({ component: Invoices });
+export const Route = createFileRoute("/_authenticated/app/invoices/")({ head: () => ({ meta: [{ title: "Invoices | LawnOffice" }, { name: "description", content: "Track landscaping invoices, outstanding balances and payments." }, { property: "og:title", content: "Invoices | LawnOffice" }, { property: "og:description", content: "Track landscaping invoices, outstanding balances and payments." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }), component: Invoices });
 
 const FILTERS = ["all", "draft", "sent", "partial", "paid"] as const;
 

@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/_authenticated/app")({
-  head: () => ({ meta: [{ title: "LawnOffice" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Business Workspace | LawnOffice" }, { name: "description", content: "Your LawnOffice landscaping company workspace." }, { property: "og:title", content: "Business Workspace | LawnOffice" }, { property: "og:description", content: "Your LawnOffice landscaping company workspace." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }),
   component: AppLayout,
 });
 

@@ -545,6 +545,7 @@ export type Database = {
           recurring_plan_id: string | null
           route_order: number | null
           scheduled_date: string
+          service_kind: string
           start_time: string | null
           status: Database["public"]["Enums"]["job_status"]
           title: string
@@ -564,6 +565,7 @@ export type Database = {
           recurring_plan_id?: string | null
           route_order?: number | null
           scheduled_date: string
+          service_kind?: string
           start_time?: string | null
           status?: Database["public"]["Enums"]["job_status"]
           title: string
@@ -583,6 +585,7 @@ export type Database = {
           recurring_plan_id?: string | null
           route_order?: number | null
           scheduled_date?: string
+          service_kind?: string
           start_time?: string | null
           status?: Database["public"]["Enums"]["job_status"]
           title?: string
@@ -815,9 +818,11 @@ export type Database = {
           end_date: string | null
           frequency: Database["public"]["Enums"]["recurrence"]
           id: string
+          notes: string | null
           price: number
           property_id: string
           service: string
+          service_kind: string
           start_date: string
         }
         Insert: {
@@ -829,9 +834,11 @@ export type Database = {
           end_date?: string | null
           frequency?: Database["public"]["Enums"]["recurrence"]
           id?: string
+          notes?: string | null
           price?: number
           property_id: string
           service: string
+          service_kind?: string
           start_date?: string
         }
         Update: {
@@ -843,9 +850,11 @@ export type Database = {
           end_date?: string | null
           frequency?: Database["public"]["Enums"]["recurrence"]
           id?: string
+          notes?: string | null
           price?: number
           property_id?: string
           service?: string
+          service_kind?: string
           start_date?: string
         }
         Relationships: [
@@ -987,6 +996,10 @@ export type Database = {
     }
     Functions: {
       accept_my_invites: { Args: never; Returns: number }
+      add_customer_service: {
+        Args: { _company: string; _customer: string; _service: Json }
+        Returns: string
+      }
       can_access_crew_job: {
         Args: { _company: string; _crew: string; _date: string }
         Returns: boolean
@@ -1000,12 +1013,29 @@ export type Database = {
         Returns: boolean
       }
       can_read_company: { Args: { _company: string }; Returns: boolean }
+      combine_service_visit: {
+        Args: { _lawn: string; _service: string }
+        Returns: undefined
+      }
       create_company: {
         Args: { _name: string; _phone?: string; _plan?: string }
         Returns: string
       }
+      create_customer_with_service: {
+        Args: {
+          _company: string
+          _customer: Json
+          _property: Json
+          _service: Json
+        }
+        Returns: string
+      }
       generate_recurring_jobs: {
         Args: { _company: string; _until: string }
+        Returns: number
+      }
+      generate_service_visits: {
+        Args: { _plan: string; _until: string }
         Returns: number
       }
       has_company_role: {
@@ -1056,7 +1086,7 @@ export type Database = {
         | "read_only"
       invoice_status: "draft" | "sent" | "paid" | "partial" | "void" | "overdue"
       job_status: "scheduled" | "in_progress" | "completed" | "cancelled"
-      recurrence: "weekly" | "biweekly" | "monthly"
+      recurrence: "weekly" | "biweekly" | "monthly" | "yearly"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1194,7 +1224,7 @@ export const Constants = {
       ],
       invoice_status: ["draft", "sent", "paid", "partial", "void", "overdue"],
       job_status: ["scheduled", "in_progress", "completed", "cancelled"],
-      recurrence: ["weekly", "biweekly", "monthly"],
+      recurrence: ["weekly", "biweekly", "monthly", "yearly"],
     },
   },
 } as const

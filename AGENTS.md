@@ -17,3 +17,5 @@
 - Route stop order is stored per job (route_order) and computed client-side from cached property/crew coordinates; geocoding runs in an authenticated server function via OpenStreetMap so no paid map key is needed.
 - Disabling a company (subscription_status = suspended) is enforced in is_member/has_company_role so every RLS path locks out; only platform admins may change subscription status or trial dates (trigger).
 - Customer portal writes go only through security-definer portal_* RPCs; companies act on service_requests directly under office RLS.
+- Customer services reuse recurring_plans and jobs, distinguished by service_kind; atomic office-only RPCs create customers/services and combine individual visits so all schedule, route and billing views share persisted work.
+- Generate recurrence dates from the original start plus occurrence index, not by incrementing the previous date, to preserve month/year anchors and original occurrence deduplication after moves.

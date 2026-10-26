@@ -7,7 +7,7 @@ import { Card, PageHeader, Spinner } from "@/components/app-ui";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/app/reports")({
-  head: () => ({ meta: [{ title: "Reports — LawnOffice" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Reports | LawnOffice" }, { name: "description", content: "Review landscaping revenue, completed work and outstanding invoices." }, { property: "og:title", content: "Reports | LawnOffice" }, { property: "og:description", content: "Review landscaping revenue, completed work and outstanding invoices." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }),
   component: Reports,
 });
 

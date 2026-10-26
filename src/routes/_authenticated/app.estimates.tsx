@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/app/estimates")({
-  head: () => ({ meta: [{ title: "Estimates — LawnOffice" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Estimates | LawnOffice" }, { name: "description", content: "Manage landscaping proposals, customer quotes and approvals." }, { property: "og:title", content: "Estimates | LawnOffice" }, { property: "og:description", content: "Manage landscaping proposals, customer quotes and approvals." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }),
   component: Estimates,
 });
 

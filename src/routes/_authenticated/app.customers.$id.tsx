@@ -10,8 +10,9 @@ import { Card, PageHeader, Spinner, StatusBadge } from "@/components/app-ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { CustomerServices } from "@/components/customer-services";
 
-export const Route = createFileRoute("/_authenticated/app/customers/$id")({ component: CustomerDetail });
+export const Route = createFileRoute("/_authenticated/app/customers/$id")({ component: CustomerDetail, head: () => ({ meta: [{ title: "Customer Services & Visits | LawnOffice" }, { name: "description", content: "Manage a customer’s services, recurring tasks, visits and invoices." }, { property: "og:title", content: "Customer Services & Visits | LawnOffice" }, { property: "og:description", content: "Landscaping customer services, visits and billing." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }) });
 
 function CustomerDetail() {
   const { id } = Route.useParams();
@@ -57,7 +58,8 @@ function CustomerDetail() {
     onError: (e) => toast.error(e.message),
   });
   async function toggleStatus() {
-    const { error } = await supabase.from("customers").update({ status: q.data!.c.status === "active" ? "inactive" : "active" }).eq("id", id);
+    if (!q.data) return;
+    const { error } = await supabase.from("customers").update({ status: q.data.c.status === "active" ? "inactive" : "active" }).eq("id", id);
     if (error) return toast.error(error.message);
     refresh();
   }
@@ -99,7 +101,7 @@ function CustomerDetail() {
                   <a className="font-semibold" target="_blank" rel="noreferrer" href={`https://maps.google.com/?q=${encodeURIComponent([p.address, p.city, p.zip].filter(Boolean).join(", "))}`}>{p.address}</a>
                   <p className="text-muted-foreground">{[p.city, p.state, p.zip].filter(Boolean).join(", ")}{p.gate_code ? ` · Gate ${p.gate_code}` : ""}</p>
                 </div>
-                {manage && <button onClick={() => delProp(p.id)} className="p-2 text-muted-foreground"><Trash2 className="h-4 w-4" /></button>}
+                {manage && <Button variant="ghost" size="icon" aria-label={`Delete property ${p.address}`} onClick={() => delProp(p.id)}><Trash2 className="h-4 w-4" /></Button>}
               </div>
             ))}
           </div>
@@ -113,6 +115,7 @@ function CustomerDetail() {
           )}
         </Card>
         <Card className="lg:col-span-2">
+          <CustomerServices customerId={id} properties={props} />
           <h2 className="mb-3 font-bold">Recent jobs</h2>
           {jobs.length === 0 ? <p className="text-sm text-muted-foreground">No jobs yet.</p> : (
             <div className="divide-y">{jobs.map((j) => (
