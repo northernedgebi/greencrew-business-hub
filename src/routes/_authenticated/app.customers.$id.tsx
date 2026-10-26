@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, MapPin, Phone, Mail, Trash2, Plus } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, Mail, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { money, useWorkspace } from "@/lib/workspace";
 import { can } from "@/lib/permissions";
@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CustomerServices } from "@/components/customer-services";
+import { CustomerAccountControls } from "@/components/customer-account-controls";
+import { DeleteRecord } from "@/components/delete-record";
 
 export const Route = createFileRoute("/_authenticated/app/customers/$id")({ component: CustomerDetail, head: () => ({ meta: [{ title: "Customer Services & Visits | LawnOffice" }, { name: "description", content: "Manage a customer’s services, recurring tasks, visits and invoices." }, { property: "og:title", content: "Customer Services & Visits | LawnOffice" }, { property: "og:description", content: "Landscaping customer services, visits and billing." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }) });
 
@@ -25,16 +27,19 @@ function CustomerDetail() {
   const q = useQuery({
     queryKey: key,
     queryFn: async () => {
-      const [c, props, jobs, invoices, notes] = await Promise.all([
+      const [c, props, jobs, invoices, notes, account] = await Promise.all([
         supabase.from("customers").select("*").eq("id", id).single(),
         supabase.from("properties").select("*").eq("customer_id", id).order("created_at"),
         supabase.from("jobs").select("id, title, scheduled_date, status, price").eq("customer_id", id).order("scheduled_date", { ascending: false }).limit(20),
         supabase.from("invoices").select("id, number, total, amount_paid, status, issue_date").eq("customer_id", id).order("issue_date", { ascending: false }),
         supabase.from("messages").select("id, body, created_at, channel").eq("customer_id", id).order("created_at", { ascending: false }),
+        supabase.rpc("customer_account_state", { _customer: id }),
       ]);
       if (c.error) throw c.error;
-      return { c: c.data, props: props.data ?? [], jobs: jobs.data ?? [], invoices: invoices.data ?? [], notes: notes.data ?? [] };
+      if (account.error) throw account.error;
+      return { c: c.data, account: account.data?.[0], props: props.data ?? [], jobs: jobs.data ?? [], invoices: invoices.data ?? [], notes: notes.data ?? [] };
     },
+    refetchInterval: 60000,
   });
 
   const [addr, setAddr] = useState({ address: "", city: "", zip: "", gate_code: "" });
@@ -57,39 +62,23 @@ function CustomerDetail() {
     onSuccess: () => { setNote(""); refresh(); },
     onError: (e) => toast.error(e.message),
   });
-  async function toggleStatus() {
-    if (!q.data) return;
-    const { error } = await supabase.from("customers").update({ status: q.data.c.status === "active" ? "inactive" : "active" }).eq("id", id);
-    if (error) return toast.error(error.message);
-    refresh();
-  }
-  async function delProp(pid: string) {
-    const { error } = await supabase.from("properties").delete().eq("id", pid);
-    if (error) return toast.error(error.message);
-    refresh();
-  }
-  async function delCustomer() {
-    if (!confirm("Delete this customer and all their records?")) return;
-    const { error } = await supabase.from("customers").delete().eq("id", id);
-    if (error) return toast.error(error.message);
-    qc.invalidateQueries({ queryKey: ["customers", companyId] });
-    navigate({ to: "/app/customers" });
-  }
 
   if (q.isLoading || !q.data) return <Spinner />;
-  const { c, props, jobs, invoices, notes } = q.data;
+  const { c, account, props, jobs, invoices, notes } = q.data;
   const balance = invoices.filter((i) => i.status !== "void" && i.status !== "draft").reduce((s, i) => s + Number(i.total) - Number(i.amount_paid), 0);
 
   return (
     <>
       <Link to="/app/customers" className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-muted-foreground"><ArrowLeft className="h-4 w-4" />Customers</Link>
-      <PageHeader title={c.name} action={<div className="flex gap-2"><StatusBadge status={c.status} />{manage && <><Button variant="outline" size="sm" onClick={toggleStatus}>{c.status === "active" ? "Deactivate" : "Activate"}</Button><Button variant="ghost" size="sm" onClick={delCustomer}><Trash2 /></Button></>}</div>} />
+      <PageHeader title={c.name} action={<div className="flex gap-2"><StatusBadge status={account?.effective_status ?? c.status} />{manage && <DeleteRecord table="customers" id={id} name={c.name} description="This customer and all their properties, services, visits, estimates, contracts, notes, requests, invoices, and payment records will be permanently removed." onDeleted={() => navigate({ to: "/app/customers" })} />}</div>} />
+      {account?.inactivity_reason && <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-destructive"><p className="font-semibold">{account.inactivity_reason}</p><p className="text-sm">{account.effective_status === "on_hold" ? `${money(account.overdue_balance)} overdue. Service is on hold until the overdue balance meets the billing rule.` : "Service is inactive until your office reactivates this customer."}</p></div>}
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="space-y-3">
           {c.phone && <a href={`tel:${c.phone}`} className="flex items-center gap-2 font-medium"><Phone className="h-4 w-4 text-primary" />{c.phone}</a>}
           <p className="text-xs text-muted-foreground">{c.portal_user_id ? "Customer portal: connected" : c.email ? "Customer portal: they can sign up with this email to see visits and bills" : "Add an email so this customer can use the portal"}</p>
           {c.email && <a href={`mailto:${c.email}`} className="flex items-center gap-2 break-all font-medium"><Mail className="h-4 w-4 text-primary" />{c.email}</a>}
           <div className="rounded-xl bg-secondary p-3"><p className="text-xs uppercase text-muted-foreground">Open balance</p><p className="font-display text-2xl font-extrabold">{money(balance)}</p></div>
+          {manage && <CustomerAccountControls key={`${c.status}-${c.inactive_reason}-${c.overdue_hold_limit}`} customer={c} />}
         </Card>
         <Card className="lg:col-span-2">
           <h2 className="mb-3 font-bold">Properties</h2>
@@ -101,7 +90,7 @@ function CustomerDetail() {
                   <a className="font-semibold" target="_blank" rel="noreferrer" href={`https://maps.google.com/?q=${encodeURIComponent([p.address, p.city, p.zip].filter(Boolean).join(", "))}`}>{p.address}</a>
                   <p className="text-muted-foreground">{[p.city, p.state, p.zip].filter(Boolean).join(", ")}{p.gate_code ? ` · Gate ${p.gate_code}` : ""}</p>
                 </div>
-                {manage && <Button variant="ghost" size="icon" aria-label={`Delete property ${p.address}`} onClick={() => delProp(p.id)}><Trash2 className="h-4 w-4" /></Button>}
+                {manage && <DeleteRecord table="properties" id={p.id} name={p.address} description="This property and its recurring plans will be removed. Existing visits and estimates stay without a property address." />}
               </div>
             ))}
           </div>

@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { WEEKDAYS } from "@/lib/scheduling";
+import { DeleteRecord } from "@/components/delete-record";
 
 export const Route = createFileRoute("/_authenticated/app/requests")({
   component: Requests,
@@ -98,7 +99,7 @@ function RequestCard({ r, crews, companyId, run, setReq }: { r: Req; crews: { id
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div><p className="font-semibold">{r.customer?.name}{r.customer?.phone ? <span className="font-normal text-muted-foreground"> · {r.customer.phone}</span> : null}</p>
           <p className="text-xs text-muted-foreground">{r.kind === "reschedule" ? "Wants to change a visit day" : "Service request"} · {new Date(r.created_at).toLocaleString()}</p></div>
-        <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-semibold">{LABEL[r.status] ?? r.status}</span>
+        <div className="flex items-center gap-2"><span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-semibold">{LABEL[r.status] ?? r.status}</span><DeleteRecord table="service_requests" id={r.id} name={`request from ${r.customer?.name ?? "customer"}`} description="This request and its messages will be removed. Linked estimates and scheduled visits stay unchanged." /></div>
       </div>
       {r.kind === "reschedule" && r.job && <p className="mt-2 text-sm"><span className="font-semibold">{r.job.title}</span>: {fmt(r.job.scheduled_date)} → <span className="font-semibold text-primary">{r.requested_date ? fmt(r.requested_date) : "?"}</span></p>}
       {r.message && <p className="mt-2 whitespace-pre-wrap rounded-lg bg-muted px-3 py-2 text-sm">“{r.message}”</p>}

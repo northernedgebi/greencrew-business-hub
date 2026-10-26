@@ -1,4 +1,6 @@
 # LawnOffice enhancement roadmap
+- [x] Customer active/hold indicators, inactivity reasons, overdue billing thresholds, automatic payment reactivation, and verification.
+- [x] Confirmed deletion for estimates, customers, properties, scheduled visits, services/tasks, invoices, payments, line items, crews, employees, invitations, team access, and customer requests; central deletion flows verified.
 - [x] Customer services: default lawn maintenance on creation, unlimited one-time/recurring services including yearly, and confirmed nearby-visit consolidation.
 - [x] Crew mapping + visible date ranges on invites/members, enforced in database.
 - [x] Two-company isolation test (each sees only its own records; cross-company edits blocked).

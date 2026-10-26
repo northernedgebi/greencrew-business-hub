@@ -7,6 +7,7 @@ import { money, useWorkspace } from "@/lib/workspace";
 import { can } from "@/lib/permissions";
 import { Card, Empty, PageHeader, Spinner, StatusBadge } from "@/components/app-ui";
 import { Button } from "@/components/ui/button";
+import { DeleteRecord } from "@/components/delete-record";
 
 export const Route = createFileRoute("/_authenticated/app/day/$date")({
   component: DayPage,
@@ -113,6 +114,7 @@ function DayPage() {
                             {j.status === "scheduled" && <Button size="sm" variant="secondary" className="h-8 px-2" onClick={() => setStatus.mutate({ id: j.id, status: "in_progress" })}><Play />Start</Button>}
                             {(j.status === "scheduled" || j.status === "in_progress") && <Button size="sm" className="h-8 px-2" onClick={() => setStatus.mutate({ id: j.id, status: "completed" })}><Check />Done</Button>}
                             {j.status !== "cancelled" && j.status !== "completed" && <Button size="sm" variant="ghost" className="h-8 px-2" onClick={() => setStatus.mutate({ id: j.id, status: "cancelled" })}><X />Cancel</Button>}
+                            <DeleteRecord table="jobs" id={j.id} name={j.title} description="This visit leaves the schedule and route. Invoice charges stay. Active recurring plans may recreate deleted occurrences when filled; cancel instead to skip permanently." />
                           </div>
                         )}
                       </div>

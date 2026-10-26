@@ -1,20 +1,24 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Trash2, Plus } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { money, useWorkspace } from "@/lib/workspace";
 import { Card, PageHeader, Spinner, StatusBadge } from "@/components/app-ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DeleteRecord } from "@/components/delete-record";
+import { can } from "@/lib/permissions";
 
 export const Route = createFileRoute("/_authenticated/app/invoices/$id")({ head: () => ({ meta: [{ title: "Invoice Details | LawnOffice" }, { name: "description", content: "Review invoice items, customer balances and recorded payments." }, { property: "og:title", content: "Invoice Details | LawnOffice" }, { property: "og:description", content: "Review invoice items, customer balances and recorded payments." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }), component: InvoiceDetail });
 
 function InvoiceDetail() {
   const { id } = Route.useParams();
-  const { companyId } = useWorkspace();
+  const { companyId, role } = useWorkspace();
+  const navigate = useNavigate();
+  const manage = can(role, "billing.manage");
   const qc = useQueryClient();
   const key = ["invoice", id];
   const q = useQuery({
@@ -52,6 +56,7 @@ function InvoiceDetail() {
         action={<div className="flex flex-wrap items-center gap-2"><StatusBadge status={inv.status} />
           {inv.status === "draft" && <Button size="sm" onClick={() => run(supabase.from("invoices").update({ status: "sent" }).eq("id", id))}>Mark as sent</Button>}
           {!locked && inv.status !== "paid" && <Button size="sm" variant="ghost" onClick={() => confirm("Void this invoice?") && run(supabase.from("invoices").update({ status: "void" }).eq("id", id))}>Void</Button>}
+          {manage && <DeleteRecord table="invoices" id={id} name={`Invoice #${inv.number}`} description="The invoice, all its line items, and all recorded payments will be permanently removed. This changes billing balances and financial reports; void instead if you need to retain the history." onDeleted={() => navigate({ to: "/app/invoices" })} />}
         </div>} />
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
@@ -61,7 +66,7 @@ function InvoiceDetail() {
               <div key={it.id} className="flex items-center justify-between gap-2 py-2.5 text-sm">
                 <span className="flex-1">{it.description} <span className="text-muted-foreground">× {Number(it.quantity)}</span></span>
                 <span className="font-medium">{money(Number(it.quantity) * Number(it.unit_price))}</span>
-                {!locked && <button className="p-2 text-muted-foreground" onClick={() => run(supabase.from("invoice_items").delete().eq("id", it.id))}><Trash2 className="h-4 w-4" /></button>}
+                {manage && !locked && <DeleteRecord table="invoice_items" id={it.id} name={it.description} description="This line item will be removed and the invoice total recalculated." />}
               </div>
             ))}
           </div>
@@ -86,7 +91,7 @@ function InvoiceDetail() {
         <Card>
           <h2 className="mb-3 font-bold">Payments</h2>
           {pays.length === 0 && <p className="text-sm text-muted-foreground">No payments recorded.</p>}
-          {pays.map((p) => <div key={p.id} className="flex justify-between py-1.5 text-sm"><span className="capitalize">{p.method} · {new Date(p.paid_at).toLocaleDateString()}</span><span className="font-semibold">{money(p.amount)}</span></div>)}
+          {pays.map((p) => <div key={p.id} className="flex items-center justify-between gap-2 py-1.5 text-sm"><span className="capitalize">{p.method} · {new Date(p.paid_at).toLocaleDateString()}</span><span className="font-semibold">{money(p.amount)}</span>{manage && <DeleteRecord table="payments" id={p.id} name={`${money(p.amount)} payment`} description="This payment record will be removed and the invoice balance recalculated. This does not refund or reverse a real payment." />}</div>)}
           {!locked && balance > 0 && (
             <form className="mt-4 space-y-2" onSubmit={async (e) => { e.preventDefault(); if (await run(supabase.from("payments").insert({ company_id: companyId, invoice_id: id, amount: Number(pay.amount), method: pay.method }))) setPay({ amount: "", method: "card" }); }}>
               <Label>Record a payment</Label>
