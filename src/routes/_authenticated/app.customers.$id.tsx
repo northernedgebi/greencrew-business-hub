@@ -106,7 +106,7 @@ function CustomerDetail() {
   });
 
   if (q.isLoading || !q.data) return <Spinner />;
-  const { c, account, props, jobs, invoices, notes, plans, yearJobs, payments } = q.data;
+  const { c, account, props, jobs, invoices, notes, plans, yearJobs, payments, unbilled } = q.data;
   const balance = invoices.filter((i) => i.status !== "void" && i.status !== "draft").reduce((s, i) => s + Number(i.total) - Number(i.amount_paid), 0);
   const year = new Date().getFullYear();
   const totals = customerYearTotals(plans, yearJobs, payments);
