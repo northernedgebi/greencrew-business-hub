@@ -13,6 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { CustomerServices } from "@/components/customer-services";
 import { customerYearTotals } from "@/lib/customer-services";
 import { localDate } from "@/lib/scheduling";
+import { billGroups, billLineDescription, type BillingMode } from "@/lib/billing";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CustomerAccountControls } from "@/components/customer-account-controls";
 import { DeleteRecord } from "@/components/delete-record";
 
@@ -39,6 +41,7 @@ function CustomerDetail() {
         supabase.rpc("customer_account_state", { _customer: id }),
         supabase.from("recurring_plans").select("service, frequency, price, times_per_year, active").eq("company_id", companyId).eq("customer_id", id).eq("active", true),
         supabase.from("jobs").select("price").eq("company_id", companyId).eq("customer_id", id).is("recurring_plan_id", null).neq("status", "cancelled").gte("scheduled_date", yearStart),
+        supabase.from("jobs").select("id, title, scheduled_date, price, property_id, property:properties(address)").eq("company_id", companyId).eq("customer_id", id).eq("status", "completed").is("invoice_id", null).order("scheduled_date"),
       ]);
       if (c.error) throw c.error;
       if (account.error) throw account.error;
