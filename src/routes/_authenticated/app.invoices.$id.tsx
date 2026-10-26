@@ -26,7 +26,7 @@ function InvoiceDetail() {
     queryFn: async () => {
       const [inv, items, pays] = await Promise.all([
         supabase.from("invoices").select("*, customer:customers(id, name, email)").eq("id", id).single(),
-        supabase.from("invoice_items").select("*").eq("invoice_id", id),
+        supabase.from("invoice_items").select("*, job:jobs(property:properties(address))").eq("invoice_id", id),
         supabase.from("payments").select("*").eq("invoice_id", id).order("paid_at"),
       ]);
       if (inv.error) throw inv.error;
@@ -48,6 +48,18 @@ function InvoiceDetail() {
   const { inv, items, pays } = q.data;
   const balance = Number(inv.total) - Number(inv.amount_paid);
   const locked = inv.status === "void";
+  const itemGroups = (() => {
+    const map = new Map<string, { address: string | null; items: typeof items }>();
+    for (const it of items) {
+      const addr = (it.job as { property: { address: string } | null } | null)?.property?.address ?? null;
+      const key = addr ?? "other";
+      const g = map.get(key) ?? { address: addr, items: [] };
+      g.items.push(it);
+      map.set(key, g);
+    }
+    return [...map.values()];
+  })();
+  const showAddresses = itemGroups.some((g) => g.address);
 
   return (
     <>
