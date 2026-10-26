@@ -4,11 +4,17 @@ import { localDate } from "@/lib/scheduling";
 export const DEFAULT_SERVICE = "Lawn maintenance";
 export const NEARBY_DAYS = 3;
 export type ServiceFrequency = "once" | "weekly" | "biweekly" | "monthly" | "yearly" | "custom";
-export type ServiceForm = { title: string; kind: string; frequency: ServiceFrequency; date: string; price: string; times_per_year: string; crew_id: string; notes: string };
-export const newServiceForm = (): ServiceForm => ({ title: DEFAULT_SERVICE, kind: "lawn", frequency: "weekly", date: localDate(new Date()), price: "", times_per_year: "4", crew_id: "", notes: "" });
+export type ServiceForm = { title: string; kind: string; frequency: ServiceFrequency; date: string; price: string; times_per_year: string; crew_id: string; notes: string; season_start: string; season_end: string };
+export const newServiceForm = (): ServiceForm => ({ title: DEFAULT_SERVICE, kind: "lawn", frequency: "weekly", date: localDate(new Date()), price: "", times_per_year: "4", crew_id: "", notes: "", season_start: "", season_end: "" });
+export function seasonLabel(start: string | null | undefined, end: string | null | undefined) {
+  if (!start || !end) return null;
+  const fmt = (md: string) => new Date(2000, Number(md.slice(0, 2)) - 1, Number(md.slice(3))).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return `${fmt(start)} – ${fmt(end)}`;
+}
 export const FREQUENCIES: { value: ServiceFrequency; label: string }[] = [{ value: "once", label: "One time" }, { value: "weekly", label: "Weekly" }, { value: "biweekly", label: "Every 2 weeks" }, { value: "monthly", label: "Monthly" }, { value: "yearly", label: "Yearly" }, { value: "custom", label: "Custom (times per year)" }];
 export function servicePayload(service: ServiceForm, timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone) {
-  return { ...service, price: Number(service.price), timezone: timeZone, times_per_year: service.frequency === "custom" ? Number(service.times_per_year) : null };
+  const seasonal = service.frequency !== "once" && service.season_start && service.season_end;
+  return { ...service, price: Number(service.price), timezone: timeZone, times_per_year: service.frequency === "custom" ? Number(service.times_per_year) : null, season_start: seasonal ? service.season_start.slice(5) : null, season_end: seasonal ? service.season_end.slice(5) : null };
 }
 export function monthlyServiceValue(price: number, frequency: Exclude<ServiceFrequency, "once">, timesPerYear?: number | null) {
   return price * (frequency === "weekly" ? 4.33 : frequency === "biweekly" ? 2.17 : frequency === "yearly" ? 1 / 12 : frequency === "custom" ? (timesPerYear ?? 0) / 12 : 1);
