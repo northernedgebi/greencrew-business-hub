@@ -1067,7 +1067,9 @@ export type Database = {
         Row: {
           company_id: string | null
           created_at: string | null
+          customer_type: string | null
           effective_status: string | null
+          ein: string | null
           email: string | null
           id: string | null
           inactive_reason: string | null
