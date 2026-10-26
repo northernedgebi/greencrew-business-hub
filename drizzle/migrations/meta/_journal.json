@@ -134,6 +134,13 @@
       "when": 1792980754137,
       "tag": "0018_customer_overdue_billing_holds",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792981389423,
+      "tag": "0019_custom_service_recurrence",
+      "breakpoints": true
     }
   ]
 }
