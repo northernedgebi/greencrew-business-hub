@@ -309,7 +309,7 @@ function NewJob({ day, job, crew, onSaved }: { day: string; job?: EditableJob; c
       };
       const { error } = job
         ? await supabase.from("jobs").update(payload).eq("company_id", companyId).eq("id", job.id).select("id").single()
-        : await supabase.from("jobs").insert(payload);
+        : await supabase.from("jobs").insert({ ...payload, service_kind: /mow|lawn|grass|cut/i.test(f.title) ? "lawn" : "other" });
       if (error) throw error;
     },
     onSuccess: () => { toast.success(job ? "Visit updated" : "Job scheduled"); qc.invalidateQueries({ queryKey: ["jobs", companyId] }); qc.invalidateQueries({ queryKey: ["dashboard", companyId] }); setOpen(false); onSaved?.(f.scheduled_date); },
@@ -414,7 +414,7 @@ function NewPlan({ plan }: { plan?: EditablePlan }) {
     mutationFn: async () => {
       if (!f.property_id) throw new Error("This customer needs a property first");
       const payload = { company_id: companyId, customer_id: f.customer_id, property_id: f.property_id, crew_id: f.crew_id || null, service: f.service, frequency: f.frequency, price: Number(f.price), start_date: f.start_date };
-      const { error } = plan ? await supabase.from("recurring_plans").update(payload).eq("company_id", companyId).eq("id", plan.id).select("id").single() : await supabase.from("recurring_plans").insert(payload);
+      const { error } = plan ? await supabase.from("recurring_plans").update(payload).eq("company_id", companyId).eq("id", plan.id).select("id").single() : await supabase.from("recurring_plans").insert({ ...payload, service_kind: /mow|lawn|grass|cut/i.test(f.service) ? "lawn" : "other" });
       if (error) throw error;
     },
     onSuccess: () => { toast.success(plan ? "Plan updated for newly generated visits" : "Plan created"); qc.invalidateQueries({ queryKey: ["plans", companyId] }); setOpen(false); },
