@@ -45,3 +45,12 @@ export function summarizeCustomerServices(plans: ServicePlanForSummary[], oneTim
 export function customerMonthlyValue(plans: ServicePlanForSummary[]) {
   return plans.reduce((sum, p) => sum + (p.frequency === "once" ? 0 : monthlyServiceValue(Number(p.price), p.frequency)), 0);
 }
+
+export type YearTotals = { yearlyServices: number; paidThisYear: number; leftForYear: number };
+
+export function customerYearTotals(plans: ServicePlanForSummary[], oneTimeThisYear: { price: number }[], paymentsThisYear: { amount: number }[]): YearTotals {
+  const yearlyServices = plans.reduce((sum, p) => sum + (!p.active || p.frequency === "once" ? 0 : monthlyServiceValue(Number(p.price), p.frequency, p.times_per_year) * 12), 0)
+    + oneTimeThisYear.reduce((sum, j) => sum + Number(j.price), 0);
+  const paidThisYear = paymentsThisYear.reduce((sum, p) => sum + Number(p.amount), 0);
+  return { yearlyServices, paidThisYear, leftForYear: Math.max(0, yearlyServices - paidThisYear) };
+}

@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CustomerServices } from "@/components/customer-services";
+import { customerYearTotals } from "@/lib/customer-services";
+import { localDate } from "@/lib/scheduling";
 import { CustomerAccountControls } from "@/components/customer-account-controls";
 import { DeleteRecord } from "@/components/delete-record";
 
@@ -27,17 +29,25 @@ function CustomerDetail() {
   const q = useQuery({
     queryKey: key,
     queryFn: async () => {
-      const [c, props, jobs, invoices, notes, account] = await Promise.all([
+      const yearStart = `${new Date().getFullYear()}-01-01`;
+      const [c, props, jobs, invoices, notes, account, plans, yearJobs] = await Promise.all([
         supabase.from("customers").select("*").eq("id", id).single(),
         supabase.from("properties").select("*").eq("customer_id", id).order("created_at"),
         supabase.from("jobs").select("id, title, scheduled_date, status, price").eq("customer_id", id).order("scheduled_date", { ascending: false }).limit(20),
         supabase.from("invoices").select("id, number, total, amount_paid, status, issue_date").eq("customer_id", id).order("issue_date", { ascending: false }),
         supabase.from("messages").select("id, body, created_at, channel").eq("customer_id", id).order("created_at", { ascending: false }),
         supabase.rpc("customer_account_state", { _customer: id }),
+        supabase.from("recurring_plans").select("service, frequency, price, times_per_year, active").eq("company_id", companyId).eq("customer_id", id).eq("active", true),
+        supabase.from("jobs").select("price").eq("company_id", companyId).eq("customer_id", id).is("recurring_plan_id", null).neq("status", "cancelled").gte("scheduled_date", yearStart),
       ]);
       if (c.error) throw c.error;
       if (account.error) throw account.error;
-      return { c: c.data, account: account.data?.[0], props: props.data ?? [], jobs: jobs.data ?? [], invoices: invoices.data ?? [], notes: notes.data ?? [] };
+      const invoiceIds = (invoices.data ?? []).filter((i) => i.status !== "void").map((i) => i.id);
+      const payments = invoiceIds.length
+        ? await supabase.from("payments").select("amount").in("invoice_id", invoiceIds).gte("paid_at", yearStart)
+        : { data: [] as { amount: number }[], error: null };
+      if (payments.error) throw payments.error;
+      return { c: c.data, account: account.data?.[0], props: props.data ?? [], jobs: jobs.data ?? [], invoices: invoices.data ?? [], notes: notes.data ?? [], plans: plans.data ?? [], yearJobs: yearJobs.data ?? [], payments: payments.data ?? [] };
     },
     refetchInterval: 60000,
   });
@@ -64,14 +74,24 @@ function CustomerDetail() {
   });
 
   if (q.isLoading || !q.data) return <Spinner />;
-  const { c, account, props, jobs, invoices, notes } = q.data;
+  const { c, account, props, jobs, invoices, notes, plans, yearJobs, payments } = q.data;
   const balance = invoices.filter((i) => i.status !== "void" && i.status !== "draft").reduce((s, i) => s + Number(i.total) - Number(i.amount_paid), 0);
+  const year = new Date().getFullYear();
+  const totals = customerYearTotals(plans, yearJobs, payments);
+  const seeMoney = can(role, "billing.manage") || role === "read_only";
 
   return (
     <>
       <Link to="/app/customers" className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-muted-foreground"><ArrowLeft className="h-4 w-4" />Customers</Link>
       <PageHeader title={c.name} action={<div className="flex gap-2"><StatusBadge status={account?.effective_status ?? c.status} />{manage && <DeleteRecord table="customers" id={id} name={c.name} description="This customer and all their properties, services, visits, estimates, contracts, notes, requests, invoices, and payment records will be permanently removed." onDeleted={() => navigate({ to: "/app/customers" })} />}</div>} />
       {account?.inactivity_reason && <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-destructive"><p className="font-semibold">{account.inactivity_reason}</p><p className="text-sm">{account.effective_status === "on_hold" ? `${money(account.overdue_balance)} overdue. Service is on hold until the overdue balance meets the billing rule.` : "Service is inactive until your office reactivates this customer."}</p></div>}
+      {seeMoney && (
+        <div className="mb-4 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border bg-card p-4"><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">All services per year</p><p className="font-display text-2xl font-extrabold">{money(totals.yearlyServices)}</p><p className="text-xs text-muted-foreground">Active services + this year's one-time work</p></div>
+          <div className="rounded-xl border bg-card p-4"><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Paid in {year}</p><p className="font-display text-2xl font-extrabold text-primary">{money(totals.paidThisYear)}</p><p className="text-xs text-muted-foreground">Payments received since Jan 1</p></div>
+          <div className="rounded-xl border bg-card p-4"><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Left for {year}</p><p className="font-display text-2xl font-extrabold">{money(totals.leftForYear)}</p><p className="text-xs text-muted-foreground">Yearly services minus what's been paid</p></div>
+        </div>
+      )}
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="space-y-3">
           {c.phone && <a href={`tel:${c.phone}`} className="flex items-center gap-2 font-medium"><Phone className="h-4 w-4 text-primary" />{c.phone}</a>}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_SERVICE, FREQUENCIES, monthlyServiceValue, nearbyServices, newServiceForm, servicePayload, summarizeCustomerServices, type NearbyJob } from "@/lib/customer-services";
+import { DEFAULT_SERVICE, FREQUENCIES, customerYearTotals, monthlyServiceValue, nearbyServices, newServiceForm, servicePayload, summarizeCustomerServices, type NearbyJob } from "@/lib/customer-services";
 
 const job = (id: string, kind: string, date: string, overrides: Partial<NearbyJob> = {}): NearbyJob => ({ id, title: id, service_kind: kind, scheduled_date: date, status: "scheduled", customer_id: "customer", property_id: "property", crew_id: "crew", ...overrides });
 describe("customer services", () => {
@@ -18,4 +18,32 @@ describe("customer services", () => {
   it("does not flag different properties or customers", () => expect(nearbyServices([job("cut", "lawn", "2026-10-30"), job("other-property", "other", "2026-10-28", { property_id: "elsewhere" }), job("other-customer", "other", "2026-10-28", { customer_id: "elsewhere" })], "2026-10-26")).toEqual([]));
   it("only flags separate dates within three days", () => expect(nearbyServices([job("cut", "lawn", "2026-10-30"), job("same-day", "other", "2026-10-30"), job("far", "other", "2026-11-03")], "2026-10-26")).toEqual([]));
   it("does not move completed or cancelled work", () => expect(nearbyServices([job("cut", "lawn", "2026-10-30"), job("done", "other", "2026-10-28", { status: "completed" }), job("cancelled", "other", "2026-10-29", { status: "cancelled" })], "2026-10-26")).toEqual([]));
+});
+describe("customerYearTotals", () => {
+  it("sums active recurring services to a yearly value plus this year's one-time work", () => {
+    const totals = customerYearTotals(
+      [
+        { service: "Lawn maintenance", price: 50, frequency: "weekly", active: true },
+        { service: "Fertilizing", price: 100, frequency: "custom", times_per_year: 6, active: true },
+        { service: "Blowout", price: 120, frequency: "yearly", active: true },
+        { service: "Old plan", price: 999, frequency: "monthly", active: false },
+      ],
+      [{ price: 80 }, { price: 20 }],
+      [{ amount: 500 }, { amount: 250 }],
+    );
+    // 50*4.33*12 + 100*6 + 120 + 100 = 2598 + 600 + 120 + 100 = 3418
+    expect(totals.yearlyServices).toBeCloseTo(3418, 2);
+    expect(totals.paidThisYear).toBe(750);
+    expect(totals.leftForYear).toBeCloseTo(2668, 2);
+  });
+
+  it("never shows a negative amount left for the year", () => {
+    const totals = customerYearTotals(
+      [{ service: "Lawn maintenance", price: 10, frequency: "monthly", active: true }],
+      [],
+      [{ amount: 500 }],
+    );
+    expect(totals.yearlyServices).toBe(120);
+    expect(totals.leftForYear).toBe(0);
+  });
 });
