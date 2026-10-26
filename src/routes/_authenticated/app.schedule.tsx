@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, Plus, MapPin, Play, Check, X, Receipt, Pencil, RefreshCw } from "lucide-react";
 import { MonthCalendar } from "@/components/month-calendar";
+import { NearbyServiceSuggestions } from "@/components/nearby-service-suggestions";
 import { ScheduleDatePicker } from "@/components/schedule-date-picker";
 import { WEEKDAYS } from "@/lib/scheduling";
 import { getDay, parseISO } from "date-fns";
@@ -35,13 +36,14 @@ function Schedule() {
   return (
     <>
       {showTabs && (
-        <div className="mb-4 flex gap-2" role="tablist">
+        <div className="mb-4 flex flex-wrap gap-2" role="tablist">
           <Button variant={tab === "visits" ? "default" : "outline"} onClick={() => setTab("visits")}>Visits</Button>
           <Button variant={tab === "crew" ? "default" : "outline"} onClick={() => setTab("crew")}>Crew board</Button>
           <Button variant={tab === "month" ? "default" : "outline"} onClick={() => setTab("month")}>Month</Button>
           <Button variant={tab === "recurring" ? "default" : "outline"} onClick={() => setTab("recurring")}>Recurring plans</Button>
         </div>
       )}
+      {showTabs && <NearbyServiceSuggestions />}
       {(!showTabs || tab === "visits") && <Visits key={openDay ?? "today"} initialDay={openDay} />}
       {showTabs && tab === "month" && <MonthCalendar onOpenDay={(d) => navigate({ to: "/app/day/$date", params: { date: d } })} />}
       {showTabs && tab === "crew" && <CrewBoard />}
@@ -344,7 +346,7 @@ function NewJob({ day, job, crew, onSaved }: { day: string; job?: EditableJob; c
   );
 }
 
-type Freq = "weekly" | "biweekly" | "monthly";
+type Freq = "weekly" | "biweekly" | "monthly" | "yearly";
 
 function RecurringSection() {
   const { companyId, role } = useWorkspace();
@@ -383,7 +385,7 @@ function RecurringSection() {
                   <p className="font-bold">{p.service} · <span className="capitalize">{p.frequency}</span></p>
                   <p className="text-sm">{p.customer?.name}</p>
                   <p className="text-sm text-muted-foreground">{p.property?.address} · {p.crew?.name ?? "Unassigned"}</p>
-                  <p className="mt-1 text-sm font-medium">{p.frequency === "monthly" ? `Day ${parseISO(p.start_date).getDate()} of month` : WEEKDAYS[getDay(parseISO(p.start_date))]}</p>
+                  <p className="mt-1 text-sm font-medium">{p.frequency === "yearly" ? `Every year on ${parseISO(p.start_date).toLocaleDateString(undefined, { month: "long", day: "numeric" })}` : p.frequency === "monthly" ? `Day ${parseISO(p.start_date).getDate()} of month` : WEEKDAYS[getDay(parseISO(p.start_date))]}</p>
                   <p className="mt-2 font-display text-xl font-bold">{money(p.price)}<span className="text-sm font-normal text-muted-foreground"> / visit · from {p.start_date}</span></p>
                 </div>
                 {office && <Switch aria-label={`Active plan for ${p.customer?.name}`} checked={p.active} onCheckedChange={(v) => toggle(p.id, v)} />}
@@ -432,7 +434,7 @@ function NewPlan({ plan }: { plan?: EditablePlan }) {
           {props.length > 0 && <div className="space-y-1.5"><Label>Property</Label><select className={sel} value={f.property_id} onChange={(e) => setF({ ...f, property_id: e.target.value })}>{props.map((p) => <option key={p.id} value={p.id}>{p.address}</option>)}</select></div>}
           <div className="space-y-1.5"><Label>Service</Label><Input className="h-11" value={f.service} onChange={(e) => setF({ ...f, service: e.target.value })} /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5"><Label>Frequency</Label><select className={sel} value={f.frequency} onChange={(e) => setF({ ...f, frequency: e.target.value as Freq })}><option value="weekly">Weekly</option><option value="biweekly">Every 2 weeks</option><option value="monthly">Monthly</option></select></div>
+            <div className="space-y-1.5"><Label>Frequency</Label><select className={sel} value={f.frequency} onChange={(e) => setF({ ...f, frequency: e.target.value as Freq })}><option value="weekly">Weekly</option><option value="biweekly">Every 2 weeks</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></div>
             <div className="space-y-1.5"><Label>Price per visit</Label><Input className="h-11" type="number" step="0.01" min="0" value={f.price} onChange={(e) => setF({ ...f, price: e.target.value })} /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">

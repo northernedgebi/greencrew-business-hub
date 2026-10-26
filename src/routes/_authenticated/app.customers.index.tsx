@@ -11,8 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { CustomerServiceFields } from "@/components/customer-service-fields";
+import { newServiceForm } from "@/lib/customer-services";
 
-export const Route = createFileRoute("/_authenticated/app/customers/")({ component: Customers });
+export const Route = createFileRoute("/_authenticated/app/customers/")({ component: Customers, head: () => ({ meta: [{ title: "Customers & Services | LawnOffice" }, { name: "description", content: "Manage customers, properties and scheduled landscaping services." }, { property: "og:title", content: "Customers & Services | LawnOffice" }, { property: "og:description", content: "Customer records and landscaping service schedules." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }) });
 
 function Customers() {
   const { companyId, role } = useWorkspace();
@@ -60,25 +62,24 @@ function NewCustomer() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [f, setF] = useState({ name: "", email: "", phone: "", address: "", city: "", state: "", zip: "" });
+  const [service, setService] = useState(newServiceForm);
+  const crews = useQuery({ queryKey: ["crews", companyId], queryFn: async () => { const { data, error } = await supabase.from("crews").select("id,name").eq("company_id", companyId); if (error) throw error; return data ?? []; } });
   const m = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.from("customers").insert({ company_id: companyId, name: f.name, email: f.email || null, phone: f.phone || null }).select("id").single();
+      const { error } = await supabase.rpc("create_customer_with_service", { _company: companyId, _customer: { name: f.name, email: f.email, phone: f.phone }, _property: { address: f.address, city: f.city, state: f.state, zip: f.zip }, _service: { ...service, price: Number(service.price) } });
       if (error) throw error;
-      if (f.address) {
-        const r = await supabase.from("properties").insert({ company_id: companyId, customer_id: data.id, address: f.address, city: f.city || null, state: f.state || null, zip: f.zip || null });
-        if (r.error) throw r.error;
-      }
     },
     onSuccess: () => {
       toast.success("Customer added");
-      qc.invalidateQueries({ queryKey: ["customers", companyId] });
+      qc.invalidateQueries();
       setOpen(false);
       setF({ name: "", email: "", phone: "", address: "", city: "", state: "", zip: "" });
+      setService(newServiceForm());
     },
     onError: (e) => toast.error(e.message),
   });
   const field = (k: keyof typeof f, label: string, type = "text") => (
-    <div className="space-y-1.5"><Label>{label}</Label><Input className="h-11" type={type} value={f[k]} onChange={(e) => setF({ ...f, [k]: e.target.value })} required={k === "name"} /></div>
+    <div className="space-y-1.5"><Label htmlFor={`customer-${k}`}>{label}</Label><Input id={`customer-${k}`} className="h-11" type={type} value={f[k]} onChange={(e) => setF({ ...f, [k]: e.target.value })} required={k === "name" || k === "address"} /></div>
   );
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -90,6 +91,7 @@ function NewCustomer() {
           <div className="grid gap-3 sm:grid-cols-2">{field("email", "Email", "email")}{field("phone", "Phone", "tel")}</div>
           {field("address", "Service address")}
           <div className="grid grid-cols-3 gap-3">{field("city", "City")}{field("state", "State")}{field("zip", "ZIP")}</div>
+          <div className="border-t pt-4"><h3 className="mb-3 font-bold">Initial service</h3><CustomerServiceFields value={service} onChange={setService} crews={crews.data ?? []} /></div>
           <Button type="submit" size="lg" className="w-full" disabled={m.isPending}>Save customer</Button>
         </form>
       </DialogContent>
