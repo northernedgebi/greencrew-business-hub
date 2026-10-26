@@ -29,6 +29,7 @@ const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(
 const JOB_COLS = "id, title, status, notes, route_order, start_time, scheduled_date, crew_id, property_id, customer:customers(name), property:properties(id, address, city, state, zip, lat, lng, gate_code, notes)";
 
 type Job = { id: string; title: string; status: string; notes: string | null; route_order: number | null; property_id: string | null; customer: { name: string } | null; property: { id: string; address: string; city: string | null; state: string | null; zip: string | null; lat: number | null; lng: number | null; gate_code: string | null; notes: string | null } | null };
+type Group = { key: string; name: string; property: Job["property"]; jobs: Job[]; order: number };
 type Crew = { id: string; name: string; start_address: string | null; start_lat: number | null; start_lng: number | null };
 
 const fullAddress = (p: NonNullable<Job["property"]>) => [p.address, p.city, p.state, p.zip].filter(Boolean).join(", ");
@@ -104,11 +105,11 @@ function Routes() {
   }
 
   async function nudge(index: number, dir: -1 | 1) {
-    const list = jobs.data ?? [];
-    const other = list[index + dir];
+    const gs = [...groups];
+    const other = gs[index + dir];
     if (!other) return;
-    const reordered = [...list];
-    [reordered[index], reordered[index + dir]] = [reordered[index + dir]!, reordered[index]!];
+    [gs[index], gs[index + dir]] = [gs[index + dir]!, gs[index]!];
+    const reordered = gs.flatMap((g) => g.jobs);
     await run(async () => {
       const res = await Promise.all(reordered.map((j, i) => supabase.from("jobs").update({ route_order: i + 1 }).eq("company_id", companyId).eq("id", j.id)));
       const bad = res.find((r) => r.error); if (bad?.error) throw bad.error;
