@@ -48,6 +48,16 @@ export function CustomerServices({ customerId, properties }: { customerId: strin
   async function toggle(id: string, active: boolean) { const { error } = await supabase.from("recurring_plans").update({ active }).eq("id", id).eq("company_id", companyId); if (error) return toast.error(error.message); qc.invalidateQueries(); }
   return <section className="my-6 border-y py-5">
     <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-bold">Services & tasks</h2>{manage && <div className="flex flex-wrap gap-2"><Button variant="outline" size="sm" disabled={fill.isPending} onClick={() => fill.mutate()}><RefreshCw />Fill next 4 weeks</Button><Button size="sm" disabled={!properties.length} onClick={() => { setPlanId(null); setF({ ...newServiceForm(), title: "", kind: "other", frequency: "once" }); setProperty(properties[0]?.id ?? ""); setOpen(true); }}><Plus />Add service</Button></div>}</div>
+    {q.data && !!summary.length && <div className="mb-4 rounded-lg border bg-muted/40 p-4">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Work this customer gets done</p>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {summary.map(s => <div key={s.name} className="flex items-baseline justify-between gap-3 rounded-md border bg-background px-3 py-2">
+          <span className="font-bold">{s.name}</span>
+          <span className="text-sm text-muted-foreground">{FREQUENCIES.find(f => f.value === s.frequency)?.label} · {s.prices.every(p => p === s.prices[0]) ? money(s.prices[0]) : `${money(Math.min(...s.prices))}–${money(Math.max(...s.prices))}`}{s.count > 1 ? ` · ${s.count}x` : ""}</span>
+        </div>)}
+      </div>
+      {monthly > 0 && <p className="mt-2 text-sm text-muted-foreground">About {money(monthly)} / month across all services</p>}
+    </div>}
     <NearbyServiceSuggestions customerId={customerId} />
     {q.isError && <p role="alert" className="text-destructive">{q.error.message}</p>}
     {q.isLoading ? <p className="text-muted-foreground">Loading services…</p> : <div className="divide-y">
