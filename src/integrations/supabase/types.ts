@@ -213,6 +213,13 @@ export type Database = {
             foreignKeyName: "contracts_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
+            referencedRelation: "customer_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
@@ -265,8 +272,10 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          inactive_reason: string | null
           name: string
           notes: string | null
+          overdue_hold_limit: number | null
           phone: string | null
           portal_user_id: string | null
           status: string
@@ -276,8 +285,10 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          inactive_reason?: string | null
           name: string
           notes?: string | null
+          overdue_hold_limit?: number | null
           phone?: string | null
           portal_user_id?: string | null
           status?: string
@@ -287,8 +298,10 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          inactive_reason?: string | null
           name?: string
           notes?: string | null
+          overdue_hold_limit?: number | null
           phone?: string | null
           portal_user_id?: string | null
           status?: string
@@ -403,6 +416,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estimates_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_accounts"
             referencedColumns: ["id"]
           },
           {
@@ -524,6 +544,13 @@ export type Database = {
             foreignKeyName: "invoices_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
+            referencedRelation: "customer_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
@@ -609,6 +636,13 @@ export type Database = {
             foreignKeyName: "jobs_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
+            referencedRelation: "customer_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
@@ -665,6 +699,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_accounts"
             referencedColumns: ["id"]
           },
           {
@@ -803,6 +844,13 @@ export type Database = {
             foreignKeyName: "properties_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
+            referencedRelation: "customer_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "properties_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
@@ -870,6 +918,13 @@ export type Database = {
             columns: ["crew_id"]
             isOneToOne: false
             referencedRelation: "crews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_plans_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_accounts"
             referencedColumns: ["id"]
           },
           {
@@ -946,6 +1001,13 @@ export type Database = {
             foreignKeyName: "service_requests_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
+            referencedRelation: "customer_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_requests_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
@@ -992,7 +1054,33 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      customer_accounts: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          effective_status: string | null
+          email: string | null
+          id: string | null
+          inactive_reason: string | null
+          inactivity_reason: string | null
+          name: string | null
+          notes: string | null
+          overdue_balance: number | null
+          overdue_hold_limit: number | null
+          phone: string | null
+          portal_user_id: string | null
+          status: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       accept_my_invites: { Args: never; Returns: number }
@@ -1029,6 +1117,14 @@ export type Database = {
           _service: Json
         }
         Returns: string
+      }
+      customer_account_state: {
+        Args: { _customer: string }
+        Returns: {
+          effective_status: string
+          inactivity_reason: string
+          overdue_balance: number
+        }[]
       }
       generate_recurring_jobs: {
         Args: { _company: string; _until: string }

@@ -127,6 +127,13 @@
       "when": 1792980029966,
       "tag": "0017_service_calendar_timezone_validation",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1792980754137,
+      "tag": "0018_customer_overdue_billing_holds",
+      "breakpoints": true
     }
   ]
 }
