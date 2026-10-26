@@ -878,6 +878,8 @@ export type Database = {
           notes: string | null
           price: number
           property_id: string
+          season_end: string | null
+          season_start: string | null
           service: string
           service_kind: string
           start_date: string
@@ -895,6 +897,8 @@ export type Database = {
           notes?: string | null
           price?: number
           property_id: string
+          season_end?: string | null
+          season_start?: string | null
           service: string
           service_kind?: string
           start_date?: string
@@ -912,6 +916,8 @@ export type Database = {
           notes?: string | null
           price?: number
           property_id?: string
+          season_end?: string | null
+          season_start?: string | null
           service?: string
           service_kind?: string
           start_date?: string
@@ -1162,6 +1168,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      in_service_season: {
+        Args: { _date: string; _end: string; _start: string }
         Returns: boolean
       }
       is_manager: { Args: { _company: string }; Returns: boolean }
