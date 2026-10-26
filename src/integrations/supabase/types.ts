@@ -818,6 +818,7 @@ export type Database = {
           end_date: string | null
           frequency: Database["public"]["Enums"]["recurrence"]
           id: string
+          notes: string | null
           price: number
           property_id: string
           service: string
@@ -833,6 +834,7 @@ export type Database = {
           end_date?: string | null
           frequency?: Database["public"]["Enums"]["recurrence"]
           id?: string
+          notes?: string | null
           price?: number
           property_id: string
           service: string
@@ -848,6 +850,7 @@ export type Database = {
           end_date?: string | null
           frequency?: Database["public"]["Enums"]["recurrence"]
           id?: string
+          notes?: string | null
           price?: number
           property_id?: string
           service?: string
