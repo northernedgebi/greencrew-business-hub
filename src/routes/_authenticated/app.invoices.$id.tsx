@@ -73,15 +73,25 @@ function InvoiceDetail() {
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <h2 className="mb-3 font-bold">Line items</h2>
-          <div className="divide-y">
-            {items.map((it) => (
-              <div key={it.id} className="flex items-center justify-between gap-2 py-2.5 text-sm">
-                <span className="flex-1">{it.description} <span className="text-muted-foreground">× {Number(it.quantity)}</span></span>
-                <span className="font-medium">{money(Number(it.quantity) * Number(it.unit_price))}</span>
-                {manage && !locked && <DeleteRecord table="invoice_items" id={it.id} name={it.description} description="This line item will be removed and the invoice total recalculated." />}
+          {itemGroups.map((g) => (
+            <div key={g.address ?? "other"} className="mb-4">
+              {showAddresses && (
+                <div className="mb-1 flex items-center justify-between rounded-lg bg-secondary px-3 py-2 text-sm">
+                  <span className="font-semibold">{g.address ?? "Other charges"}</span>
+                  <span className="tabular-nums text-muted-foreground">{money(g.items.reduce((s, it) => s + Number(it.quantity) * Number(it.unit_price), 0))}</span>
+                </div>
+              )}
+              <div className="divide-y">
+                {g.items.map((it) => (
+                  <div key={it.id} className="flex items-center justify-between gap-2 py-2.5 text-sm">
+                    <span className="flex-1">{it.description} <span className="text-muted-foreground">× {Number(it.quantity)}</span></span>
+                    <span className="font-medium">{money(Number(it.quantity) * Number(it.unit_price))}</span>
+                    {manage && !locked && <DeleteRecord table="invoice_items" id={it.id} name={it.description} description="This line item will be removed and the invoice total recalculated." />}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
           {!locked && (
             <form className="mt-3 grid grid-cols-6 gap-2" onSubmit={async (e) => { e.preventDefault(); if (await run(supabase.from("invoice_items").insert({ company_id: companyId, invoice_id: id, description: item.description, quantity: Number(item.quantity), unit_price: Number(item.unit_price) }))) setItem({ description: "", quantity: "1", unit_price: "" }); }}>
               <Input className="col-span-6 h-11 sm:col-span-3" placeholder="Description" required value={item.description} onChange={(e) => setItem({ ...item, description: e.target.value })} />
