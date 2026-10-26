@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export const Route = createFileRoute("/_authenticated/app/settings")({ component: Settings });
+export const Route = createFileRoute("/_authenticated/app/settings")({ head: () => ({ meta: [{ title: "Company Settings | LawnOffice" }, { name: "description", content: "Manage company contact details and LawnOffice workspace settings." }, { property: "og:title", content: "Company Settings | LawnOffice" }, { property: "og:description", content: "Manage company contact details and LawnOffice workspace settings." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }), component: Settings });
 
 function Settings() {
   const ws = useWorkspace();

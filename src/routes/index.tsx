@@ -7,6 +7,8 @@ import { MarketingShell, PricingGrid } from "@/components/marketing";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "LawnOffice — Run your landscaping business from one place" },
       { name: "description", content: "Scheduling, crews, recurring mowing, estimates, invoicing and automatic billing for landscaping companies." },
       { property: "og:title", content: "LawnOffice — Landscaping business software" },

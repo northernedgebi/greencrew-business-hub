@@ -5,7 +5,7 @@ import { money, useWorkspace } from "@/lib/workspace";
 import { can } from "@/lib/permissions";
 import { Card, PageHeader, Spinner, StatusBadge } from "@/components/app-ui";
 
-export const Route = createFileRoute("/_authenticated/app/")({ component: Dashboard });
+export const Route = createFileRoute("/_authenticated/app/")({ head: () => ({ meta: [{ title: "Dashboard | LawnOffice" }, { name: "description", content: "Landscaping business overview, upcoming visits and financial totals." }, { property: "og:title", content: "Dashboard | LawnOffice" }, { property: "og:description", content: "Landscaping business overview, upcoming visits and financial totals." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }), component: Dashboard });
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
