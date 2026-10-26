@@ -23,7 +23,7 @@ function Customers() {
   const q = useQuery({
     queryKey: ["customers", companyId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("customer_accounts").select("id, name, email, phone, effective_status, inactivity_reason, properties(id, address)").eq("company_id", companyId).order("name");
+      const { data, error } = await supabase.from("customer_accounts").select("id, name, email, phone, customer_type, effective_status, inactivity_reason, properties(id, address)").eq("company_id", companyId).order("name");
       if (error) throw error;
       return (data ?? []).flatMap(c => c.id && c.name ? [{ ...c, id: c.id, name: c.name }] : []);
     },
@@ -46,7 +46,7 @@ function Customers() {
             <Link key={c.id} to="/app/customers/$id" params={{ id: c.id }} className="flex items-center gap-3 p-4 hover:bg-muted/50">
               <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-full font-bold ${c.effective_status === "active" ? "bg-success/20 text-primary ring-2 ring-success/40" : "bg-destructive/15 text-destructive ring-2 ring-destructive/40"}`}>{c.name[0]?.toUpperCase()}</div>
               <div className="min-w-0 flex-1">
-                <p className="truncate font-semibold">{c.name}</p>
+                <p className="truncate font-semibold">{c.name}{c.customer_type === "commercial" && <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold">Commercial</span>}</p>
                 <p className="truncate text-sm text-muted-foreground">{c.properties[0]?.address ?? "No property"}{c.properties.length > 1 ? ` +${c.properties.length - 1}` : ""}</p>
                 {c.inactivity_reason && <p className="text-xs text-destructive">{c.inactivity_reason}</p>}
               </div>
