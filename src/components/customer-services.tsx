@@ -33,6 +33,8 @@ export function CustomerServices({ customerId, properties }: { customerId: strin
     if (plans.error) throw plans.error; if (visits.error) throw visits.error;
     return { plans: plans.data ?? [], visits: visits.data ?? [] };
   }});
+  const summary = q.data ? summarizeCustomerServices(q.data.plans, q.data.visits.filter((v: { recurring_plan_id: string | null }) => !v.recurring_plan_id).map((v: { title: string; price: number }) => ({ title: v.title, price: v.price }))) : [];
+  const monthly = q.data ? customerMonthlyValue(q.data.plans) : 0;
   const save = useMutation({ mutationFn: async () => {
     if (!property) throw new Error("Add a service address first");
     if (planId && f.frequency !== "once") {
