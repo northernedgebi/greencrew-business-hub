@@ -14,3 +14,6 @@
 - [x] Crew-friendly route view with notes per stop
 - [x] Platform admin: companies list, disable/enable, new signups, revenue (MRR)
 - [x] Customer portal: see schedule, request reschedule (company approves), bills & payments, send notes/requests, company quotes them, customer approves, company schedules
+- [x] Customer yearly totals: all services per year, paid this year, left for year on customer page
+- [x] New customer: residential/commercial type, EIN for commercial, city/state, gate code
+- [ ] Reports: total revenue, paid by month/year, commercial vs residential breakout, revenue by service type
