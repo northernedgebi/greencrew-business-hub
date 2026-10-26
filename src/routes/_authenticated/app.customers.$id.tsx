@@ -156,6 +156,37 @@ function CustomerDetail() {
             </form>
           )}
         </Card>
+        {manage && (
+          <Card className="lg:col-span-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="font-bold">Billing</h2>
+              <Select value={c.billing_mode ?? "combined"} onValueChange={(v) => saveBillingMode.mutate(v as BillingMode)}>
+                <SelectTrigger className="h-11 w-full sm:w-80"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="combined">One bill, broken out by address</SelectItem>
+                  <SelectItem value="per_property">Separate bill for each address</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {unbilled.length === 0 ? (
+              <p className="mt-3 text-sm text-muted-foreground">No completed visits waiting to be billed.</p>
+            ) : (
+              <>
+                <div className="mt-3 divide-y rounded-xl border">
+                  {unbilled.map((v) => (
+                    <div key={v.id} className="flex items-center justify-between gap-2 px-3 py-2.5 text-sm">
+                      <span className="min-w-0 truncate"><span className="font-medium">{v.title}</span> <span className="text-muted-foreground">· {v.scheduled_date}{v.address ? ` · ${v.address}` : ""}</span></span>
+                      <span className="shrink-0 tabular-nums">{money(v.price)}</span>
+                    </div>
+                  ))}
+                </div>
+                <Button className="mt-3" disabled={billVisits.isPending} onClick={() => billVisits.mutate()}>
+                  {billGroups(unbilled, (c.billing_mode ?? "combined") as BillingMode).length > 1 ? `Create ${billGroups(unbilled, (c.billing_mode ?? "combined") as BillingMode).length} bills (one per address)` : "Create bill"} · {money(unbilled.reduce((s, v) => s + v.price, 0))}
+                </Button>
+              </>
+            )}
+          </Card>
+        )}
         <Card className="lg:col-span-2">
           <CustomerServices customerId={id} properties={props} />
           <h2 className="mb-3 font-bold">Recent jobs</h2>
