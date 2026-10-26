@@ -52,16 +52,6 @@ function Admin() {
     qc.invalidateQueries({ queryKey: ["admin-companies"] });
   }
 
-  function TrialExtender({ onExtend }: { onExtend: (days: number) => void }) {
-    const [days, setDays] = useState("14");
-    const n = Math.floor(Number(days));
-    return (
-      <span className="flex items-center gap-1">
-        <Input type="number" min={1} max={365} aria-label="Trial days to add" className="h-10 w-16" value={days} onChange={(e) => setDays(e.target.value)} />
-        <Button size="sm" variant="outline" className="h-10" disabled={!Number.isFinite(n) || n < 1 || n > 365} onClick={() => onExtend(n)}>Add trial days</Button>
-      </span>
-    );
-  }
 
   if (ws.loading) return <Spinner />;
   return (
