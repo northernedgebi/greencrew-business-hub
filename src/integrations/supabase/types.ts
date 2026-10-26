@@ -872,6 +872,7 @@ export type Database = {
           service: string
           service_kind: string
           start_date: string
+          times_per_year: number | null
         }
         Insert: {
           active?: boolean
@@ -888,6 +889,7 @@ export type Database = {
           service: string
           service_kind?: string
           start_date?: string
+          times_per_year?: number | null
         }
         Update: {
           active?: boolean
@@ -904,6 +906,7 @@ export type Database = {
           service?: string
           service_kind?: string
           start_date?: string
+          times_per_year?: number | null
         }
         Relationships: [
           {
@@ -1184,7 +1187,7 @@ export type Database = {
         | "read_only"
       invoice_status: "draft" | "sent" | "paid" | "partial" | "void" | "overdue"
       job_status: "scheduled" | "in_progress" | "completed" | "cancelled"
-      recurrence: "weekly" | "biweekly" | "monthly" | "yearly"
+      recurrence: "weekly" | "biweekly" | "monthly" | "yearly" | "custom"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1322,7 +1325,7 @@ export const Constants = {
       ],
       invoice_status: ["draft", "sent", "paid", "partial", "void", "overdue"],
       job_status: ["scheduled", "in_progress", "completed", "cancelled"],
-      recurrence: ["weekly", "biweekly", "monthly", "yearly"],
+      recurrence: ["weekly", "biweekly", "monthly", "yearly", "custom"],
     },
   },
 } as const

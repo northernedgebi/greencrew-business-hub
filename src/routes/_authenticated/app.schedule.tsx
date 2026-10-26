@@ -348,7 +348,7 @@ function NewJob({ day, job, crew, onSaved }: { day: string; job?: EditableJob; c
   );
 }
 
-type Freq = "weekly" | "biweekly" | "monthly" | "yearly";
+type Freq = "weekly" | "biweekly" | "monthly" | "yearly" | "custom";
 
 function RecurringSection() {
   const { companyId, role } = useWorkspace();
@@ -384,10 +384,10 @@ function RecurringSection() {
             <Card key={p.id}>
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-bold">{p.service} · <span className="capitalize">{p.frequency}</span></p>
+                  <p className="font-bold">{p.service} · <span className="capitalize">{p.frequency === "custom" ? `${p.times_per_year}× a year` : p.frequency}</span></p>
                   <p className="text-sm">{p.customer?.name}</p>
                   <p className="text-sm text-muted-foreground">{p.property?.address} · {p.crew?.name ?? "Unassigned"}</p>
-                  <p className="mt-1 text-sm font-medium">{p.frequency === "yearly" ? `Every year on ${parseISO(p.start_date).toLocaleDateString(undefined, { month: "long", day: "numeric" })}` : p.frequency === "monthly" ? `Day ${parseISO(p.start_date).getDate()} of month` : WEEKDAYS[getDay(parseISO(p.start_date))]}</p>
+                  <p className="mt-1 text-sm font-medium">{p.frequency === "custom" ? `${p.times_per_year} times a year` : p.frequency === "yearly" ? `Every year on ${parseISO(p.start_date).toLocaleDateString(undefined, { month: "long", day: "numeric" })}` : p.frequency === "monthly" ? `Day ${parseISO(p.start_date).getDate()} of month` : WEEKDAYS[getDay(parseISO(p.start_date))]}</p>
                   <p className="mt-2 font-display text-xl font-bold">{money(p.price)}<span className="text-sm font-normal text-muted-foreground"> / visit · from {p.start_date}</span></p>
                 </div>
                 {office && <Switch aria-label={`Active plan for ${p.customer?.name}`} checked={p.active} onCheckedChange={(v) => toggle(p.id, v)} />}
@@ -401,7 +401,7 @@ function RecurringSection() {
   );
 }
 
-type EditablePlan = { id: string; customer_id: string; property_id: string; crew_id: string | null; service: string; frequency: Freq; price: number; start_date: string };
+type EditablePlan = { id: string; customer_id: string; property_id: string; crew_id: string | null; service: string; frequency: Freq; times_per_year: number | null; price: number; start_date: string };
 
 function NewPlan({ plan }: { plan?: EditablePlan }) {
   const { companyId } = useWorkspace();
@@ -409,13 +409,14 @@ function NewPlan({ plan }: { plan?: EditablePlan }) {
   const [open, setOpen] = useState(false);
   const customers = useCustomerOptions(companyId);
   const crews = useQuery({ queryKey: ["crews", companyId], queryFn: async () => (await supabase.from("crews").select("id, name").eq("company_id", companyId)).data ?? [] });
-  const initial = () => ({ customer_id: plan?.customer_id ?? "", property_id: plan?.property_id ?? "", crew_id: plan?.crew_id ?? "", service: plan?.service ?? "Weekly mowing", frequency: plan?.frequency ?? "weekly" as Freq, price: String(plan?.price ?? 45), start_date: plan?.start_date ?? new Date().toLocaleDateString("en-CA") });
+  const initial = () => ({ customer_id: plan?.customer_id ?? "", property_id: plan?.property_id ?? "", crew_id: plan?.crew_id ?? "", service: plan?.service ?? "Weekly mowing", frequency: plan?.frequency ?? "weekly" as Freq, times_per_year: plan?.times_per_year ? String(plan.times_per_year) : "", price: String(plan?.price ?? 45), start_date: plan?.start_date ?? new Date().toLocaleDateString("en-CA") });
   const [f, setF] = useState(initial);
   const props = customers.data?.find((c) => c.id === f.customer_id)?.properties ?? [];
   const m = useMutation({
     mutationFn: async () => {
       if (!f.property_id) throw new Error("This customer needs a property first");
-      const payload = { company_id: companyId, customer_id: f.customer_id, property_id: f.property_id, crew_id: f.crew_id || null, service: f.service, frequency: f.frequency, price: Number(f.price), start_date: f.start_date };
+      if (f.frequency === "custom") { const n = Number(f.times_per_year); if (!Number.isInteger(n) || n < 2 || n > 51) throw new Error("Choose how many times a year, between 2 and 51"); }
+      const payload = { company_id: companyId, customer_id: f.customer_id, property_id: f.property_id, crew_id: f.crew_id || null, service: f.service, frequency: f.frequency, times_per_year: f.frequency === "custom" ? Number(f.times_per_year) : null, price: Number(f.price), start_date: f.start_date };
       const { error } = plan ? await supabase.from("recurring_plans").update(payload).eq("company_id", companyId).eq("id", plan.id).select("id").single() : await supabase.from("recurring_plans").insert({ ...payload, service_kind: /mow|lawn|grass|cut/i.test(f.service) ? "lawn" : "other" });
       if (error) throw error;
     },
@@ -436,8 +437,9 @@ function NewPlan({ plan }: { plan?: EditablePlan }) {
           {props.length > 0 && <div className="space-y-1.5"><Label>Property</Label><select className={sel} value={f.property_id} onChange={(e) => setF({ ...f, property_id: e.target.value })}>{props.map((p) => <option key={p.id} value={p.id}>{p.address}</option>)}</select></div>}
           <div className="space-y-1.5"><Label>Service</Label><Input className="h-11" value={f.service} onChange={(e) => setF({ ...f, service: e.target.value })} /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5"><Label>Frequency</Label><select className={sel} value={f.frequency} onChange={(e) => setF({ ...f, frequency: e.target.value as Freq })}><option value="weekly">Weekly</option><option value="biweekly">Every 2 weeks</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></div>
+            <div className="space-y-1.5"><Label>Frequency</Label><select className={sel} value={f.frequency} onChange={(e) => setF({ ...f, frequency: e.target.value as Freq })}><option value="weekly">Weekly</option><option value="biweekly">Every 2 weeks</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option><option value="custom">Custom (times per year)</option></select></div>
             <div className="space-y-1.5"><Label>Price per visit</Label><Input className="h-11" type="number" step="0.01" min="0" value={f.price} onChange={(e) => setF({ ...f, price: e.target.value })} /></div>
+            {f.frequency === "custom" && <div className="space-y-1.5"><Label>Times per year</Label><Input className="h-11" type="number" min={2} max={51} step={1} value={f.times_per_year} onChange={(e) => setF({ ...f, times_per_year: e.target.value })} placeholder="6" /></div>}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5"><Label>First visit / weekday</Label><ScheduleDatePicker value={f.start_date} onChange={(start_date) => setF({ ...f, start_date })} label="First visit date" /></div>
