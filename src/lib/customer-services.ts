@@ -43,5 +43,5 @@ export function summarizeCustomerServices(plans: ServicePlanForSummary[], oneTim
 }
 
 export function customerMonthlyValue(plans: ServicePlanForSummary[]) {
-  return plans.reduce((sum, p) => sum + monthlyServiceValue(Number(p.price), p.frequency), 0);
+  return plans.reduce((sum, p) => sum + (p.frequency === "once" ? 0 : monthlyServiceValue(Number(p.price), p.frequency)), 0);
 }
