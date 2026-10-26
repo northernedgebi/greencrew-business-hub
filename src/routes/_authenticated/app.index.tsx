@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { money, useWorkspace } from "@/lib/workspace";
 import { can } from "@/lib/permissions";
 import { Card, PageHeader, Spinner, StatusBadge } from "@/components/app-ui";
+import { monthlyServiceValue } from "@/lib/customer-services";
 
 export const Route = createFileRoute("/_authenticated/app/")({ head: () => ({ meta: [{ title: "Dashboard | LawnOffice" }, { name: "description", content: "Landscaping business overview, upcoming visits and financial totals." }, { property: "og:title", content: "Dashboard | LawnOffice" }, { property: "og:description", content: "Landscaping business overview, upcoming visits and financial totals." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }), component: Dashboard });
 
@@ -46,7 +47,7 @@ function Dashboard() {
         const e = prod.get(k) ?? { name: c?.name ?? "Unassigned", jobs: 0, revenue: 0 };
         e.jobs++; e.revenue += Number(j.price); prod.set(k, e);
       }
-      const mrr = (plans.data ?? []).reduce((s, p) => s + Number(p.price) * (p.frequency === "weekly" ? 4.33 : p.frequency === "biweekly" ? 2.17 : 1), 0);
+      const mrr = (plans.data ?? []).reduce((s, p) => s + monthlyServiceValue(Number(p.price), p.frequency), 0);
       return {
         todayJobs: todayJobs.count ?? 0,
         monthDone: monthDone.count ?? 0,
