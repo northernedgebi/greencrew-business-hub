@@ -24,7 +24,7 @@ function Dashboard() {
         supabase.from("jobs").select("id", { count: "exact", head: true }).eq("company_id", companyId).eq("scheduled_date", today).neq("status", "cancelled"),
         supabase.from("jobs").select("id", { count: "exact", head: true }).eq("company_id", companyId).eq("status", "completed").gte("scheduled_date", monthStart),
         supabase.from("customers").select("id", { count: "exact", head: true }).eq("company_id", companyId).eq("status", "active"),
-        supabase.from("recurring_plans").select("price, frequency").eq("company_id", companyId).eq("active", true),
+        supabase.from("recurring_plans").select("price, frequency, times_per_year").eq("company_id", companyId).eq("active", true),
         supabase.from("payments").select("amount").eq("company_id", companyId).gte("paid_at", monthStart),
         supabase.from("invoices").select("total, amount_paid, status").eq("company_id", companyId).in("status", ["sent", "partial", "overdue"]),
         supabase.from("jobs").select("id, title, scheduled_date, status, customer:customers(name), crew:crews(name)").eq("company_id", companyId).gte("scheduled_date", today).neq("status", "cancelled").order("scheduled_date").limit(8),
@@ -47,7 +47,7 @@ function Dashboard() {
         const e = prod.get(k) ?? { name: c?.name ?? "Unassigned", jobs: 0, revenue: 0 };
         e.jobs++; e.revenue += Number(j.price); prod.set(k, e);
       }
-      const mrr = (plans.data ?? []).reduce((s, p) => s + monthlyServiceValue(Number(p.price), p.frequency), 0);
+      const mrr = (plans.data ?? []).reduce((s, p) => s + monthlyServiceValue(Number(p.price), p.frequency, p.times_per_year), 0);
       return {
         todayJobs: todayJobs.count ?? 0,
         monthDone: monthDone.count ?? 0,
