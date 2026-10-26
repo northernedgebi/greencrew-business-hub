@@ -76,6 +76,34 @@ function CustomerDetail() {
     onSuccess: () => { setNote(""); refresh(); },
     onError: (e) => toast.error(e.message),
   });
+  const saveBillingMode = useMutation({
+    mutationFn: async (mode: BillingMode) => {
+      const { error } = await supabase.from("customers").update({ billing_mode: mode }).eq("id", id).eq("company_id", companyId);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Billing preference saved"); refresh(); },
+    onError: (e) => toast.error(e.message),
+  });
+  const billVisits = useMutation({
+    mutationFn: async () => {
+      const data = q.data;
+      if (!data) return;
+      const mode = (data.c.billing_mode ?? "combined") as BillingMode;
+      const groups = billGroups(data.unbilled, mode);
+      for (const g of groups) {
+        const inv = await supabase.from("invoices").insert({ company_id: companyId, customer_id: id, status: "sent" }).select("id").single();
+        if (inv.error) throw inv.error;
+        const items = g.visits.map((v) => ({ company_id: companyId, invoice_id: inv.data.id, description: billLineDescription(v, mode), quantity: 1, unit_price: v.price, job_id: v.id }));
+        const it = await supabase.from("invoice_items").insert(items);
+        if (it.error) throw it.error;
+        const link = await supabase.from("jobs").update({ invoice_id: inv.data.id }).in("id", g.visits.map((v) => v.id));
+        if (link.error) throw link.error;
+      }
+      return groups.length;
+    },
+    onSuccess: (n) => { toast.success(n === 1 ? "Bill created" : `${n} bills created, one per address`); refresh(); qc.invalidateQueries({ queryKey: ["invoices", companyId] }); },
+    onError: (e) => toast.error(e.message),
+  });
 
   if (q.isLoading || !q.data) return <Spinner />;
   const { c, account, props, jobs, invoices, notes, plans, yearJobs, payments } = q.data;
