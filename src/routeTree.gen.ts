@@ -25,6 +25,7 @@ import { Route as AuthenticatedAppRoutesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAppScheduleRouteImport } from './routes/_authenticated/app.schedule'
 import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app.settings'
 import { Route as AuthenticatedAppTeamRouteImport } from './routes/_authenticated/app.team'
+import { Route as AuthenticatedAppWinterRouteImport } from './routes/_authenticated/app.winter'
 import { Route as AuthenticatedAppCustomersIndexRouteImport } from './routes/_authenticated/app.customers.index'
 import { Route as AuthenticatedAppCustomersIdRouteImport } from './routes/_authenticated/app.customers.$id'
 import { Route as AuthenticatedAppDayDateRouteImport } from './routes/_authenticated/app.day.$date'
@@ -115,6 +116,11 @@ const AuthenticatedAppTeamRoute = AuthenticatedAppTeamRouteImport.update({
   path: '/team',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAppWinterRoute = AuthenticatedAppWinterRouteImport.update({
+  id: '/winter',
+  path: '/winter',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const AuthenticatedAppCustomersIndexRoute =
   AuthenticatedAppCustomersIndexRouteImport.update({
     id: '/customers/',
@@ -160,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/app/schedule': typeof AuthenticatedAppScheduleRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/team': typeof AuthenticatedAppTeamRoute
+  '/app/winter': typeof AuthenticatedAppWinterRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/app/customers/$id': typeof AuthenticatedAppCustomersIdRoute
   '/app/day/$date': typeof AuthenticatedAppDayDateRoute
@@ -181,6 +188,7 @@ export interface FileRoutesByTo {
   '/app/schedule': typeof AuthenticatedAppScheduleRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/team': typeof AuthenticatedAppTeamRoute
+  '/app/winter': typeof AuthenticatedAppWinterRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/app/customers/$id': typeof AuthenticatedAppCustomersIdRoute
   '/app/day/$date': typeof AuthenticatedAppDayDateRoute
@@ -205,6 +213,7 @@ export interface FileRoutesById {
   '/_authenticated/app/schedule': typeof AuthenticatedAppScheduleRoute
   '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
   '/_authenticated/app/team': typeof AuthenticatedAppTeamRoute
+  '/_authenticated/app/winter': typeof AuthenticatedAppWinterRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/app/customers/$id': typeof AuthenticatedAppCustomersIdRoute
   '/_authenticated/app/day/$date': typeof AuthenticatedAppDayDateRoute
@@ -229,6 +238,7 @@ export interface FileRouteTypes {
     | '/app/schedule'
     | '/app/settings'
     | '/app/team'
+    | '/app/winter'
     | '/app/'
     | '/app/customers/$id'
     | '/app/day/$date'
@@ -250,6 +260,7 @@ export interface FileRouteTypes {
     | '/app/schedule'
     | '/app/settings'
     | '/app/team'
+    | '/app/winter'
     | '/app'
     | '/app/customers/$id'
     | '/app/day/$date'
@@ -273,6 +284,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/schedule'
     | '/_authenticated/app/settings'
     | '/_authenticated/app/team'
+    | '/_authenticated/app/winter'
     | '/_authenticated/app/'
     | '/_authenticated/app/customers/$id'
     | '/_authenticated/app/day/$date'
@@ -402,6 +414,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppTeamRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/winter': {
+      id: '/_authenticated/app/winter'
+      path: '/winter'
+      fullPath: '/app/winter'
+      preLoaderRoute: typeof AuthenticatedAppWinterRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/customers/': {
       id: '/_authenticated/app/customers/'
       path: '/customers'
@@ -449,6 +468,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppScheduleRoute: typeof AuthenticatedAppScheduleRoute
   AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
   AuthenticatedAppTeamRoute: typeof AuthenticatedAppTeamRoute
+  AuthenticatedAppWinterRoute: typeof AuthenticatedAppWinterRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
   AuthenticatedAppCustomersIdRoute: typeof AuthenticatedAppCustomersIdRoute
   AuthenticatedAppDayDateRoute: typeof AuthenticatedAppDayDateRoute
@@ -466,6 +486,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppScheduleRoute: AuthenticatedAppScheduleRoute,
   AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,
   AuthenticatedAppTeamRoute: AuthenticatedAppTeamRoute,
+  AuthenticatedAppWinterRoute: AuthenticatedAppWinterRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
   AuthenticatedAppCustomersIdRoute: AuthenticatedAppCustomersIdRoute,
   AuthenticatedAppDayDateRoute: AuthenticatedAppDayDateRoute,
