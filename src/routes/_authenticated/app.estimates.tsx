@@ -70,26 +70,44 @@ function Estimates() {
   );
 }
 
+type Item = EstimateDraft["items"][number];
+
 function NewEstimate() {
   const { companyId } = useWorkspace();
   const qc = useQueryClient();
   const [openD, setOpen] = useState(false);
   const [f, setF] = useState({ customer_id: "", property_id: "", title: "", total: "", valid_until: "", notes: "" });
+  const [ask, setAsk] = useState("");
+  const [items, setItems] = useState<Item[]>([]);
+  const [drafting, setDrafting] = useState(false);
+  const draftFn = useServerFn(draftEstimate);
   const custs = useQuery({
     queryKey: ["est-customers", companyId], enabled: openD,
     queryFn: async () => (await supabase.from("customers").select("id, name, properties(id, address)").eq("company_id", companyId).order("name")).data ?? [],
   });
   const props = custs.data?.find((c) => c.id === f.customer_id)?.properties ?? [];
+  const itemsTotal = items.reduce((s, i) => s + i.quantity * i.unit_price, 0);
+  function setItem(n: number, patch: Partial<Item>) { const next = items.map((it, i) => i === n ? { ...it, ...patch } : it); setItems(next); setF(v => ({ ...v, total: next.reduce((s, i) => s + i.quantity * i.unit_price, 0).toFixed(2) })); }
+  async function draft() {
+    setDrafting(true);
+    try {
+      const d = await draftFn({ data: { companyId, description: ask } });
+      setItems(d.items);
+      setF(v => ({ ...v, title: d.title, notes: d.scope_notes, total: d.items.reduce((s, i) => s + i.quantity * i.unit_price, 0).toFixed(2) }));
+      toast.success("Draft ready — review the items");
+    } catch (e) { toast.error((e as Error).message); } finally { setDrafting(false); }
+  }
   async function save(e: React.FormEvent) {
     e.preventDefault();
+    const lines = items.length ? `\n\nItems:\n${items.map(i => `- ${i.description}: ${i.quantity} × ${money(i.unit_price)} = ${money(i.quantity * i.unit_price)}`).join("\n")}` : "";
     const { error } = await supabase.from("estimates").insert({
       company_id: companyId, customer_id: f.customer_id, property_id: f.property_id || null, title: f.title.trim(),
-      total: Number(f.total || 0), valid_until: f.valid_until || null, notes: f.notes.trim() || null,
+      total: Number(f.total || 0), valid_until: f.valid_until || null, notes: (f.notes.trim() + lines).trim() || null,
     });
     if (error) return toast.error(error.message);
     toast.success("Estimate created");
     setOpen(false);
-    setF({ customer_id: "", property_id: "", title: "", total: "", valid_until: "", notes: "" });
+    setF({ customer_id: "", property_id: "", title: "", total: "", valid_until: "", notes: "" }); setItems([]); setAsk("");
     qc.invalidateQueries({ queryKey: ["estimates", companyId] });
   }
   return (
