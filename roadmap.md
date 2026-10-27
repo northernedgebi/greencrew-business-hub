@@ -20,5 +20,5 @@
 - [x] Reports: total revenue, paid by month/year, commercial vs residential breakout, revenue by service type
 - [x] Multi-address billing: per-customer choice of separate bill per address or one combined bill with per-address breakouts
 - [x] Seasonal service schedules: optional month-day window per recurring service (e.g. May 1 - Oct 31); visits only generated inside the window
-- [ ] AI estimate drafts from a described request (Estimates page)
-- [ ] Snow/winter: undated "as storms hit" services; log each storm visit (date, inches, plow/shovel/snowblower, price) on the customer, add as many as needed
+- [x] AI estimate drafts from a described request (Estimates page)
+- [x] Snow/winter: undated "as storms hit" services; log each storm visit (date, inches, plow/shovel/snowblower, price) on the customer, add as many as needed
