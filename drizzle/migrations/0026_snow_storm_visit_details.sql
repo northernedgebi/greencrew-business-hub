@@ -1,0 +1,1 @@
+ALTER TABLE public.jobs ADD COLUMN snow_inches numeric CHECK (snow_inches IS NULL OR snow_inches >= 0), ADD COLUMN snow_trips integer CHECK (snow_trips IS NULL OR snow_trips BETWEEN 1 AND 50), ADD COLUMN snow_method text CHECK (snow_method IS NULL OR snow_method IN ('plow','shovel','snowblower','salt'));

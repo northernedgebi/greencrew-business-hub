@@ -2,7 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus, Sparkles, X } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { draftEstimate, type EstimateDraft } from "@/lib/estimate-ai.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { money, useWorkspace } from "@/lib/workspace";
 import { can } from "@/lib/permissions";
@@ -70,26 +72,44 @@ function Estimates() {
   );
 }
 
+type Item = EstimateDraft["items"][number];
+
 function NewEstimate() {
   const { companyId } = useWorkspace();
   const qc = useQueryClient();
   const [openD, setOpen] = useState(false);
   const [f, setF] = useState({ customer_id: "", property_id: "", title: "", total: "", valid_until: "", notes: "" });
+  const [ask, setAsk] = useState("");
+  const [items, setItems] = useState<Item[]>([]);
+  const [drafting, setDrafting] = useState(false);
+  const draftFn = useServerFn(draftEstimate);
   const custs = useQuery({
     queryKey: ["est-customers", companyId], enabled: openD,
     queryFn: async () => (await supabase.from("customers").select("id, name, properties(id, address)").eq("company_id", companyId).order("name")).data ?? [],
   });
   const props = custs.data?.find((c) => c.id === f.customer_id)?.properties ?? [];
+  const itemsTotal = items.reduce((s, i) => s + i.quantity * i.unit_price, 0);
+  function setItem(n: number, patch: Partial<Item>) { const next = items.map((it, i) => i === n ? { ...it, ...patch } : it); setItems(next); setF(v => ({ ...v, total: next.reduce((s, i) => s + i.quantity * i.unit_price, 0).toFixed(2) })); }
+  async function draft() {
+    setDrafting(true);
+    try {
+      const d = await draftFn({ data: { companyId, description: ask } });
+      setItems(d.items);
+      setF(v => ({ ...v, title: d.title, notes: d.scope_notes, total: d.items.reduce((s, i) => s + i.quantity * i.unit_price, 0).toFixed(2) }));
+      toast.success("Draft ready — review the items");
+    } catch (e) { toast.error((e as Error).message); } finally { setDrafting(false); }
+  }
   async function save(e: React.FormEvent) {
     e.preventDefault();
+    const lines = items.length ? `\n\nItems:\n${items.map(i => `- ${i.description}: ${i.quantity} × ${money(i.unit_price)} = ${money(i.quantity * i.unit_price)}`).join("\n")}` : "";
     const { error } = await supabase.from("estimates").insert({
       company_id: companyId, customer_id: f.customer_id, property_id: f.property_id || null, title: f.title.trim(),
-      total: Number(f.total || 0), valid_until: f.valid_until || null, notes: f.notes.trim() || null,
+      total: Number(f.total || 0), valid_until: f.valid_until || null, notes: (f.notes.trim() + lines).trim() || null,
     });
     if (error) return toast.error(error.message);
     toast.success("Estimate created");
     setOpen(false);
-    setF({ customer_id: "", property_id: "", title: "", total: "", valid_until: "", notes: "" });
+    setF({ customer_id: "", property_id: "", title: "", total: "", valid_until: "", notes: "" }); setItems([]); setAsk("");
     qc.invalidateQueries({ queryKey: ["estimates", companyId] });
   }
   return (
@@ -100,6 +120,20 @@ function NewEstimate() {
         <form onSubmit={save} className="space-y-3">
           <div className="space-y-1.5"><Label>Customer</Label><select required className={sel} value={f.customer_id} onChange={(e) => setF({ ...f, customer_id: e.target.value, property_id: "" })}><option value="">Choose…</option>{(custs.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
           <div className="space-y-1.5"><Label>Property</Label><select className={sel} value={f.property_id} onChange={(e) => setF({ ...f, property_id: e.target.value })}><option value="">None</option>{props.map((p) => <option key={p.id} value={p.id}>{p.address}</option>)}</select></div>
+          <div className="space-y-1.5 rounded-lg border bg-muted/40 p-3">
+            <Label htmlFor="ai-ask">Describe the request (AI draft)</Label>
+            <Textarea id="ai-ask" placeholder="Front and back weekly mowing, spring cleanup, mulch 3 beds, and plow the driveway this winter" value={ask} onChange={(e) => setAsk(e.target.value)} />
+            <Button type="button" variant="outline" className="w-full" disabled={drafting || !ask.trim()} onClick={draft}><Sparkles />{drafting ? "Drafting…" : "Draft itemized estimate"}</Button>
+          </div>
+          {items.length > 0 && <div className="space-y-2">
+            <Label>Line items</Label>
+            {items.map((it, n) => <div key={n} className="rounded-md border p-2">
+              <div className="flex items-start gap-2"><Input aria-label="Item description" value={it.description} onChange={(e) => setItem(n, { description: e.target.value })} /><Button type="button" size="icon" variant="ghost" aria-label="Remove item" onClick={() => { const next = items.filter((_, i) => i !== n); setItems(next); setF(v => ({ ...v, total: next.reduce((s, i) => s + i.quantity * i.unit_price, 0).toFixed(2) })); }}><X /></Button></div>
+              <div className="mt-2 grid grid-cols-2 gap-2"><Input aria-label="Quantity" type="number" min="1" value={it.quantity} onChange={(e) => setItem(n, { quantity: Number(e.target.value) })} /><Input aria-label="Unit price" type="number" min="0" step="0.01" value={it.unit_price} onChange={(e) => setItem(n, { unit_price: Number(e.target.value) })} /></div>
+              <p className="mt-1 text-xs text-muted-foreground">{it.catalog_service ? `Matches your service: ${it.catalog_service}` : "New service (not in your list)"} · {money(it.quantity * it.unit_price)}</p>
+            </div>)}
+            <p className="text-sm font-semibold">Items total {money(itemsTotal)}</p>
+          </div>}
           <div className="space-y-1.5"><Label>Title</Label><Input required className="h-11" placeholder="Spring cleanup and mulch" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} /></div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5"><Label>Total ($)</Label><Input required className="h-11" type="number" min="0" step="0.01" value={f.total} onChange={(e) => setF({ ...f, total: e.target.value })} /></div>

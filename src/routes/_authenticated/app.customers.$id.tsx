@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CustomerServices } from "@/components/customer-services";
+import { StormVisits } from "@/components/storm-visits";
 import { customerYearTotals } from "@/lib/customer-services";
 import { localDate } from "@/lib/scheduling";
 import { billGroups, billLineDescription, type BillingMode } from "@/lib/billing";
@@ -189,6 +190,7 @@ function CustomerDetail() {
         )}
         <Card className="lg:col-span-2">
           <CustomerServices customerId={id} properties={props} />
+          <StormVisits customerId={id} properties={props} />
           <h2 className="mb-3 font-bold">Recent jobs</h2>
           {jobs.length === 0 ? <p className="text-sm text-muted-foreground">No jobs yet.</p> : (
             <div className="divide-y">{jobs.map((j) => (
