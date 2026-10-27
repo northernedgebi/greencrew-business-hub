@@ -7,7 +7,7 @@ import { MonthCalendar } from "@/components/month-calendar";
 import { NearbyServiceSuggestions } from "@/components/nearby-service-suggestions";
 import { ScheduleDatePicker } from "@/components/schedule-date-picker";
 import { WEEKDAYS } from "@/lib/scheduling";
-import { seasonLabel } from "@/lib/customer-services";
+import { seasonLabel, serviceKindFromTitle } from "@/lib/customer-services";
 import { getDay, parseISO } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { money, useWorkspace } from "@/lib/workspace";
@@ -312,7 +312,7 @@ function NewJob({ day, job, crew, onSaved }: { day: string; job?: EditableJob; c
       };
       const { error } = job
         ? await supabase.from("jobs").update(payload).eq("company_id", companyId).eq("id", job.id).select("id").single()
-        : await supabase.from("jobs").insert({ ...payload, service_kind: /mow|lawn|grass|cut/i.test(f.title) ? "lawn" : "other" });
+        : await supabase.from("jobs").insert({ ...payload, service_kind: serviceKindFromTitle(f.title) });
       if (error) throw error;
     },
     onSuccess: () => { toast.success(job ? "Visit updated" : "Job scheduled"); qc.invalidateQueries({ queryKey: ["jobs", companyId] }); qc.invalidateQueries({ queryKey: ["dashboard", companyId] }); setOpen(false); onSaved?.(f.scheduled_date); },
