@@ -582,6 +582,9 @@ export type Database = {
           route_order: number | null
           scheduled_date: string
           service_kind: string
+          snow_inches: number | null
+          snow_method: string | null
+          snow_trips: number | null
           start_time: string | null
           status: Database["public"]["Enums"]["job_status"]
           title: string
@@ -602,6 +605,9 @@ export type Database = {
           route_order?: number | null
           scheduled_date: string
           service_kind?: string
+          snow_inches?: number | null
+          snow_method?: string | null
+          snow_trips?: number | null
           start_time?: string | null
           status?: Database["public"]["Enums"]["job_status"]
           title: string
@@ -622,6 +628,9 @@ export type Database = {
           route_order?: number | null
           scheduled_date?: string
           service_kind?: string
+          snow_inches?: number | null
+          snow_method?: string | null
+          snow_trips?: number | null
           start_time?: string | null
           status?: Database["public"]["Enums"]["job_status"]
           title?: string

@@ -183,6 +183,13 @@
       "when": 1793129735973,
       "tag": "0025_initialize_optional_shared_visit_record",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1793131442712,
+      "tag": "0026_snow_storm_visit_details",
+      "breakpoints": true
     }
   ]
 }
