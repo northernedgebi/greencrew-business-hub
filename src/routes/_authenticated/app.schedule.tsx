@@ -419,7 +419,7 @@ function NewPlan({ plan }: { plan?: EditablePlan }) {
       if (f.frequency === "custom") { const n = Number(f.times_per_year); if (!Number.isInteger(n) || n < 2 || n > 51) throw new Error("Choose how many times a year, between 2 and 51"); }
       if ((f.season_start && !f.season_end) || (!f.season_start && f.season_end)) throw new Error("Choose both a season start and season end, or neither");
       const payload = { company_id: companyId, customer_id: f.customer_id, property_id: f.property_id, crew_id: f.crew_id || null, service: f.service, frequency: f.frequency, times_per_year: f.frequency === "custom" ? Number(f.times_per_year) : null, price: Number(f.price), start_date: f.start_date, season_start: f.season_start ? f.season_start.slice(5) : null, season_end: f.season_end ? f.season_end.slice(5) : null };
-      const { error } = plan ? await supabase.from("recurring_plans").update(payload).eq("company_id", companyId).eq("id", plan.id).select("id").single() : await supabase.from("recurring_plans").insert({ ...payload, service_kind: /mow|lawn|grass|cut/i.test(f.service) ? "lawn" : "other" });
+      const { error } = plan ? await supabase.from("recurring_plans").update(payload).eq("company_id", companyId).eq("id", plan.id).select("id").single() : await supabase.from("recurring_plans").insert({ ...payload, service_kind: serviceKindFromTitle(f.service) });
       if (error) throw error;
     },
     onSuccess: () => { toast.success(plan ? "Plan updated for newly generated visits" : "Plan created"); qc.invalidateQueries({ queryKey: ["plans", companyId] }); setOpen(false); },
