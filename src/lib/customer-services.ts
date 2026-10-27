@@ -3,6 +3,27 @@ import { localDate } from "@/lib/scheduling";
 
 export const DEFAULT_SERVICE = "Lawn maintenance";
 export const NEARBY_DAYS = 3;
+export const SERVICE_CATEGORIES = [
+  { value: "lawn", label: "Lawn maintenance" },
+  { value: "snow_plowing", label: "Snow plowing" },
+  { value: "snow_removal", label: "Snow removal" },
+  { value: "shoveling", label: "Shoveling" },
+  { value: "other", label: "Additional service" },
+] as const;
+export const isWinterService = (kind: string) => ["snow_plowing", "snow_removal", "shoveling"].includes(kind);
+export function serviceKindFromTitle(title: string) {
+  if (/shovel/i.test(title)) return "shoveling";
+  if (/snow.*plow|plow/i.test(title)) return "snow_plowing";
+  if (/snow/i.test(title)) return "snow_removal";
+  return /mow|lawn|grass|cut/i.test(title) ? "lawn" : "other";
+}
+export function categoryServiceForm(kind: string): ServiceForm {
+  return { ...newServiceForm(), kind, title: SERVICE_CATEGORIES.find(c => c.value === kind)?.label ?? "", frequency: kind === "lawn" ? "weekly" : "once" };
+}
+export type CrewVisit = { id: string; customer_id: string; property_id: string | null; crew_id: string | null; scheduled_date: string; status?: string };
+export function availableCrewVisits<T extends CrewVisit>(visits: T[], customerId: string, propertyId: string, today: string, excludeId?: string) {
+  return visits.filter(v => v.id !== excludeId && v.customer_id === customerId && v.property_id === propertyId && !!v.crew_id && v.scheduled_date >= today && (!v.status || v.status === "scheduled" || v.status === "in_progress"));
+}
 export type ServiceFrequency = "once" | "weekly" | "biweekly" | "monthly" | "yearly" | "custom";
 export type ServiceForm = { title: string; kind: string; frequency: ServiceFrequency; date: string; price: string; times_per_year: string; crew_id: string; notes: string; season_start: string; season_end: string };
 export const newServiceForm = (): ServiceForm => ({ title: DEFAULT_SERVICE, kind: "lawn", frequency: "weekly", date: localDate(new Date()), price: "", times_per_year: "4", crew_id: "", notes: "", season_start: "", season_end: "" });

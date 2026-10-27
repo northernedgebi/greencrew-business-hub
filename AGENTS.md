@@ -18,6 +18,7 @@
 - Disabling a company (subscription_status = suspended) is enforced in is_member/has_company_role so every RLS path locks out; only platform admins may change subscription status or trial dates (trigger).
 - Customer portal writes go only through security-definer portal_* RPCs; companies act on service_requests directly under office RLS.
 - Customer services reuse recurring_plans and jobs, distinguished by service_kind; atomic office-only RPCs create customers/services and combine individual visits so all schedule, route and billing views share persisted work.
+- Winter services use the same service records and billing flow as landscaping; onboarding accepts a service array atomically, and shared-visit actions retain separate prices and recurrence identities while checking customer, property, company, crew, and local date.
 - Service creation sends the calendar's IANA time zone; validate dates and generate initial occurrences in that zone so local today is not rejected after UTC midnight.
 - Generate recurrence dates from the original start plus occurrence index, not by incrementing the previous date, to preserve month/year anchors and original occurrence deduplication after moves.
 - Derive customer billing holds through the security-definer customer_account_state function and security-invoker customer_accounts view; enforce service start/dispatch and generation through database guards, keeping manual inactivity separate so payments never clear cancellations and date-based holds cannot go stale.
