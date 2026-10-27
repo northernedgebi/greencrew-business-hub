@@ -169,6 +169,13 @@
       "when": 1792982192437,
       "tag": "0023_seasonal_service_windows",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1793129422751,
+      "tag": "0024_winter_services_and_shared_visits",
+      "breakpoints": true
     }
   ]
 }
