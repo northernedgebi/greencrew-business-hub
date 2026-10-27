@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CustomerServiceFields } from "@/components/customer-service-fields";
+import { CustomerServiceSelection } from "@/components/customer-service-selection";
 import { newServiceForm, servicePayload } from "@/lib/customer-services";
 
 export const Route = createFileRoute("/_authenticated/app/customers/")({ component: Customers, head: () => ({ meta: [{ title: "Customers & Services | LawnOffice" }, { name: "description", content: "Manage customers, properties and scheduled landscaping services." }, { property: "og:title", content: "Customers & Services | LawnOffice" }, { property: "og:description", content: "Customer records and landscaping service schedules." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }) });
@@ -65,11 +65,12 @@ function NewCustomer() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [f, setF] = useState({ name: "", email: "", phone: "", customer_type: "residential", ein: "", address: "", city: "", state: "", zip: "", gate_code: "" });
-  const [service, setService] = useState(newServiceForm);
+  const [services, setServices] = useState(() => [newServiceForm()]);
   const crews = useQuery({ queryKey: ["crews", companyId], queryFn: async () => { const { data, error } = await supabase.from("crews").select("id,name").eq("company_id", companyId); if (error) throw error; return data ?? []; } });
   const m = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.rpc("create_customer_with_service", { _company: companyId, _customer: { name: f.name, email: f.email, phone: f.phone, customer_type: f.customer_type, ein: f.customer_type === "commercial" ? f.ein : "" }, _property: { address: f.address, city: f.city, state: f.state, zip: f.zip, gate_code: f.gate_code }, _service: servicePayload(service) });
+      if (!services.length) throw new Error("Select at least one service");
+      const { error } = await supabase.rpc("create_customer_with_service", { _company: companyId, _customer: { name: f.name, email: f.email, phone: f.phone, customer_type: f.customer_type, ein: f.customer_type === "commercial" ? f.ein : "" }, _property: { address: f.address, city: f.city, state: f.state, zip: f.zip, gate_code: f.gate_code }, _service: services.map(s => servicePayload(s)) });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -77,7 +78,7 @@ function NewCustomer() {
       qc.invalidateQueries();
       setOpen(false);
       setF({ name: "", email: "", phone: "", customer_type: "residential", ein: "", address: "", city: "", state: "", zip: "", gate_code: "" });
-      setService(newServiceForm());
+      setServices([newServiceForm()]);
     },
     onError: (e) => toast.error(e.message),
   });
@@ -106,8 +107,8 @@ function NewCustomer() {
           {field("address", "Service address")}
           <div className="grid grid-cols-3 gap-3">{field("city", "City")}{field("state", "State")}{field("zip", "ZIP")}</div>
           {field("gate_code", "Gate code (if any)")}
-          <div className="border-t pt-4"><h3 className="mb-3 font-bold">Initial service</h3><CustomerServiceFields value={service} onChange={setService} crews={crews.data ?? []} /></div>
-          <Button type="submit" size="lg" className="w-full" disabled={m.isPending}>Save customer</Button>
+          <CustomerServiceSelection value={services} onChange={setServices} crews={crews.data ?? []} />
+          <Button type="submit" size="lg" className="w-full" disabled={m.isPending || !services.length}>Save customer</Button>
         </form>
       </DialogContent>
     </Dialog>

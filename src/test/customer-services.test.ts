@@ -1,7 +1,28 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_SERVICE, FREQUENCIES, customerYearTotals, monthlyServiceValue, nearbyServices, newServiceForm, seasonLabel, servicePayload, summarizeCustomerServices, type NearbyJob } from "@/lib/customer-services";
+import { DEFAULT_SERVICE, FREQUENCIES, SERVICE_CATEGORIES, availableCrewVisits, categoryServiceForm, isWinterService, serviceKindFromTitle, customerYearTotals, monthlyServiceValue, nearbyServices, newServiceForm, seasonLabel, servicePayload, summarizeCustomerServices, type NearbyJob } from "@/lib/customer-services";
 
 const job = (id: string, kind: string, date: string, overrides: Partial<NearbyJob> = {}): NearbyJob => ({ id, title: id, service_kind: kind, scheduled_date: date, status: "scheduled", customer_id: "customer", property_id: "property", crew_id: "crew", ...overrides });
+describe("winter and shared crew work", () => {
+  it("supports snow plowing, snow removal and shoveling alongside lawn care", () => {
+    expect(SERVICE_CATEGORIES.map(c => c.value)).toEqual(["lawn", "snow_plowing", "snow_removal", "shoveling", "other"]);
+    expect(isWinterService("snow_plowing")).toBe(true);
+    expect(isWinterService("lawn")).toBe(false);
+  });
+  it("keeps separate charges and dates for lawn and winter work", () => {
+    const lawn = servicePayload({ ...newServiceForm(), price: "75", date: "2026-10-27" });
+    const snow = servicePayload({ ...categoryServiceForm("snow_plowing"), price: "125", date: "2026-12-01", notes: "Driveway and garage apron" });
+    expect(lawn.price).toBe(75);
+    expect(snow).toMatchObject({ price: 125, date: "2026-12-01", kind: "snow_plowing", notes: "Driveway and garage apron" });
+  });
+  it("offers only active upcoming crew visits for the same customer and address", () => {
+    expect(availableCrewVisits([job("target", "lawn", "2026-10-27"), job("other-address", "lawn", "2026-10-27", { property_id: "elsewhere" }), job("other-customer", "lawn", "2026-10-27", { customer_id: "elsewhere" }), job("unassigned", "lawn", "2026-10-27", { crew_id: null }), job("done", "lawn", "2026-10-27", { status: "completed" }), job("past", "lawn", "2026-10-26"), job("self", "other", "2026-10-28")], "customer", "property", "2026-10-27", "self").map(v => v.id)).toEqual(["target"]);
+  });
+  it("recognizes winter jobs entered from the schedule", () => {
+    expect(serviceKindFromTitle("Snow plowing")).toBe("snow_plowing");
+    expect(serviceKindFromTitle("Snow removal")).toBe("snow_removal");
+    expect(serviceKindFromTitle("Shoveling sidewalks")).toBe("shoveling");
+  });
+});
 describe("customer services", () => {
   it("sends the local calendar timezone and the valid $100 price when adding a yearly service", () => {
     expect(servicePayload({ ...newServiceForm(), title: "Sprinkler Blowout", frequency: "yearly", date: "2026-10-25", price: "100" }, "America/New_York")).toMatchObject({ date: "2026-10-25", price: 100, timezone: "America/New_York", frequency: "yearly" });

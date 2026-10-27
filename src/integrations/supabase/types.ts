@@ -1178,6 +1178,10 @@ export type Database = {
       is_member: { Args: { _company: string }; Returns: boolean }
       is_member_any: { Args: { _company: string }; Returns: boolean }
       is_office: { Args: { _company: string }; Returns: boolean }
+      join_service_visit: {
+        Args: { _service: string; _target: string; _timezone: string }
+        Returns: undefined
+      }
       link_my_customer_accounts: { Args: never; Returns: number }
       portal_available_days: {
         Args: { _from: string; _job: string; _to: string }
