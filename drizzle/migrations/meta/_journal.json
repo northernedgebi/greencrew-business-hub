@@ -176,6 +176,13 @@
       "when": 1793129422751,
       "tag": "0024_winter_services_and_shared_visits",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1793129735973,
+      "tag": "0025_initialize_optional_shared_visit_record",
+      "breakpoints": true
     }
   ]
 }

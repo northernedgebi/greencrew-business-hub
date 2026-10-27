@@ -1,0 +1,1 @@
+DO $$ DECLARE definition text; BEGIN SELECT pg_get_functiondef('public.add_customer_service(uuid,uuid,jsonb)'::regprocedure) INTO definition; definition:=replace(definition,'target record;','target public.jobs%ROWTYPE;'); EXECUTE definition; END $$;
