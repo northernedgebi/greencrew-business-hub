@@ -1,5 +1,5 @@
 # LawnOffice enhancement roadmap
-- [ ] Winter services section, onboarding service checkboxes, separate charges, and same-address crew scheduling; verify persisted flows.
+- [x] Winter services section, onboarding service checkboxes, separate charges, and same-address crew scheduling; verified onboarding and both new/existing shared crew tasks through the signed-in app.
 - [x] Customer active/hold indicators, inactivity reasons, overdue billing thresholds, automatic payment reactivation, and verification.
 - [x] Confirmed deletion for estimates, customers, properties, scheduled visits, services/tasks, invoices, payments, line items, crews, employees, invitations, team access, and customer requests; central deletion flows verified.
 - [x] Customer services: default lawn maintenance on creation, unlimited one-time/recurring services including yearly, and confirmed nearby-visit consolidation.
