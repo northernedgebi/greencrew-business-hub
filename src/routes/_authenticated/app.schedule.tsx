@@ -349,7 +349,7 @@ function NewJob({ day, job, crew, onSaved }: { day: string; job?: EditableJob; c
   );
 }
 
-type Freq = "weekly" | "biweekly" | "monthly" | "yearly" | "custom";
+type Freq = "weekly" | "biweekly" | "monthly" | "yearly" | "custom" | "as_needed";
 
 function RecurringSection() {
   const { companyId, role } = useWorkspace();
@@ -385,10 +385,10 @@ function RecurringSection() {
             <Card key={p.id}>
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-bold">{p.service} · <span className="capitalize">{p.frequency === "custom" ? `${p.times_per_year}× a year` : p.frequency}</span></p>
+                  <p className="font-bold">{p.service} · <span className="capitalize">{p.frequency === "custom" ? `${p.times_per_year}× a year` : p.frequency === "as_needed" ? "as needed" : p.frequency}</span></p>
                   <p className="text-sm">{p.customer?.name}</p>
                   <p className="text-sm text-muted-foreground">{p.property?.address} · {p.crew?.name ?? "Unassigned"}</p>
-                  <p className="mt-1 text-sm font-medium">{p.frequency === "custom" ? `${p.times_per_year} times a year` : p.frequency === "yearly" ? `Every year on ${parseISO(p.start_date).toLocaleDateString(undefined, { month: "long", day: "numeric" })}` : p.frequency === "monthly" ? `Day ${parseISO(p.start_date).getDate()} of month` : WEEKDAYS[getDay(parseISO(p.start_date))]}{seasonLabel(p.season_start, p.season_end) ? ` · ${seasonLabel(p.season_start, p.season_end)}` : ""}</p>
+                  <p className="mt-1 text-sm font-medium">{p.frequency === "as_needed" ? "Booked each storm" : p.frequency === "custom" ? `${p.times_per_year} times a year` : p.frequency === "yearly" ? `Every year on ${parseISO(p.start_date).toLocaleDateString(undefined, { month: "long", day: "numeric" })}` : p.frequency === "monthly" ? `Day ${parseISO(p.start_date).getDate()} of month` : WEEKDAYS[getDay(parseISO(p.start_date))]}{seasonLabel(p.season_start, p.season_end) ? ` · ${seasonLabel(p.season_start, p.season_end)}` : ""}</p>
                   <p className="mt-2 font-display text-xl font-bold">{money(p.price)}<span className="text-sm font-normal text-muted-foreground"> / visit · from {p.start_date}</span></p>
                 </div>
                 {office && <Switch aria-label={`Active plan for ${p.customer?.name}`} checked={p.active} onCheckedChange={(v) => toggle(p.id, v)} />}
@@ -439,7 +439,7 @@ function NewPlan({ plan }: { plan?: EditablePlan }) {
           {props.length > 0 && <div className="space-y-1.5"><Label>Property</Label><select className={sel} value={f.property_id} onChange={(e) => setF({ ...f, property_id: e.target.value })}>{props.map((p) => <option key={p.id} value={p.id}>{p.address}</option>)}</select></div>}
           <div className="space-y-1.5"><Label>Service</Label><Input className="h-11" value={f.service} onChange={(e) => setF({ ...f, service: e.target.value })} /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5"><Label>Frequency</Label><select className={sel} value={f.frequency} onChange={(e) => setF({ ...f, frequency: e.target.value as Freq })}><option value="weekly">Weekly</option><option value="biweekly">Every 2 weeks</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option><option value="custom">Custom (times per year)</option></select></div>
+            <div className="space-y-1.5"><Label>Frequency</Label><select className={sel} value={f.frequency} onChange={(e) => setF({ ...f, frequency: e.target.value as Freq })}><option value="weekly">Weekly</option><option value="biweekly">Every 2 weeks</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option><option value="custom">Custom (times per year)</option><option value="as_needed">As needed (each storm)</option></select></div>
             <div className="space-y-1.5"><Label>Price per visit</Label><Input className="h-11" type="number" step="0.01" min="0" value={f.price} onChange={(e) => setF({ ...f, price: e.target.value })} /></div>
             {f.frequency === "custom" && <div className="space-y-1.5"><Label>Times per year</Label><Input className="h-11" type="number" min={2} max={51} step={1} value={f.times_per_year} onChange={(e) => setF({ ...f, times_per_year: e.target.value })} placeholder="6" /></div>}
           </div>

@@ -86,3 +86,8 @@ describe("service season windows", () => {
     expect(seasonLabel(null, null)).toBeNull();
   });
 });
+
+describe("as-needed winter services", () => {
+  it("defaults snow services to as needed instead of a fixed count", () => expect(categoryServiceForm("snow_plowing").frequency).toBe("as_needed"));
+  it("does not count as-needed services toward a fixed monthly value", () => expect(monthlyServiceValue(100, "as_needed")).toBe(0));
+});
