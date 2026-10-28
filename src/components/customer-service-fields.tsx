@@ -11,10 +11,11 @@ export function CustomerServiceFields({ value, onChange, crews, idPrefix = "serv
     <div className="grid gap-3 sm:grid-cols-2">
       <div className="space-y-1.5"><Label>Service category</Label><Select value={value.kind} onValueChange={kind => onChange({ ...value, kind })}><SelectTrigger aria-label="Service category"><SelectValue /></SelectTrigger><SelectContent>{SERVICE_CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent></Select></div>
       <div className="space-y-1.5"><Label>Repeat</Label><Select value={value.frequency} onValueChange={frequency => { const found = FREQUENCIES.find(f => f.value === frequency); if (found) onChange({ ...value, frequency: found.value }); }}><SelectTrigger aria-label="Repeat"><SelectValue /></SelectTrigger><SelectContent>{FREQUENCIES.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}</SelectContent></Select></div>
-      <div className="space-y-1.5"><Label>First visit</Label><ScheduleDatePicker value={value.date} min={localDate(new Date())} onChange={date => onChange({ ...value, date })} label="Service date" /></div>
+      {value.frequency !== "as_needed" && <div className="space-y-1.5"><Label>First visit</Label><ScheduleDatePicker value={value.date} min={localDate(new Date())} onChange={date => onChange({ ...value, date })} label="Service date" /></div>}
       <div className="space-y-1.5"><Label htmlFor={`${idPrefix}-price`}>Price per visit ($)</Label><Input id={`${idPrefix}-price`} type="number" min="0" step="0.01" required value={value.price} onChange={e => onChange({ ...value, price: e.target.value })} /></div>
     </div>
     {value.frequency === "custom" && <div className="space-y-1.5"><Label htmlFor={`${idPrefix}-times-per-year`}>Times per year</Label><Input id={`${idPrefix}-times-per-year`} type="number" min={2} max={51} step={1} required value={value.times_per_year} onChange={e => onChange({ ...value, times_per_year: e.target.value })} placeholder="e.g. 6" /></div>}
+    {value.frequency === "as_needed" && <p className="text-sm text-muted-foreground">No visits are booked ahead. Add a visit each time it snows (Snow &amp; storm visits on the customer page), on the day you go.</p>}
     {value.frequency !== "once" && (
       <div className="space-y-1.5">
         <Label>Season (optional)</Label>
