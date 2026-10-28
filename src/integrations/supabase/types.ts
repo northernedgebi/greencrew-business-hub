@@ -1221,7 +1221,13 @@ export type Database = {
         | "read_only"
       invoice_status: "draft" | "sent" | "paid" | "partial" | "void" | "overdue"
       job_status: "scheduled" | "in_progress" | "completed" | "cancelled"
-      recurrence: "weekly" | "biweekly" | "monthly" | "yearly" | "custom"
+      recurrence:
+        | "weekly"
+        | "biweekly"
+        | "monthly"
+        | "yearly"
+        | "custom"
+        | "as_needed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1359,7 +1365,14 @@ export const Constants = {
       ],
       invoice_status: ["draft", "sent", "paid", "partial", "void", "overdue"],
       job_status: ["scheduled", "in_progress", "completed", "cancelled"],
-      recurrence: ["weekly", "biweekly", "monthly", "yearly", "custom"],
+      recurrence: [
+        "weekly",
+        "biweekly",
+        "monthly",
+        "yearly",
+        "custom",
+        "as_needed",
+      ],
     },
   },
 } as const
