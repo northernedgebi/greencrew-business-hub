@@ -1,0 +1,3 @@
+CREATE OR REPLACE FUNCTION public.preserve_completed_service_work() RETURNS trigger LANGUAGE plpgsql SET search_path TO 'public' AS $$ BEGIN
+ IF TG_OP='DELETE' AND (OLD.status='completed' OR OLD.invoice_id IS NOT NULL) AND auth.uid() IS NOT NULL AND EXISTS(SELECT 1 FROM public.customers WHERE id=OLD.customer_id) THEN RAISE EXCEPTION 'Completed or billed work must be kept for customer balances and history; cancel future visits or remove the recurring service instead'; END IF;
+ RETURN OLD; END $$;
