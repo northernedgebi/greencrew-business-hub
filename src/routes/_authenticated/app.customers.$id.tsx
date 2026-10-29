@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CustomerAccountControls } from "@/components/customer-account-controls";
 import { DeleteRecord } from "@/components/delete-record";
 import { CustomerHistory } from "@/components/customer-history";
+import { CustomerBillingSettings } from "@/components/customer-billing-settings";
 
 export const Route = createFileRoute("/_authenticated/app/customers/$id")({ component: CustomerDetail, head: () => ({ meta: [{ title: "Customer Services & Visits | LawnOffice" }, { name: "description", content: "Manage a customer’s services, recurring tasks, visits and invoices." }, { property: "og:title", content: "Customer Services & Visits | LawnOffice" }, { property: "og:description", content: "Landscaping customer services, visits and billing." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }) });
 
@@ -43,7 +44,7 @@ function CustomerDetail() {
         supabase.rpc("customer_account_state", { _customer: id }),
         supabase.from("recurring_plans").select("service, frequency, price, pricing_mode, times_per_year, active").eq("company_id", companyId).eq("customer_id", id).eq("active", true),
         supabase.from("jobs").select("price").eq("company_id", companyId).eq("customer_id", id).is("recurring_plan_id", null).neq("status", "cancelled").gte("scheduled_date", yearStart),
-        supabase.from("jobs").select("id, title, scheduled_date, price, property_id, property:properties(address)").eq("company_id", companyId).eq("customer_id", id).eq("status", "completed").is("invoice_id", null).order("scheduled_date"),
+        supabase.from("jobs").select("id, title, scheduled_date, price, property_id, property:properties(address)").eq("company_id", companyId).eq("customer_id", id).eq("status", "completed").eq("monthly_included", false).is("invoice_id", null).order("scheduled_date"),
       ]);
       if (c.error) throw c.error;
       if (account.error) throw account.error;
@@ -93,7 +94,9 @@ function CustomerDetail() {
       const mode = (data.c.billing_mode ?? "combined") as BillingMode;
       const groups = billGroups(data.unbilled, mode);
       for (const g of groups) {
-        const inv = await supabase.from("invoices").insert({ company_id: companyId, customer_id: id, status: "sent" }).select("id").single();
+        const issue = localDate(new Date());
+        const due = new Date(`${issue}T12:00:00`); due.setDate(due.getDate() + data.c.payment_terms_days);
+        const inv = await supabase.from("invoices").insert({ company_id: companyId, customer_id: id, status: "draft", issue_date: issue, due_date: localDate(due) }).select("id").single();
         if (inv.error) throw inv.error;
         const items = g.visits.map((v) => ({ company_id: companyId, invoice_id: inv.data.id, description: billLineDescription(v, mode), quantity: 1, unit_price: v.price, job_id: v.id }));
         const it = await supabase.from("invoice_items").insert(items);
@@ -162,7 +165,7 @@ function CustomerDetail() {
           <Card className="lg:col-span-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="font-bold">Billing</h2>
-              <Select value={c.billing_mode ?? "combined"} onValueChange={(v) => saveBillingMode.mutate(v as BillingMode)}>
+              <Select disabled={c.monthly_amount !== null} value={c.billing_mode ?? "combined"} onValueChange={(v) => saveBillingMode.mutate(v as BillingMode)}>
                 <SelectTrigger className="h-11 w-full sm:w-80"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="combined">One bill, broken out by address</SelectItem>
@@ -170,6 +173,7 @@ function CustomerDetail() {
                 </SelectContent>
               </Select>
             </div>
+            <CustomerBillingSettings key={`${c.billing_frequency}-${c.billing_start}-${c.billing_end}-${c.monthly_amount}-${c.payment_terms_days}`} customer={c} />
             {unbilled.length === 0 ? (
               <p className="mt-3 text-sm text-muted-foreground">No completed visits waiting to be billed.</p>
             ) : (
