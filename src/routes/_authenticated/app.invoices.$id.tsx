@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, Printer, Mail, CreditCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { money, useWorkspace } from "@/lib/workspace";
 import { Card, PageHeader, Spinner, StatusBadge } from "@/components/app-ui";
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DeleteRecord } from "@/components/delete-record";
 import { can } from "@/lib/permissions";
+import { InvoiceDocument } from "@/components/invoice-document";
 
 export const Route = createFileRoute("/_authenticated/app/invoices/$id")({ head: () => ({ meta: [{ title: "Invoice Details | LawnOffice" }, { name: "description", content: "Review invoice items, customer balances and recorded payments." }, { property: "og:title", content: "Invoice Details | LawnOffice" }, { property: "og:description", content: "Review invoice items, customer balances and recorded payments." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }), component: InvoiceDetail });
 
@@ -24,17 +25,21 @@ function InvoiceDetail() {
   const q = useQuery({
     queryKey: key,
     queryFn: async () => {
-      const [inv, items, pays] = await Promise.all([
+      const [inv, items, pays, company] = await Promise.all([
         supabase.from("invoices").select("*, customer:customers(id, name, email)").eq("id", id).single(),
         supabase.from("invoice_items").select("*").eq("invoice_id", id),
         supabase.from("payments").select("*").eq("invoice_id", id).order("paid_at"),
+        supabase.from("companies").select("name, address, phone, email").eq("id", companyId).single(),
       ]);
       if (inv.error) throw inv.error;
+      if (items.error) throw items.error;
+      if (pays.error) throw pays.error;
+      if (company.error) throw company.error;
       const jobIds = [...new Set((items.data ?? []).map((i) => i.job_id).filter((x): x is string => !!x))];
       const jobRows = jobIds.length ? await supabase.from("jobs").select("id, property:properties(address)").in("id", jobIds) : { data: [], error: null };
       if (jobRows.error) throw jobRows.error;
       const addrByJob = new Map((jobRows.data ?? []).map((j) => [j.id, (j.property as { address: string } | null)?.address ?? null]));
-      return { inv: inv.data, items: (items.data ?? []).map((i) => ({ ...i, address: i.job_id ? addrByJob.get(i.job_id) ?? null : null })), pays: pays.data ?? [] };
+      return { inv: inv.data, items: (items.data ?? []).map((i) => ({ ...i, address: i.job_id ? addrByJob.get(i.job_id) ?? null : null })), pays: pays.data ?? [], company: company.data };
     },
   });
   const [item, setItem] = useState({ description: "", quantity: "1", unit_price: "" });
@@ -49,9 +54,9 @@ function InvoiceDetail() {
   }
 
   if (q.isLoading || !q.data) return <Spinner />;
-  const { inv, items, pays } = q.data;
+  const { inv, items, pays, company } = q.data;
   const balance = Number(inv.total) - Number(inv.amount_paid);
-  const locked = inv.status === "void";
+  const locked = inv.status === "void" || !manage;
   const itemGroups = (() => {
     const map = new Map<string, { address: string | null; items: typeof items }>();
     for (const it of items) {
@@ -67,10 +72,16 @@ function InvoiceDetail() {
 
   return (
     <>
+      <InvoiceDocument invoice={inv} company={company} items={items} />
       <Link to="/app/invoices" className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-muted-foreground"><ArrowLeft className="h-4 w-4" />Invoices</Link>
       <PageHeader title={`Invoice #${inv.number}`} subtitle={`${inv.customer?.name} · issued ${inv.issue_date} · due ${inv.due_date}`}
         action={<div className="flex flex-wrap items-center gap-2"><StatusBadge status={inv.status} />
-          {inv.status === "draft" && <Button size="sm" onClick={() => run(supabase.from("invoices").update({ status: "sent" }).eq("id", id))}>Mark as sent</Button>}
+          <Button size="sm" variant="outline" onClick={() => window.print()}><Printer />Print / PDF</Button>
+          {manage && <Button size="sm" variant="outline" disabled={!inv.customer?.email || inv.status === "void"} onClick={() => {
+            const body = [`${company.name} — Invoice #${inv.number}`, `Bill to: ${inv.customer?.name}`, `Issued: ${inv.issue_date} · Due: ${inv.due_date}`, "", ...items.map(i => `${i.description} × ${i.quantity}: ${money(i.quantity * i.unit_price)}`), "", `Total: ${money(inv.total)}`, `Paid: ${money(inv.amount_paid)}`, `Balance due: ${money(Math.max(0, balance))}`, "", "View your invoices by signing in to your customer portal:", "https://greencrew-business-hub.lovable.app/portal", inv.notes ?? ""].join("\n");
+            window.location.href = `mailto:${encodeURIComponent(inv.customer?.email ?? "")}?subject=${encodeURIComponent(`${company.name} — Invoice #${inv.number}`)}&body=${encodeURIComponent(body)}`;
+          }}><Mail />Email invoice</Button>}
+          {manage && inv.status === "draft" && <Button size="sm" onClick={() => run(supabase.from("invoices").update({ status: "sent" }).eq("id", id))}>Mark as sent</Button>}
           {!locked && inv.status !== "paid" && <Button size="sm" variant="ghost" onClick={() => confirm("Void this invoice?") && run(supabase.from("invoices").update({ status: "void" }).eq("id", id))}>Void</Button>}
           {manage && <DeleteRecord table="invoices" id={id} name={`Invoice #${inv.number}`} description="The invoice, all its line items, and all recorded payments will be permanently removed. This changes billing balances and financial reports; void instead if you need to retain the history." onDeleted={() => navigate({ to: "/app/invoices" })} />}
         </div>} />
@@ -116,6 +127,7 @@ function InvoiceDetail() {
         </Card>
         <Card>
           <h2 className="mb-3 font-bold">Payments</h2>
+          <div className="mb-4 flex items-start gap-2 border-b pb-3 text-sm text-muted-foreground"><CreditCard className="mt-0.5 h-4 w-4 shrink-0" /><span>Online card payments: not connected yet. Recorded card payments below are manual records, not charges.</span></div>
           {pays.length === 0 && <p className="text-sm text-muted-foreground">No payments recorded.</p>}
           {pays.map((p) => <div key={p.id} className="flex items-center justify-between gap-2 py-1.5 text-sm"><span className="capitalize">{p.method} · {new Date(p.paid_at).toLocaleDateString()}</span><span className="font-semibold">{money(p.amount)}</span>{manage && <DeleteRecord table="payments" id={p.id} name={`${money(p.amount)} payment`} description="This payment record will be removed and the invoice balance recalculated. This does not refund or reverse a real payment." />}</div>)}
           {!locked && balance > 0 && (

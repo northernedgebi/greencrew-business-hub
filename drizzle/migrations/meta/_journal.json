@@ -218,6 +218,20 @@
       "when": 1793237422750,
       "tag": "0030_retain_work_without_blocking_customer_deletion",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1793238414371,
+      "tag": "0031_monthly_customer_billing",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1793238523859,
+      "tag": "0032_protect_monthly_included_visit_billing",
+      "breakpoints": true
     }
   ]
 }

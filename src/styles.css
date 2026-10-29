@@ -126,3 +126,18 @@
 .route-pin { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9999px; background: var(--primary); color: var(--primary-foreground); font-weight: 700; font-size: 13px; border: 2px solid var(--card); box-shadow: 0 2px 6px oklch(0 0 0 / 0.3); }
 .route-pin-start { background: var(--accent); color: var(--foreground); }
 .route-line { stroke: var(--primary); }
+
+@media print {
+  @page { margin: 16mm; }
+  body:has(#invoice-document) { background: var(--card); }
+  body:has(#invoice-document) * { visibility: hidden; }
+  body:has(#invoice-document) #invoice-document,
+  body:has(#invoice-document) #invoice-document * { visibility: visible; }
+  body:has(#invoice-document) aside,
+  body:has(#invoice-document) main ~ nav,
+  body:has(#invoice-document) main > div > :not(#invoice-document),
+  body:has(#invoice-document) header:not(#invoice-document header) { display: none; }
+  body:has(#invoice-document) main { padding: 0; }
+  #invoice-document { display: block; position: static; width: 100%; padding: 0; color: var(--foreground); background: var(--card); }
+  #invoice-document tr { break-inside: avoid; }
+}
