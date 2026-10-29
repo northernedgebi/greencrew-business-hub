@@ -133,6 +133,11 @@
   body:has(#invoice-document) * { visibility: hidden; }
   body:has(#invoice-document) #invoice-document,
   body:has(#invoice-document) #invoice-document * { visibility: visible; }
-  #invoice-document { display: block; position: absolute; inset: 0; width: 100%; padding: 0; color: var(--foreground); background: var(--card); }
+  body:has(#invoice-document) aside,
+  body:has(#invoice-document) main ~ nav,
+  body:has(#invoice-document) main > div > :not(#invoice-document),
+  body:has(#invoice-document) header:not(#invoice-document header) { display: none; }
+  body:has(#invoice-document) main { padding: 0; }
+  #invoice-document { display: block; position: static; width: 100%; padding: 0; color: var(--foreground); background: var(--card); }
   #invoice-document tr { break-inside: avoid; }
 }
