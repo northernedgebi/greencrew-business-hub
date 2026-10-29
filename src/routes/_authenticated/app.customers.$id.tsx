@@ -133,6 +133,11 @@ function CustomerDetail() {
         <Card className="space-y-3">
           {c.phone && <a href={`tel:${c.phone}`} className="flex items-center gap-2 font-medium"><Phone className="h-4 w-4 text-primary" />{c.phone}</a>}
           <p className="text-xs text-muted-foreground">{c.portal_user_id ? "Customer portal: connected" : c.email ? "Customer portal: they can sign up with this email to see visits and bills" : "Add an email so this customer can use the portal"}</p>
+          {manage && c.email && <Button variant="outline" size="sm" onClick={() => {
+            const link = `https://greencrew-business-hub.lovable.app/auth?mode=signup&company=${companyId}`;
+            const body = `Hi ${c.name},\n\nCreate your customer account using this email address to see your schedule, bills and service requests:\n${link}`;
+            window.location.href = `mailto:${encodeURIComponent(c.email ?? "")}?subject=${encodeURIComponent("Your customer portal invitation")}&body=${encodeURIComponent(body)}`;
+          }}><Mail />Invite to customer portal</Button>}
           {c.email && <a href={`mailto:${c.email}`} className="flex items-center gap-2 break-all font-medium"><Mail className="h-4 w-4 text-primary" />{c.email}</a>}
           {c.customer_type === "commercial" && c.ein && <p className="text-sm text-muted-foreground">EIN: {c.ein}</p>}
           <div className="rounded-xl bg-secondary p-3"><p className="text-xs uppercase text-muted-foreground">Open balance</p><p className="font-display text-2xl font-extrabold">{money(balance)}</p></div>

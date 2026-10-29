@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CompanyBrand } from "@/components/company-brand";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/portal")({
   head: () => ({ meta: [{ title: "Customer portal — LawnOffice" }, { name: "description", content: "See your lawn care schedule, bills and requests." }, { property: "og:title", content: "Customer portal — LawnOffice" }, { property: "og:description", content: "Your lawn care schedule, bills and requests." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }),
@@ -28,18 +30,29 @@ function Portal() {
   const [moving, setMoving] = useState<Visit | null>(null);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState("");
+  const accounts = useQuery({ queryKey: ["portal-accounts", ws.userId], enabled: !!ws.userId, queryFn: async () => {
+    const { data, error } = await supabase.from("customers").select("id,name,company_id").eq("portal_user_id", ws.userId);
+    if (error) throw error;
+    return await Promise.all((data ?? []).map(async c => {
+      const brand = await supabase.rpc("company_branding", { _company: c.company_id });
+      if (brand.error) throw brand.error;
+      return { ...c, company: brand.data?.[0] ?? null };
+    }));
+  } });
+  const activeAccount = accounts.data?.find(c => c.id === selectedCustomer) ?? accounts.data?.[0];
   const q = useQuery({
-    queryKey: ["portal", ws.userId],
-    enabled: !!ws.userId,
+    queryKey: ["portal", ws.userId, activeAccount?.id],
+    enabled: !!activeAccount,
     queryFn: async () => {
-      const me = (await supabase.from("customers").select("id, name, company:companies(name, phone, email)").eq("portal_user_id", ws.userId)).data ?? [];
+      const me = activeAccount ? [activeAccount] : [];
       const ids = me.map((c) => c.id);
       if (!ids.length) return null;
       const today = new Date().toISOString().slice(0, 10);
       const [jobs, invoices, payments, requests, quotes] = await Promise.all([
         supabase.from("jobs").select("id, title, scheduled_date, status, property:properties(address)").in("customer_id", ids).gte("scheduled_date", today).neq("status", "cancelled").order("scheduled_date").limit(20),
         supabase.from("invoices").select("id, number, total, amount_paid, status, due_date, issue_date").in("customer_id", ids).neq("status", "draft").neq("status", "void").order("issue_date", { ascending: false }),
-        supabase.from("payments").select("id, amount, paid_at, method, invoice:invoices(number)").order("paid_at", { ascending: false }).limit(20),
+        supabase.from("payments").select("id, amount, paid_at, method, invoice:invoices!inner(number, customer_id)").in("invoice.customer_id", ids).order("paid_at", { ascending: false }).limit(20),
         supabase.from("service_requests").select("*").in("customer_id", ids).order("created_at", { ascending: false }).limit(30),
         supabase.from("estimates").select("id, title, total, notes, status, valid_until").in("customer_id", ids).neq("status", "draft").order("created_at", { ascending: false }),
       ]);
@@ -60,16 +73,17 @@ function Portal() {
   const balance = d?.invoices.reduce((s, i) => s + Number(i.total) - Number(i.amount_paid), 0) ?? 0;
   const paid = d?.invoices.reduce((s, i) => s + Number(i.amount_paid), 0) ?? 0;
   const me = d?.me[0];
-  const company = me?.company as { name: string; phone: string | null; email: string | null } | null | undefined;
+  const company = activeAccount?.company;
   const pendingMove = (jobId: string) => d?.requests.find((r) => r.job_id === jobId && r.status === "pending");
 
   return (
     <div className="min-h-screen pb-10">
-      <header className="flex h-16 items-center justify-between bg-forest px-4"><Logo light /><Button variant="heroOutline" size="sm" onClick={signOut}>Sign out</Button></header>
+      <header className="flex min-h-16 items-center justify-between gap-3 bg-forest px-4 py-2">{company ? <CompanyBrand name={company.name} logoPath={company.logo_url} light /> : <Logo light />}<Button variant="heroOutline" size="sm" onClick={signOut}>Sign out</Button></header>
       <main className="mx-auto max-w-3xl p-4 sm:p-8">
-        {q.isLoading ? <Spinner /> : !d || !me ? <Empty title="No account linked" text="Ask your landscaping company to add this email address to your customer record, then sign in again." /> : (
+        {(accounts.data?.length ?? 0) > 1 && <div className="mb-4"><Select value={activeAccount?.id} onValueChange={setSelectedCustomer}><SelectTrigger aria-label="Landscaping company"><SelectValue /></SelectTrigger><SelectContent>{accounts.data?.map(a => <SelectItem key={a.id} value={a.id}>{a.company?.name ?? "Company"} · {a.name}</SelectItem>)}</SelectContent></Select></div>}
+        {accounts.isLoading || q.isLoading ? <Spinner /> : !d || !me ? <Empty title="No account linked" text="Ask your landscaping company to add this email address to your customer record, then sign in again." /> : (
           <>
-            <PageHeader title={`Hi, ${me.name}`} subtitle={company ? `Lawn care by ${company.name}${company.phone ? ` · ${company.phone}` : ""}` : undefined} />
+            <PageHeader title={`Hi, ${me.name}`} subtitle={company ? `Services by ${company.name}` : undefined} />
             <div className="grid grid-cols-2 gap-3">
               <Card><p className="text-xs uppercase text-muted-foreground">Balance due</p><p className="font-display text-2xl font-extrabold">{money(balance)}</p></Card>
               <Card><p className="text-xs uppercase text-muted-foreground">Paid so far</p><p className="font-display text-2xl font-extrabold">{money(paid)}</p></Card>
