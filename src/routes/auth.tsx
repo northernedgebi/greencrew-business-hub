@@ -10,7 +10,7 @@ import { Logo } from "@/components/marketing";
 import { useQuery } from "@tanstack/react-query";
 import { CompanyBrand } from "@/components/company-brand";
 
-type Search = { mode?: "signup" | "signin"; plan?: string | undefined; company?: string };
+type Search = { mode?: "signup" | "signin"; plan?: string | undefined; company?: string | undefined };
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>): Search => ({

@@ -80,7 +80,7 @@ function Portal() {
     <div className="min-h-screen pb-10">
       <header className="flex min-h-16 items-center justify-between gap-3 bg-forest px-4 py-2">{company ? <CompanyBrand name={company.name} logoPath={company.logo_url} light /> : <Logo light />}<Button variant="heroOutline" size="sm" onClick={signOut}>Sign out</Button></header>
       <main className="mx-auto max-w-3xl p-4 sm:p-8">
-        {(accounts.data?.length ?? 0) > 1 && <div className="mb-4"><Select value={activeAccount?.id} onValueChange={setSelectedCustomer}><SelectTrigger aria-label="Landscaping company"><SelectValue /></SelectTrigger><SelectContent>{accounts.data?.map(a => <SelectItem key={a.id} value={a.id}>{a.company?.name ?? "Company"} · {a.name}</SelectItem>)}</SelectContent></Select></div>}
+        {(accounts.data?.length ?? 0) > 1 && <div className="mb-4"><Select value={activeAccount?.id ?? ""} onValueChange={setSelectedCustomer}><SelectTrigger aria-label="Landscaping company"><SelectValue /></SelectTrigger><SelectContent>{accounts.data?.map(a => <SelectItem key={a.id} value={a.id}>{a.company?.name ?? "Company"} · {a.name}</SelectItem>)}</SelectContent></Select></div>}
         {accounts.isLoading || q.isLoading ? <Spinner /> : !d || !me ? <Empty title="No account linked" text="Ask your landscaping company to add this email address to your customer record, then sign in again." /> : (
           <>
             <PageHeader title={`Hi, ${me.name}`} subtitle={company ? `Services by ${company.name}` : undefined} />
