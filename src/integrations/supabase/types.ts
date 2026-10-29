@@ -266,6 +266,67 @@ export type Database = {
           },
         ]
       }
+      customer_history: {
+        Row: {
+          action: string
+          actor_id: string | null
+          after_values: Json | null
+          before_values: Json | null
+          company_id: string
+          created_at: string
+          customer_id: string
+          effective_date: string
+          id: string
+          summary: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          after_values?: Json | null
+          before_values?: Json | null
+          company_id: string
+          created_at?: string
+          customer_id: string
+          effective_date?: string
+          id?: string
+          summary: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          after_values?: Json | null
+          before_values?: Json | null
+          company_id?: string
+          created_at?: string
+          customer_id?: string
+          effective_date?: string
+          id?: string
+          summary?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_history_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_history_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_history_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           billing_mode: string
@@ -274,6 +335,7 @@ export type Database = {
           customer_type: string
           ein: string | null
           email: string | null
+          history_account_status: string
           id: string
           inactive_reason: string | null
           name: string
@@ -290,6 +352,7 @@ export type Database = {
           customer_type?: string
           ein?: string | null
           email?: string | null
+          history_account_status?: string
           id?: string
           inactive_reason?: string | null
           name: string
@@ -306,6 +369,7 @@ export type Database = {
           customer_type?: string
           ein?: string | null
           email?: string | null
+          history_account_status?: string
           id?: string
           inactive_reason?: string | null
           name?: string
@@ -1228,6 +1292,11 @@ export type Database = {
         Returns: undefined
       }
       recalc_invoice: { Args: { _id: string }; Returns: undefined }
+      refresh_customer_history_state: {
+        Args: { _customer: string }
+        Returns: undefined
+      }
+      sync_customer_history: { Args: { _customer: string }; Returns: undefined }
     }
     Enums: {
       app_role: "super_admin"
