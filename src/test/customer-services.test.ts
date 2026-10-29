@@ -4,7 +4,7 @@ import { DEFAULT_SERVICE, FREQUENCIES, SERVICE_CATEGORIES, availableCrewVisits, 
 const job = (id: string, kind: string, date: string, overrides: Partial<NearbyJob> = {}): NearbyJob => ({ id, title: id, service_kind: kind, scheduled_date: date, status: "scheduled", customer_id: "customer", property_id: "property", crew_id: "crew", ...overrides });
 describe("winter and shared crew work", () => {
   it("supports snow plowing, snow removal and shoveling alongside lawn care", () => {
-    expect(SERVICE_CATEGORIES.map(c => c.value)).toEqual(["lawn", "snow_plowing", "snow_removal", "shoveling", "other"]);
+    expect(SERVICE_CATEGORIES.map(c => c.value)).toEqual(expect.arrayContaining(["lawn", "snow_plowing", "snow_removal", "shoveling", "other"]));
     expect(isWinterService("snow_plowing")).toBe(true);
     expect(isWinterService("lawn")).toBe(false);
   });
@@ -24,6 +24,16 @@ describe("winter and shared crew work", () => {
   });
 });
 describe("customer services", () => {
+  it.each([
+    ["sprinkler_blowout", "Sprinkler blowout"],
+    ["bush_trimming", "Bush trimming"],
+    ["fertilizers", "Fertilizers"],
+    ["weeding", "Weeding"],
+    ["fall_cleanup", "Fall cleanup"],
+    ["spring_cleanup", "Spring cleanup"],
+  ])("saves %s as separately priced additional work", (kind, title) => {
+    expect(servicePayload({ ...categoryServiceForm(kind), price: "90", date: "2026-11-01" }, "America/New_York")).toMatchObject({ kind: "other", title, price: 90, date: "2026-11-01" });
+  });
   it("sends the local calendar timezone and the valid $100 price when adding a yearly service", () => {
     expect(servicePayload({ ...newServiceForm(), title: "Sprinkler Blowout", frequency: "yearly", date: "2026-10-25", price: "100" }, "America/New_York")).toMatchObject({ date: "2026-10-25", price: 100, timezone: "America/New_York", frequency: "yearly" });
   });

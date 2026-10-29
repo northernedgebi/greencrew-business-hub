@@ -5,6 +5,12 @@ export const DEFAULT_SERVICE = "Lawn maintenance";
 export const NEARBY_DAYS = 3;
 export const SERVICE_CATEGORIES = [
   { value: "lawn", label: "Lawn maintenance" },
+  { value: "sprinkler_blowout", label: "Sprinkler blowout" },
+  { value: "bush_trimming", label: "Bush trimming" },
+  { value: "fertilizers", label: "Fertilizers" },
+  { value: "weeding", label: "Weeding" },
+  { value: "fall_cleanup", label: "Fall cleanup" },
+  { value: "spring_cleanup", label: "Spring cleanup" },
   { value: "snow_plowing", label: "Snow plowing" },
   { value: "snow_removal", label: "Snow removal" },
   { value: "shoveling", label: "Shoveling" },
@@ -35,7 +41,8 @@ export function seasonLabel(start: string | null | undefined, end: string | null
 export const FREQUENCIES: { value: ServiceFrequency; label: string }[] = [{ value: "once", label: "One time" }, { value: "weekly", label: "Weekly" }, { value: "biweekly", label: "Every 2 weeks" }, { value: "monthly", label: "Monthly" }, { value: "yearly", label: "Yearly" }, { value: "custom", label: "Custom (times per year)" }, { value: "as_needed", label: "As needed (each storm)" }];
 export function servicePayload(service: ServiceForm, timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone) {
   const seasonal = service.frequency !== "once" && service.season_start && service.season_end;
-  return { ...service, pricing_mode: isWinterService(service.kind) ? service.pricing_mode ?? "flat" : "flat", minimum_hours: isWinterService(service.kind) && service.pricing_mode === "hourly" && service.minimum_hours ? Number(service.minimum_hours) : null, price: Number(service.price), timezone: timeZone, times_per_year: service.frequency === "custom" ? Number(service.times_per_year) : null, season_start: seasonal ? service.season_start.slice(5) : null, season_end: seasonal ? service.season_end.slice(5) : null };
+  const kind = service.kind === "lawn" || isWinterService(service.kind) ? service.kind : "other";
+  return { ...service, kind, pricing_mode: isWinterService(service.kind) ? service.pricing_mode ?? "flat" : "flat", minimum_hours: isWinterService(service.kind) && service.pricing_mode === "hourly" && service.minimum_hours ? Number(service.minimum_hours) : null, price: Number(service.price), timezone: timeZone, times_per_year: service.frequency === "custom" ? Number(service.times_per_year) : null, season_start: seasonal ? service.season_start.slice(5) : null, season_end: seasonal ? service.season_end.slice(5) : null };
 }
 export function monthlyServiceValue(price: number, frequency: Exclude<ServiceFrequency, "once">, timesPerYear?: number | null) {
   return price * (frequency === "weekly" ? 4.33 : frequency === "biweekly" ? 2.17 : frequency === "yearly" ? 1 / 12 : frequency === "custom" ? (timesPerYear ?? 0) / 12 : frequency === "as_needed" ? 0 : 1);
