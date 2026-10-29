@@ -5,8 +5,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -34,6 +34,7 @@
   --color-lime-foreground: var(--lime-foreground);
   --color-forest: var(--forest);
   --color-forest-foreground: var(--forest-foreground);
+  --color-hero-overlay: var(--hero-overlay);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -77,6 +78,7 @@
   --lime-foreground: oklch(0.22 0.05 150);
   --forest: oklch(0.24 0.05 158);
   --forest-foreground: oklch(0.96 0.02 110);
+  --hero-overlay: oklch(0.16 0.015 155 / 60%);
   --border: oklch(0.88 0.02 110);
   --input: oklch(0.86 0.02 110);
   --ring: oklch(0.55 0.12 150);
@@ -109,7 +111,7 @@
   }
   h1, h2, h3, h4 {
     font-family: var(--font-display);
-    letter-spacing: -0.02em;
+    letter-spacing: 0;
   }
 }
 
