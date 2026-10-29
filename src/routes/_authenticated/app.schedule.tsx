@@ -1,3 +1,4 @@
+import { SnowTimeEntry } from "@/components/snow-time-entry";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -75,7 +76,7 @@ function Visits({ initialDay }: { initialDay?: string | undefined }) {
     enabled: visibleDay,
     queryFn: async () => {
       const { data, error } = await supabase.from("jobs")
-        .select("id, title, scheduled_date, status, price, start_time, notes, invoice_id, customer_id, property_id, crew_id, route_order, customer:customers(name, phone), property:properties(address, city, zip, gate_code), crew:crews(name)")
+        .select("id, title, scheduled_date, status, price, pricing_mode, hourly_rate, minimum_hours, worked_hours, start_time, notes, invoice_id, customer_id, property_id, crew_id, route_order, customer:customers(name, phone), property:properties(address, city, zip, gate_code), crew:crews(name)")
         .eq("company_id", companyId).eq("scheduled_date", selectedDay);
       if (error) throw error;
       // Saved route order first (Routes page), then start time, ZIP, street.
@@ -148,6 +149,7 @@ function Visits({ initialDay }: { initialDay?: string | undefined }) {
                   {j.notes && <p className="mt-1 text-sm text-muted-foreground">{j.notes}</p>}
                 </div>
               </div>
+              <div className="mt-3"><SnowTimeEntry job={j} /></div>
               <div className="mt-3 flex flex-wrap gap-2">
                 {can(role, "jobs.manage") && j.status !== "completed" && j.status !== "cancelled" && <NewJob day={selectedDay} job={j} onSaved={setDay} />}
                 {j.status === "scheduled" && <Button size="sm" variant="secondary" onClick={() => setStatus.mutate({ id: j.id, status: "in_progress" })}><Play />Start</Button>}

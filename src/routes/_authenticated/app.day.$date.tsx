@@ -1,3 +1,4 @@
+import { SnowTimeEntry } from "@/components/snow-time-entry";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/_authenticated/app/day/$date")({
 type JobStatus = "scheduled" | "in_progress" | "completed" | "cancelled";
 
 type DayJob = {
-  id: string; title: string; status: JobStatus; price: number; start_time: string | null; route_order: number | null;
+  pricing_mode: string; hourly_rate: number | null; minimum_hours: number | null; worked_hours: number | null; invoice_id: string | null; id: string; title: string; status: JobStatus; price: number; start_time: string | null; route_order: number | null;
   customer: { name: string } | null; crew_id: string | null; crew: { name: string } | null;
   property: { address: string | null; city: string | null; zip: string | null; gate_code: string | null } | null;
 };
@@ -40,7 +41,7 @@ function DayPage() {
     enabled: valid,
     queryFn: async () => {
       const { data, error } = await supabase.from("jobs")
-        .select("id, title, status, price, start_time, route_order, crew_id, customer:customers(name), crew:crews(name), property:properties(address, city, zip, gate_code)")
+        .select("id, title, status, price, pricing_mode, hourly_rate, minimum_hours, worked_hours, invoice_id, start_time, route_order, crew_id, customer:customers(name), crew:crews(name), property:properties(address, city, zip, gate_code)")
         .eq("company_id", companyId).eq("scheduled_date", date)
         .order("route_order", { nullsFirst: false }).order("start_time");
       if (error) throw error;
@@ -102,7 +103,7 @@ function DayPage() {
                             <p className="font-medium">{j.customer?.name ?? j.title}</p>
                             <StatusBadge status={j.status} />
                           </div>
-                          <p className="text-xs text-muted-foreground">{j.start_time ? `${j.start_time.slice(0, 5)} · ` : ""}{j.title} · {money(j.price)}</p>
+                          <SnowTimeEntry job={j} /><p className="text-xs text-muted-foreground">{j.start_time ? `${j.start_time.slice(0, 5)} · ` : ""}{j.title} · {money(j.price)}</p>
                           {j.property?.address && (
                             <a target="_blank" rel="noreferrer" href={`https://maps.google.com/?daddr=${encodeURIComponent([j.property.address, j.property.city, j.property.zip].filter(Boolean).join(", "))}`} className="mt-1 flex items-center gap-1 text-xs text-primary">
                               <MapPin className="h-3.5 w-3.5" />{j.property.address}{j.property.gate_code ? ` · Gate ${j.property.gate_code}` : ""}
