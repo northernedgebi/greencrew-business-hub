@@ -1,4 +1,5 @@
 # LawnOffice enhancement roadmap
+- [ ] Snow flat/hourly pricing, optional minimum, crew time entry and calculated billing; verify through the signed-in app.
 - [x] Winter services section, onboarding service checkboxes, separate charges, and same-address crew scheduling; verified onboarding and both new/existing shared crew tasks through the signed-in app.
 - [x] Customer active/hold indicators, inactivity reasons, overdue billing thresholds, automatic payment reactivation, and verification.
 - [x] Confirmed deletion for estimates, customers, properties, scheduled visits, services/tasks, invoices, payments, line items, crews, employees, invitations, team access, and customer requests; central deletion flows verified.
