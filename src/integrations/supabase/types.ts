@@ -329,7 +329,11 @@ export type Database = {
       }
       customers: {
         Row: {
+          billing_end: string | null
+          billing_frequency: string
           billing_mode: string
+          billing_start: string | null
+          billing_timezone: string
           company_id: string
           created_at: string
           customer_type: string
@@ -338,15 +342,21 @@ export type Database = {
           history_account_status: string
           id: string
           inactive_reason: string | null
+          monthly_amount: number | null
           name: string
           notes: string | null
           overdue_hold_limit: number | null
+          payment_terms_days: number
           phone: string | null
           portal_user_id: string | null
           status: string
         }
         Insert: {
+          billing_end?: string | null
+          billing_frequency?: string
           billing_mode?: string
+          billing_start?: string | null
+          billing_timezone?: string
           company_id: string
           created_at?: string
           customer_type?: string
@@ -355,15 +365,21 @@ export type Database = {
           history_account_status?: string
           id?: string
           inactive_reason?: string | null
+          monthly_amount?: number | null
           name: string
           notes?: string | null
           overdue_hold_limit?: number | null
+          payment_terms_days?: number
           phone?: string | null
           portal_user_id?: string | null
           status?: string
         }
         Update: {
+          billing_end?: string | null
+          billing_frequency?: string
           billing_mode?: string
+          billing_start?: string | null
+          billing_timezone?: string
           company_id?: string
           created_at?: string
           customer_type?: string
@@ -372,9 +388,11 @@ export type Database = {
           history_account_status?: string
           id?: string
           inactive_reason?: string | null
+          monthly_amount?: number | null
           name?: string
           notes?: string | null
           overdue_hold_limit?: number | null
+          payment_terms_days?: number
           phone?: string | null
           portal_user_id?: string | null
           status?: string
@@ -562,6 +580,9 @@ export type Database = {
       invoices: {
         Row: {
           amount_paid: number
+          billing_group: string | null
+          billing_kind: string | null
+          billing_period: string | null
           company_id: string
           created_at: string
           customer_id: string
@@ -577,6 +598,9 @@ export type Database = {
         }
         Insert: {
           amount_paid?: number
+          billing_group?: string | null
+          billing_kind?: string | null
+          billing_period?: string | null
           company_id: string
           created_at?: string
           customer_id: string
@@ -592,6 +616,9 @@ export type Database = {
         }
         Update: {
           amount_paid?: number
+          billing_group?: string | null
+          billing_kind?: string | null
+          billing_period?: string | null
           company_id?: string
           created_at?: string
           customer_id?: string
@@ -640,6 +667,7 @@ export type Database = {
           id: string
           invoice_id: string | null
           minimum_hours: number | null
+          monthly_included: boolean
           notes: string | null
           price: number
           pricing_mode: string
@@ -667,6 +695,7 @@ export type Database = {
           id?: string
           invoice_id?: string | null
           minimum_hours?: number | null
+          monthly_included?: boolean
           notes?: string | null
           price?: number
           pricing_mode?: string
@@ -694,6 +723,7 @@ export type Database = {
           id?: string
           invoice_id?: string | null
           minimum_hours?: number | null
+          monthly_included?: boolean
           notes?: string | null
           price?: number
           pricing_mode?: string
@@ -961,6 +991,7 @@ export type Database = {
           frequency: Database["public"]["Enums"]["recurrence"]
           id: string
           minimum_hours: number | null
+          monthly_included: boolean
           notes: string | null
           price: number
           pricing_mode: string
@@ -982,6 +1013,7 @@ export type Database = {
           frequency?: Database["public"]["Enums"]["recurrence"]
           id?: string
           minimum_hours?: number | null
+          monthly_included?: boolean
           notes?: string | null
           price?: number
           pricing_mode?: string
@@ -1003,6 +1035,7 @@ export type Database = {
           frequency?: Database["public"]["Enums"]["recurrence"]
           id?: string
           minimum_hours?: number | null
+          monthly_included?: boolean
           notes?: string | null
           price?: number
           pricing_mode?: string
@@ -1237,6 +1270,11 @@ export type Database = {
           overdue_balance: number
         }[]
       }
+      generate_customer_monthly_invoice: {
+        Args: { _as_of?: string; _customer: string }
+        Returns: number
+      }
+      generate_due_monthly_invoices: { Args: never; Returns: number }
       generate_recurring_jobs: {
         Args: { _company: string; _until: string }
         Returns: number
