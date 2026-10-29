@@ -31,6 +31,7 @@ import { Route as AuthenticatedAppCustomersIdRouteImport } from './routes/_authe
 import { Route as AuthenticatedAppDayDateRouteImport } from './routes/_authenticated/app.day.$date'
 import { Route as AuthenticatedAppInvoicesIndexRouteImport } from './routes/_authenticated/app.invoices.index'
 import { Route as AuthenticatedAppInvoicesIdRouteImport } from './routes/_authenticated/app.invoices.$id'
+import { Route as ApiPublicBillingMonthlyRouteImport } from './routes/api/public/billing/monthly'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -150,6 +151,11 @@ const AuthenticatedAppInvoicesIdRoute =
     path: '/invoices/$id',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const ApiPublicBillingMonthlyRoute = ApiPublicBillingMonthlyRouteImport.update({
+  id: '/api/public/billing/monthly',
+  path: '/api/public/billing/monthly',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -171,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/app/customers/$id': typeof AuthenticatedAppCustomersIdRoute
   '/app/day/$date': typeof AuthenticatedAppDayDateRoute
   '/app/invoices/$id': typeof AuthenticatedAppInvoicesIdRoute
+  '/api/public/billing/monthly': typeof ApiPublicBillingMonthlyRoute
   '/app/customers/': typeof AuthenticatedAppCustomersIndexRoute
   '/app/invoices/': typeof AuthenticatedAppInvoicesIndexRoute
 }
@@ -193,6 +200,7 @@ export interface FileRoutesByTo {
   '/app/customers/$id': typeof AuthenticatedAppCustomersIdRoute
   '/app/day/$date': typeof AuthenticatedAppDayDateRoute
   '/app/invoices/$id': typeof AuthenticatedAppInvoicesIdRoute
+  '/api/public/billing/monthly': typeof ApiPublicBillingMonthlyRoute
   '/app/customers': typeof AuthenticatedAppCustomersIndexRoute
   '/app/invoices': typeof AuthenticatedAppInvoicesIndexRoute
 }
@@ -218,6 +226,7 @@ export interface FileRoutesById {
   '/_authenticated/app/customers/$id': typeof AuthenticatedAppCustomersIdRoute
   '/_authenticated/app/day/$date': typeof AuthenticatedAppDayDateRoute
   '/_authenticated/app/invoices/$id': typeof AuthenticatedAppInvoicesIdRoute
+  '/api/public/billing/monthly': typeof ApiPublicBillingMonthlyRoute
   '/_authenticated/app/customers/': typeof AuthenticatedAppCustomersIndexRoute
   '/_authenticated/app/invoices/': typeof AuthenticatedAppInvoicesIndexRoute
 }
@@ -243,6 +252,7 @@ export interface FileRouteTypes {
     | '/app/customers/$id'
     | '/app/day/$date'
     | '/app/invoices/$id'
+    | '/api/public/billing/monthly'
     | '/app/customers/'
     | '/app/invoices/'
   fileRoutesByTo: FileRoutesByTo
@@ -265,6 +275,7 @@ export interface FileRouteTypes {
     | '/app/customers/$id'
     | '/app/day/$date'
     | '/app/invoices/$id'
+    | '/api/public/billing/monthly'
     | '/app/customers'
     | '/app/invoices'
   id:
@@ -289,6 +300,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/customers/$id'
     | '/_authenticated/app/day/$date'
     | '/_authenticated/app/invoices/$id'
+    | '/api/public/billing/monthly'
     | '/_authenticated/app/customers/'
     | '/_authenticated/app/invoices/'
   fileRoutesById: FileRoutesById
@@ -298,6 +310,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   PricingRoute: typeof PricingRoute
+  ApiPublicBillingMonthlyRoute: typeof ApiPublicBillingMonthlyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -456,6 +469,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppInvoicesIdRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/api/public/billing/monthly': {
+      id: '/api/public/billing/monthly'
+      path: '/api/public/billing/monthly'
+      fullPath: '/api/public/billing/monthly'
+      preLoaderRoute: typeof ApiPublicBillingMonthlyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -518,6 +538,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   PricingRoute: PricingRoute,
+  ApiPublicBillingMonthlyRoute: ApiPublicBillingMonthlyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
