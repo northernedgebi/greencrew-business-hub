@@ -1,7 +1,7 @@
 import { canRemoveVisit } from "@/lib/service-retention";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, RefreshCw } from "lucide-react";
+import { Plus, Pencil, RefreshCw, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { addDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { JoinCrewVisit } from "@/components/join-crew-visit";
 import { DeleteRecord } from "@/components/delete-record";
+import { findDuplicateService } from "@/lib/service-duplicates";
 
 export function CustomerServices({ customerId, properties, winterOnly = false }: { customerId: string; properties: { id: string; address: string }[]; winterOnly?: boolean }) {
   const { companyId, role } = useWorkspace();
@@ -43,18 +44,37 @@ export function CustomerServices({ customerId, properties, winterOnly = false }:
   const crewVisits = availableCrewVisits(q.data?.visits ?? [], customerId, property, localDate(new Date()));
   const summary = summarizeCustomerServices(plans, visits.filter(v => !v.recurring_plan_id));
   const monthly = customerMonthlyValue(plans);
+  const duplicate = findDuplicateService(q.data?.plans ?? [], q.data?.visits ?? [], f.title, property, planId, visitId);
+  function editExisting() {
+    if (!duplicate) return;
+    setJoinJob("");
+    if (duplicate.type === "plan") {
+      const p = q.data?.plans.find(p => p.id === duplicate.id);
+      if (!p) return;
+      setVisitId(null); setPlanId(p.id); setProperty(p.property_id);
+      setF({ ...newServiceForm(), title: p.service, kind: p.service_kind, frequency: p.frequency, date: p.start_date, price: String(p.price), crew_id: p.crew_id ?? "", notes: p.notes ?? "", times_per_year: p.times_per_year == null ? "" : String(p.times_per_year), season_start: p.season_start ? `2000-${p.season_start}` : "", season_end: p.season_end ? `2000-${p.season_end}` : "", pricing_mode: p.pricing_mode === "hourly" ? "hourly" : "flat", minimum_hours: p.minimum_hours == null ? "" : String(p.minimum_hours) });
+    } else {
+      const v = q.data?.visits.find(v => v.id === duplicate.id);
+      if (!v) return;
+      setPlanId(null); setVisitId(v.id); setProperty(v.property_id ?? "");
+      setF({ ...newServiceForm(), title: v.title, kind: v.service_kind, frequency: "once", date: v.scheduled_date, price: String(v.pricing_mode === "hourly" ? v.hourly_rate ?? 0 : v.price), crew_id: v.crew_id ?? "", notes: v.notes ?? "", pricing_mode: v.pricing_mode === "hourly" ? "hourly" : "flat", minimum_hours: v.minimum_hours == null ? "" : String(v.minimum_hours) });
+    }
+  }
   const save = useMutation({ mutationFn: async () => {
     if (!property) throw new Error("Add a service address first");
+    const fresh = await q.refetch();
+    if (fresh.error) throw fresh.error;
+    if (findDuplicateService(fresh.data?.plans ?? [], fresh.data?.visits ?? [], f.title, property, planId, visitId)) throw new Error("This customer already has this service at this address. Edit or remove the existing service instead.");
     if (f.frequency === "custom") { const n = Number(f.times_per_year); if (!Number.isInteger(n) || n < 2 || n > 51) throw new Error("Choose how many times a year, between 2 and 51"); }
     if ((f.season_start && !f.season_end) || (!f.season_start && f.season_end)) throw new Error("Choose both a season start and season end, or neither");
     if (visitId) {
       if (f.frequency !== "once") throw new Error("Add a recurring service separately");
       const pricing = servicePayload(f);
-      const { error } = await supabase.from("jobs").update({ property_id: property, title: f.title, service_kind: f.kind, scheduled_date: f.date, crew_id: f.crew_id || null, notes: f.notes || null, price: Number(f.price), pricing_mode: pricing.pricing_mode, hourly_rate: pricing.pricing_mode === "hourly" ? Number(f.price) : null, minimum_hours: pricing.minimum_hours }).eq("id", visitId).eq("company_id", companyId).eq("customer_id", customerId).select("id").single();
+      const { error } = await supabase.from("jobs").update({ property_id: property, title: f.title, service_kind: pricing.kind, scheduled_date: f.date, crew_id: f.crew_id || null, notes: f.notes || null, price: Number(f.price), pricing_mode: pricing.pricing_mode, hourly_rate: pricing.pricing_mode === "hourly" ? Number(f.price) : null, minimum_hours: pricing.minimum_hours }).eq("id", visitId).eq("company_id", companyId).eq("customer_id", customerId).select("id").single();
       if (error) throw error;
     } else if (planId && f.frequency !== "once") {
       const pricing = servicePayload(f);
-      const { error } = await supabase.from("recurring_plans").update({ pricing_mode: pricing.pricing_mode, minimum_hours: pricing.minimum_hours, property_id: property, service: f.title, service_kind: f.kind, frequency: f.frequency, start_date: f.date, price: Number(f.price), crew_id: f.crew_id || null, notes: f.notes || null, times_per_year: f.frequency === "custom" ? Number(f.times_per_year) : null, season_start: f.season_start ? f.season_start.slice(5) : null, season_end: f.season_end ? f.season_end.slice(5) : null }).eq("id", planId).eq("company_id", companyId).eq("customer_id", customerId).select("id").single();
+      const { error } = await supabase.from("recurring_plans").update({ pricing_mode: pricing.pricing_mode, minimum_hours: pricing.minimum_hours, property_id: property, service: f.title, service_kind: pricing.kind, frequency: f.frequency, start_date: f.date, price: Number(f.price), crew_id: f.crew_id || null, notes: f.notes || null, times_per_year: f.frequency === "custom" ? Number(f.times_per_year) : null, season_start: f.season_start ? f.season_start.slice(5) : null, season_end: f.season_end ? f.season_end.slice(5) : null }).eq("id", planId).eq("company_id", companyId).eq("customer_id", customerId).select("id").single();
       if (error) throw error;
     } else {
       if (planId) throw new Error("Add a separate one-time service instead");
@@ -89,7 +109,8 @@ export function CustomerServices({ customerId, properties, winterOnly = false }:
       <div className="space-y-1.5"><Label>Property</Label><Select value={property} onValueChange={v => { setProperty(v); setJoinJob(""); }}><SelectTrigger aria-label="Service property"><SelectValue placeholder="Select property" /></SelectTrigger><SelectContent>{properties.map(p => <SelectItem key={p.id} value={p.id}>{p.address}</SelectItem>)}</SelectContent></Select></div>
       {!planId && !visitId && crewVisits.length > 0 && <div className="space-y-1.5"><Label>Schedule with an existing crew visit</Label><Select value={joinJob || "separate"} onValueChange={v => { const visit = crewVisits.find(j => j.id === v); setJoinJob(v === "separate" ? "" : v); if (visit) setF({ ...f, date: visit.scheduled_date, crew_id: visit.crew_id ?? "" }); }}><SelectTrigger aria-label="Schedule with crew visit"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="separate">Choose a separate day / crew</SelectItem>{crewVisits.map(v => <SelectItem key={v.id} value={v.id}>{v.scheduled_date} · {v.crew?.name} · {v.title}</SelectItem>)}</SelectContent></Select></div>}
       <CustomerServiceFields value={f} onChange={next => { if (joinJob && (next.date !== f.date || next.crew_id !== f.crew_id)) setJoinJob(""); setF(next); }} crews={crews.data ?? []} />
-      <Button type="submit" className="w-full" disabled={save.isPending}>Save service</Button>
+      {duplicate && <div role="alert" className="space-y-3 rounded-md border border-warning bg-muted p-3"><p className="flex items-start gap-2 text-sm"><AlertTriangle className="h-5 w-5 shrink-0" /><span>This customer already has <strong>{f.title.trim()}</strong> at this address. Edit or remove the existing service instead.</span></p><div className="flex flex-wrap gap-2"><Button type="button" size="sm" variant="outline" onClick={editExisting}><Pencil />Edit existing service</Button><Button type="button" size="sm" variant="ghost" onClick={() => setOpen(false)}>View services / remove</Button></div></div>}
+      <Button type="submit" className="w-full" disabled={save.isPending || !!duplicate || q.isLoading || q.isError}>Save service</Button>
     </form></DialogContent></Dialog>
   </section>;
 }
