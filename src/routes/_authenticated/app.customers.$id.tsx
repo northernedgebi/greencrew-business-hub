@@ -18,6 +18,7 @@ import { billGroups, billLineDescription, type BillingMode } from "@/lib/billing
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CustomerAccountControls } from "@/components/customer-account-controls";
 import { DeleteRecord } from "@/components/delete-record";
+import { CustomerHistory } from "@/components/customer-history";
 
 export const Route = createFileRoute("/_authenticated/app/customers/$id")({ component: CustomerDetail, head: () => ({ meta: [{ title: "Customer Services & Visits | LawnOffice" }, { name: "description", content: "Manage a customer’s services, recurring tasks, visits and invoices." }, { property: "og:title", content: "Customer Services & Visits | LawnOffice" }, { property: "og:description", content: "Landscaping customer services, visits and billing." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }) });
 
@@ -191,6 +192,7 @@ function CustomerDetail() {
         <Card className="lg:col-span-2">
           <CustomerServices customerId={id} properties={props} />
           <StormVisits customerId={id} properties={props} />
+          <CustomerHistory customerId={id} />
           <h2 className="mb-3 font-bold">Recent jobs</h2>
           {jobs.length === 0 ? <p className="text-sm text-muted-foreground">No jobs yet.</p> : (
             <div className="divide-y">{jobs.map((j) => (
