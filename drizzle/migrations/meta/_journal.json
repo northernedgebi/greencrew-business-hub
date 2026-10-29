@@ -232,6 +232,13 @@
       "when": 1793238523859,
       "tag": "0032_protect_monthly_included_visit_billing",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1793239520268,
+      "tag": "0033_customer_company_branding",
+      "breakpoints": true
     }
   ]
 }
