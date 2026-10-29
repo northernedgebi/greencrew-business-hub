@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ export const Route = createFileRoute("/_authenticated/app/settings")({ head: () 
 
 function Settings() {
   const ws = useWorkspace();
+  const qc = useQueryClient();
   const owner = can(ws.role, "company.settings");
   const q = useQuery({ queryKey: ["company", ws.companyId], queryFn: async () => (await supabase.from("companies").select("*").eq("id", ws.companyId).single()).data });
   const [f, setF] = useState({ name: "", phone: "", email: "", address: "", website: "" });
@@ -31,7 +32,7 @@ function Settings() {
   }
   async function changeLogo(file: File | undefined) {
     if (!file) return;
-    try { await uploadCompanyLogo(ws.companyId, file); toast.success("Logo updated"); q.refetch(); }
+    try { await uploadCompanyLogo(ws.companyId, file); toast.success("Logo updated"); qc.invalidateQueries(); ws.refetch(); }
     catch (err) { toast.error((err as Error).message); }
   }
   return (

@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { DeleteRecord } from "@/components/delete-record";
 import { can } from "@/lib/permissions";
 import { InvoiceDocument } from "@/components/invoice-document";
+import { CompanyBrand } from "@/components/company-brand";
+import { useCompanyLogo } from "@/lib/company-logo";
 
 export const Route = createFileRoute("/_authenticated/app/invoices/$id")({ head: () => ({ meta: [{ title: "Invoice Details | LawnOffice" }, { name: "description", content: "Review invoice items, customer balances and recorded payments." }, { property: "og:title", content: "Invoice Details | LawnOffice" }, { property: "og:description", content: "Review invoice items, customer balances and recorded payments." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }), component: InvoiceDetail });
 
@@ -29,7 +31,7 @@ function InvoiceDetail() {
         supabase.from("invoices").select("*, customer:customers(id, name, email)").eq("id", id).single(),
         supabase.from("invoice_items").select("*").eq("invoice_id", id),
         supabase.from("payments").select("*").eq("invoice_id", id).order("paid_at"),
-        supabase.from("companies").select("name, address, phone, email").eq("id", companyId).single(),
+        supabase.from("companies").select("name, logo_url, address, phone, email").eq("id", companyId).single(),
       ]);
       if (inv.error) throw inv.error;
       if (items.error) throw items.error;
@@ -44,6 +46,7 @@ function InvoiceDetail() {
   });
   const [item, setItem] = useState({ description: "", quantity: "1", unit_price: "" });
   const [pay, setPay] = useState({ amount: "", method: "card" });
+  const logo = useCompanyLogo(q.data?.company.logo_url);
   const refresh = () => { qc.invalidateQueries({ queryKey: key }); qc.invalidateQueries({ queryKey: ["invoices", companyId] }); };
 
   async function run(p: PromiseLike<{ error: { message: string } | null }>) {
@@ -74,9 +77,10 @@ function InvoiceDetail() {
     <>
       <InvoiceDocument invoice={inv} company={company} items={items} />
       <Link to="/app/invoices" className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-muted-foreground"><ArrowLeft className="h-4 w-4" />Invoices</Link>
+      <div className="mb-4"><CompanyBrand name={company.name} logoPath={company.logo_url} /></div>
       <PageHeader title={`Invoice #${inv.number}`} subtitle={`${inv.customer?.name} · issued ${inv.issue_date} · due ${inv.due_date}`}
         action={<div className="flex flex-wrap items-center gap-2"><StatusBadge status={inv.status} />
-          <Button size="sm" variant="outline" onClick={() => window.print()}><Printer />Print / PDF</Button>
+          <Button size="sm" variant="outline" disabled={logo.isFetching} onClick={() => window.print()}><Printer />Print / PDF</Button>
           {manage && <Button size="sm" variant="outline" disabled={!inv.customer?.email || inv.status === "void"} onClick={() => {
             const body = [`${company.name} — Invoice #${inv.number}`, `Bill to: ${inv.customer?.name}`, `Issued: ${inv.issue_date} · Due: ${inv.due_date}`, "", ...items.map(i => `${i.description} × ${i.quantity}: ${money(i.quantity * i.unit_price)}`), "", `Total: ${money(inv.total)}`, `Paid: ${money(inv.amount_paid)}`, `Balance due: ${money(Math.max(0, balance))}`, "", "View your invoices by signing in to your customer portal:", "https://greencrew-business-hub.lovable.app/portal", inv.notes ?? ""].join("\n");
             window.location.href = `mailto:${encodeURIComponent(inv.customer?.email ?? "")}?subject=${encodeURIComponent(`${company.name} — Invoice #${inv.number}`)}&body=${encodeURIComponent(body)}`;

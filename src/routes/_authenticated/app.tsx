@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { CompanyBrand } from "@/components/company-brand";
 
 export const Route = createFileRoute("/_authenticated/app")({
   head: () => ({ meta: [{ title: "Business Workspace | LawnOffice" }, { name: "description", content: "Your LawnOffice landscaping company workspace." }, { property: "og:title", content: "Business Workspace | LawnOffice" }, { property: "og:description", content: "Your LawnOffice landscaping company workspace." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }),
@@ -97,14 +98,13 @@ function AppLayout() {
   return (
     <div className="min-h-screen md:flex">
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col bg-sidebar p-4 md:flex">
-        <div className="mb-6 px-2"><Logo light /></div>
+        <div className="mb-6 px-2"><CompanyBrand name={ws.current?.company.name ?? "LawnOffice"} logoPath={ws.current?.company.logo_url} light /></div>
         {sideLinks}
         {companyBlock}
       </aside>
 
       <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b bg-forest px-4 md:hidden">
-        <Logo light />
-        <span className="max-w-[45%] truncate text-xs font-medium text-forest-foreground/70">{ws.current?.company.name}</span>
+        <CompanyBrand name={ws.current?.company.name ?? "LawnOffice"} logoPath={ws.current?.company.logo_url} light />
       </header>
 
       <main className="min-w-0 flex-1 px-4 pb-28 pt-5 sm:px-6 md:pb-10 md:pt-8 lg:px-10">
@@ -120,7 +120,7 @@ function AppLayout() {
         <Sheet>
           <SheetTrigger className="flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-semibold text-muted-foreground"><MoreHorizontal className="h-6 w-6" />More</SheetTrigger>
           <SheetContent side="right" className="flex w-72 flex-col border-0 bg-sidebar p-4">
-            <div className="mb-6 mt-2 px-2"><Logo light /></div>
+            <div className="mb-6 mt-2 px-2"><CompanyBrand name={ws.current?.company.name ?? "LawnOffice"} logoPath={ws.current?.company.logo_url} light /></div>
             {sideLinks}
             {companyBlock}
           </SheetContent>

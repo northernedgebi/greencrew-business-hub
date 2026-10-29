@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-// Logos live in a private bucket under <companyId>/; only that company's members can read them.
+// Private bucket; current branding logos are readable for customer signup. Historical files stay member-only.
 export async function uploadCompanyLogo(companyId: string, file: File) {
   if (file.size > 2 * 1024 * 1024) throw new Error("Logo must be 2 MB or smaller");
   if (!file.type.startsWith("image/")) throw new Error("Logo must be an image");
@@ -19,6 +19,11 @@ export function useCompanyLogo(path: string | null | undefined) {
     queryKey: ["company-logo", path],
     enabled: !!path,
     staleTime: 50 * 60 * 1000,
-    queryFn: async () => (await supabase.storage.from("company-logos").createSignedUrl(path!, 3600)).data?.signedUrl ?? null,
+    queryFn: async () => {
+      if (!path) return null;
+      const { data, error } = await supabase.storage.from("company-logos").createSignedUrl(path, 3600);
+      if (error) throw error;
+      return data?.signedUrl ?? null;
+    },
   });
 }
