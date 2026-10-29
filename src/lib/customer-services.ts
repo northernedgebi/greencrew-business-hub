@@ -25,7 +25,7 @@ export function availableCrewVisits<T extends CrewVisit>(visits: T[], customerId
   return visits.filter(v => v.id !== excludeId && v.customer_id === customerId && v.property_id === propertyId && !!v.crew_id && v.scheduled_date >= today && (!v.status || v.status === "scheduled" || v.status === "in_progress"));
 }
 export type ServiceFrequency = "once" | "weekly" | "biweekly" | "monthly" | "yearly" | "custom" | "as_needed";
-export type ServiceForm = { title: string; kind: string; frequency: ServiceFrequency; date: string; price: string; times_per_year: string; crew_id: string; notes: string; season_start: string; season_end: string };
+export type ServiceForm = { title: string; kind: string; frequency: ServiceFrequency; date: string; price: string; times_per_year: string; crew_id: string; notes: string; season_start: string; season_end: string; pricing_mode?: "flat" | "hourly"; minimum_hours?: string };
 export const newServiceForm = (): ServiceForm => ({ title: DEFAULT_SERVICE, kind: "lawn", frequency: "weekly", date: localDate(new Date()), price: "", times_per_year: "4", crew_id: "", notes: "", season_start: "", season_end: "" });
 export function seasonLabel(start: string | null | undefined, end: string | null | undefined) {
   if (!start || !end) return null;
@@ -35,7 +35,7 @@ export function seasonLabel(start: string | null | undefined, end: string | null
 export const FREQUENCIES: { value: ServiceFrequency; label: string }[] = [{ value: "once", label: "One time" }, { value: "weekly", label: "Weekly" }, { value: "biweekly", label: "Every 2 weeks" }, { value: "monthly", label: "Monthly" }, { value: "yearly", label: "Yearly" }, { value: "custom", label: "Custom (times per year)" }, { value: "as_needed", label: "As needed (each storm)" }];
 export function servicePayload(service: ServiceForm, timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone) {
   const seasonal = service.frequency !== "once" && service.season_start && service.season_end;
-  return { ...service, price: Number(service.price), timezone: timeZone, times_per_year: service.frequency === "custom" ? Number(service.times_per_year) : null, season_start: seasonal ? service.season_start.slice(5) : null, season_end: seasonal ? service.season_end.slice(5) : null };
+  return { ...service, pricing_mode: isWinterService(service.kind) ? service.pricing_mode ?? "flat" : "flat", minimum_hours: isWinterService(service.kind) && service.pricing_mode === "hourly" && service.minimum_hours ? Number(service.minimum_hours) : null, price: Number(service.price), timezone: timeZone, times_per_year: service.frequency === "custom" ? Number(service.times_per_year) : null, season_start: seasonal ? service.season_start.slice(5) : null, season_end: seasonal ? service.season_end.slice(5) : null };
 }
 export function monthlyServiceValue(price: number, frequency: Exclude<ServiceFrequency, "once">, timesPerYear?: number | null) {
   return price * (frequency === "weekly" ? 4.33 : frequency === "biweekly" ? 2.17 : frequency === "yearly" ? 1 / 12 : frequency === "custom" ? (timesPerYear ?? 0) / 12 : frequency === "as_needed" ? 0 : 1);
@@ -50,33 +50,33 @@ export function nearbyServices(jobs: NearbyJob[], today: string) {
   });
 }
 
-export type ServicePlanForSummary = { service: string; price: number; frequency: ServiceFrequency; times_per_year?: number | null; active: boolean };
-export type ServiceSummaryRow = { name: string; frequency: ServiceFrequency; prices: number[]; count: number };
+export type ServicePlanForSummary = { service: string; price: number; frequency: ServiceFrequency; times_per_year?: number | null; active: boolean; pricing_mode?: string };
+export type ServiceSummaryRow = { name: string; frequency: ServiceFrequency; prices: number[]; count: number; pricing_mode?: string };
 
 export function summarizeCustomerServices(plans: ServicePlanForSummary[], oneTime: { title: string; price: number }[] = []): ServiceSummaryRow[] {
   const rows = new Map<string, ServiceSummaryRow>();
-  const add = (name: string, frequency: ServiceFrequency, price: number) => {
-    const key = name.trim().toLowerCase();
+  const add = (name: string, frequency: ServiceFrequency, price: number, pricing_mode = "flat") => {
+    const key = `${name.trim().toLowerCase()}|${pricing_mode}`;
     if (!key) return;
-    const row = rows.get(key) ?? { name: name.trim(), frequency, prices: [], count: 0 };
+    const row = rows.get(key) ?? { name: name.trim(), frequency, prices: [], count: 0, pricing_mode };
     row.prices.push(price);
     row.count += 1;
     if (frequency !== "once") row.frequency = frequency;
     rows.set(key, row);
   };
-  for (const p of plans) add(p.service, p.frequency, Number(p.price));
+  for (const p of plans) add(p.service, p.frequency, Number(p.price), p.pricing_mode);
   for (const v of oneTime) add(v.title, "once", Number(v.price));
   return [...rows.values()];
 }
 
 export function customerMonthlyValue(plans: ServicePlanForSummary[]) {
-  return plans.reduce((sum, p) => sum + (p.frequency === "once" || p.frequency === "as_needed" ? 0 : monthlyServiceValue(Number(p.price), p.frequency)), 0);
+  return plans.reduce((sum, p) => sum + (p.pricing_mode === "hourly" || p.frequency === "once" || p.frequency === "as_needed" ? 0 : monthlyServiceValue(Number(p.price), p.frequency, p.times_per_year)), 0);
 }
 
 export type YearTotals = { yearlyServices: number; paidThisYear: number; leftForYear: number };
 
 export function customerYearTotals(plans: ServicePlanForSummary[], oneTimeThisYear: { price: number }[], paymentsThisYear: { amount: number }[]): YearTotals {
-  const yearlyServices = plans.reduce((sum, p) => sum + (!p.active || p.frequency === "once" || p.frequency === "as_needed" ? 0 : monthlyServiceValue(Number(p.price), p.frequency, p.times_per_year) * 12), 0)
+  const yearlyServices = plans.reduce((sum, p) => sum + (!p.active || p.pricing_mode === "hourly" || p.frequency === "once" || p.frequency === "as_needed" ? 0 : monthlyServiceValue(Number(p.price), p.frequency, p.times_per_year) * 12), 0)
     + oneTimeThisYear.reduce((sum, j) => sum + Number(j.price), 0);
   const paidThisYear = paymentsThisYear.reduce((sum, p) => sum + Number(p.amount), 0);
   return { yearlyServices, paidThisYear, leftForYear: Math.max(0, yearlyServices - paidThisYear) };

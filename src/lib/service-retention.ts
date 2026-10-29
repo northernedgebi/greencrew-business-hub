@@ -1,0 +1,1 @@
+export function canRemoveVisit(status: string, invoiceId: string | null) { return status !== "completed" && invoiceId === null; }

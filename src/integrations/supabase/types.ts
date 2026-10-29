@@ -266,6 +266,67 @@ export type Database = {
           },
         ]
       }
+      customer_history: {
+        Row: {
+          action: string
+          actor_id: string | null
+          after_values: Json | null
+          before_values: Json | null
+          company_id: string
+          created_at: string
+          customer_id: string
+          effective_date: string
+          id: string
+          summary: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          after_values?: Json | null
+          before_values?: Json | null
+          company_id: string
+          created_at?: string
+          customer_id: string
+          effective_date?: string
+          id?: string
+          summary: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          after_values?: Json | null
+          before_values?: Json | null
+          company_id?: string
+          created_at?: string
+          customer_id?: string
+          effective_date?: string
+          id?: string
+          summary?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_history_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_history_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_history_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           billing_mode: string
@@ -274,6 +335,7 @@ export type Database = {
           customer_type: string
           ein: string | null
           email: string | null
+          history_account_status: string
           id: string
           inactive_reason: string | null
           name: string
@@ -290,6 +352,7 @@ export type Database = {
           customer_type?: string
           ein?: string | null
           email?: string | null
+          history_account_status?: string
           id?: string
           inactive_reason?: string | null
           name: string
@@ -306,6 +369,7 @@ export type Database = {
           customer_type?: string
           ein?: string | null
           email?: string | null
+          history_account_status?: string
           id?: string
           inactive_reason?: string | null
           name?: string
@@ -572,10 +636,13 @@ export type Database = {
           created_at: string
           crew_id: string | null
           customer_id: string
+          hourly_rate: number | null
           id: string
           invoice_id: string | null
+          minimum_hours: number | null
           notes: string | null
           price: number
+          pricing_mode: string
           property_id: string | null
           recurrence_date: string | null
           recurring_plan_id: string | null
@@ -588,6 +655,7 @@ export type Database = {
           start_time: string | null
           status: Database["public"]["Enums"]["job_status"]
           title: string
+          worked_hours: number | null
         }
         Insert: {
           company_id: string
@@ -595,10 +663,13 @@ export type Database = {
           created_at?: string
           crew_id?: string | null
           customer_id: string
+          hourly_rate?: number | null
           id?: string
           invoice_id?: string | null
+          minimum_hours?: number | null
           notes?: string | null
           price?: number
+          pricing_mode?: string
           property_id?: string | null
           recurrence_date?: string | null
           recurring_plan_id?: string | null
@@ -611,6 +682,7 @@ export type Database = {
           start_time?: string | null
           status?: Database["public"]["Enums"]["job_status"]
           title: string
+          worked_hours?: number | null
         }
         Update: {
           company_id?: string
@@ -618,10 +690,13 @@ export type Database = {
           created_at?: string
           crew_id?: string | null
           customer_id?: string
+          hourly_rate?: number | null
           id?: string
           invoice_id?: string | null
+          minimum_hours?: number | null
           notes?: string | null
           price?: number
+          pricing_mode?: string
           property_id?: string | null
           recurrence_date?: string | null
           recurring_plan_id?: string | null
@@ -634,6 +709,7 @@ export type Database = {
           start_time?: string | null
           status?: Database["public"]["Enums"]["job_status"]
           title?: string
+          worked_hours?: number | null
         }
         Relationships: [
           {
@@ -884,8 +960,10 @@ export type Database = {
           end_date: string | null
           frequency: Database["public"]["Enums"]["recurrence"]
           id: string
+          minimum_hours: number | null
           notes: string | null
           price: number
+          pricing_mode: string
           property_id: string
           season_end: string | null
           season_start: string | null
@@ -903,8 +981,10 @@ export type Database = {
           end_date?: string | null
           frequency?: Database["public"]["Enums"]["recurrence"]
           id?: string
+          minimum_hours?: number | null
           notes?: string | null
           price?: number
+          pricing_mode?: string
           property_id: string
           season_end?: string | null
           season_start?: string | null
@@ -922,8 +1002,10 @@ export type Database = {
           end_date?: string | null
           frequency?: Database["public"]["Enums"]["recurrence"]
           id?: string
+          minimum_hours?: number | null
           notes?: string | null
           price?: number
+          pricing_mode?: string
           property_id?: string
           season_end?: string | null
           season_start?: string | null
@@ -1210,6 +1292,11 @@ export type Database = {
         Returns: undefined
       }
       recalc_invoice: { Args: { _id: string }; Returns: undefined }
+      refresh_customer_history_state: {
+        Args: { _customer: string }
+        Returns: undefined
+      }
+      sync_customer_history: { Args: { _customer: string }; Returns: undefined }
     }
     Enums: {
       app_role: "super_admin"
