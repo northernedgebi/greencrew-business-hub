@@ -62,9 +62,9 @@ export function CustomerServices({ customerId, properties, winterOnly = false }:
     {q.data && !!summary.length && <div className="mb-4 rounded-lg border bg-muted/40 p-4">
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Work this customer gets done</p>
       <div className="grid gap-2 sm:grid-cols-2">
-        {summary.map(s => <div key={s.name} className="flex items-baseline justify-between gap-3 rounded-md border bg-background px-3 py-2">
+        {summary.map(s => <div key={`${s.name}-${s.pricing_mode}`} className="flex items-baseline justify-between gap-3 rounded-md border bg-background px-3 py-2">
           <span className="font-bold">{s.name}</span>
-          <span className="text-sm text-muted-foreground">{FREQUENCIES.find(f => f.value === s.frequency)?.label} · {s.prices.every(p => p === s.prices[0]) ? money(s.prices[0]) : `${money(Math.min(...s.prices))}–${money(Math.max(...s.prices))}`}{s.count > 1 ? ` · ${s.count}x` : ""}</span>
+          <span className="text-sm text-muted-foreground">{FREQUENCIES.find(f => f.value === s.frequency)?.label} · {s.prices.every(p => p === s.prices[0]) ? money(s.prices[0]) : `${money(Math.min(...s.prices))}–${money(Math.max(...s.prices))}`}{s.pricing_mode === "hourly" ? " / hr" : ""}{s.count > 1 ? ` · ${s.count}x` : ""}</span>
         </div>)}
       </div>
       {monthly > 0 && <p className="mt-2 text-sm text-muted-foreground">About {money(monthly)} / month across all services</p>}

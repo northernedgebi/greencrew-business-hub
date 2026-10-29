@@ -40,7 +40,7 @@ function CustomerDetail() {
         supabase.from("invoices").select("id, number, total, amount_paid, status, issue_date").eq("customer_id", id).order("issue_date", { ascending: false }),
         supabase.from("messages").select("id, body, created_at, channel").eq("customer_id", id).order("created_at", { ascending: false }),
         supabase.rpc("customer_account_state", { _customer: id }),
-        supabase.from("recurring_plans").select("service, frequency, price, times_per_year, active").eq("company_id", companyId).eq("customer_id", id).eq("active", true),
+        supabase.from("recurring_plans").select("service, frequency, price, pricing_mode, times_per_year, active").eq("company_id", companyId).eq("customer_id", id).eq("active", true),
         supabase.from("jobs").select("price").eq("company_id", companyId).eq("customer_id", id).is("recurring_plan_id", null).neq("status", "cancelled").gte("scheduled_date", yearStart),
         supabase.from("jobs").select("id, title, scheduled_date, price, property_id, property:properties(address)").eq("company_id", companyId).eq("customer_id", id).eq("status", "completed").is("invoice_id", null).order("scheduled_date"),
       ]);
