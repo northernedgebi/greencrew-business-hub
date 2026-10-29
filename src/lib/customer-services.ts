@@ -50,33 +50,33 @@ export function nearbyServices(jobs: NearbyJob[], today: string) {
   });
 }
 
-export type ServicePlanForSummary = { service: string; price: number; frequency: ServiceFrequency; times_per_year?: number | null; active: boolean };
-export type ServiceSummaryRow = { name: string; frequency: ServiceFrequency; prices: number[]; count: number };
+export type ServicePlanForSummary = { service: string; price: number; frequency: ServiceFrequency; times_per_year?: number | null; active: boolean; pricing_mode?: string };
+export type ServiceSummaryRow = { name: string; frequency: ServiceFrequency; prices: number[]; count: number; pricing_mode?: string };
 
 export function summarizeCustomerServices(plans: ServicePlanForSummary[], oneTime: { title: string; price: number }[] = []): ServiceSummaryRow[] {
   const rows = new Map<string, ServiceSummaryRow>();
-  const add = (name: string, frequency: ServiceFrequency, price: number) => {
-    const key = name.trim().toLowerCase();
+  const add = (name: string, frequency: ServiceFrequency, price: number, pricing_mode = "flat") => {
+    const key = `${name.trim().toLowerCase()}|${pricing_mode}`;
     if (!key) return;
-    const row = rows.get(key) ?? { name: name.trim(), frequency, prices: [], count: 0 };
+    const row = rows.get(key) ?? { name: name.trim(), frequency, prices: [], count: 0, pricing_mode };
     row.prices.push(price);
     row.count += 1;
     if (frequency !== "once") row.frequency = frequency;
     rows.set(key, row);
   };
-  for (const p of plans) add(p.service, p.frequency, Number(p.price));
+  for (const p of plans) add(p.service, p.frequency, Number(p.price), p.pricing_mode);
   for (const v of oneTime) add(v.title, "once", Number(v.price));
   return [...rows.values()];
 }
 
 export function customerMonthlyValue(plans: ServicePlanForSummary[]) {
-  return plans.reduce((sum, p) => sum + (p.frequency === "once" || p.frequency === "as_needed" ? 0 : monthlyServiceValue(Number(p.price), p.frequency)), 0);
+  return plans.reduce((sum, p) => sum + (p.pricing_mode === "hourly" || p.frequency === "once" || p.frequency === "as_needed" ? 0 : monthlyServiceValue(Number(p.price), p.frequency, p.times_per_year)), 0);
 }
 
 export type YearTotals = { yearlyServices: number; paidThisYear: number; leftForYear: number };
 
 export function customerYearTotals(plans: ServicePlanForSummary[], oneTimeThisYear: { price: number }[], paymentsThisYear: { amount: number }[]): YearTotals {
-  const yearlyServices = plans.reduce((sum, p) => sum + (!p.active || p.frequency === "once" || p.frequency === "as_needed" ? 0 : monthlyServiceValue(Number(p.price), p.frequency, p.times_per_year) * 12), 0)
+  const yearlyServices = plans.reduce((sum, p) => sum + (!p.active || p.pricing_mode === "hourly" || p.frequency === "once" || p.frequency === "as_needed" ? 0 : monthlyServiceValue(Number(p.price), p.frequency, p.times_per_year) * 12), 0)
     + oneTimeThisYear.reduce((sum, j) => sum + Number(j.price), 0);
   const paidThisYear = paymentsThisYear.reduce((sum, p) => sum + Number(p.amount), 0);
   return { yearlyServices, paidThisYear, leftForYear: Math.max(0, yearlyServices - paidThisYear) };
