@@ -7,7 +7,7 @@ import type { CrewAccess } from "@/lib/crew-access";
 export type Membership = CrewAccess & {
   company_id: string;
   role: CompanyRole;
-  company: { id: string; name: string; plan: string; subscription_status: string; trial_ends_at: string };
+  company: { id: string; name: string; logo_url: string | null; plan: string; subscription_status: string; trial_ends_at: string };
 };
 
 type Ctx = {
@@ -56,7 +56,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       const [m, r, c] = await Promise.all([
         supabase
           .from("company_members")
-          .select("company_id, role, crew_id, schedule_visible_from, schedule_visible_until, company:companies(id, name, plan, subscription_status, trial_ends_at)")
+          .select("company_id, role, crew_id, schedule_visible_from, schedule_visible_until, company:companies(id, name, logo_url, plan, subscription_status, trial_ends_at)")
           .eq("user_id", user.id),
         supabase.from("user_roles").select("role").eq("user_id", user.id),
         supabase.from("customers").select("id").eq("portal_user_id", user.id).limit(1),

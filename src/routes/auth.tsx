@@ -7,13 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/marketing";
+import { useQuery } from "@tanstack/react-query";
+import { CompanyBrand } from "@/components/company-brand";
 
-type Search = { mode?: "signup" | "signin"; plan?: string | undefined };
+type Search = { mode?: "signup" | "signin"; plan?: string | undefined; company?: string | undefined };
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>): Search => ({
     mode: s["mode"] === "signup" ? "signup" : "signin",
     plan: typeof s["plan"] === "string" ? s["plan"] : undefined,
+    company: typeof s["company"] === "string" && /^[0-9a-f-]{36}$/i.test(s["company"]) ? s["company"] : undefined,
   }),
   head: () => ({
     meta: [
@@ -29,7 +32,12 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
-  const { mode, plan } = Route.useSearch();
+  const { mode, plan, company } = Route.useSearch();
+  const brand = useQuery({ queryKey: ["signup-brand", company], enabled: !!company, queryFn: async () => {
+    if (!company) return null;
+    const { data, error } = await supabase.rpc("company_branding", { _company: company });
+    if (error) throw error; return data?.[0] ?? null;
+  } });
   const navigate = useNavigate();
   const isSignup = mode === "signup";
   const [loading, setLoading] = useState(false);
@@ -78,7 +86,7 @@ function AuthPage() {
   return (
     <div className="grid min-h-screen place-items-center bg-hero px-4 py-10">
       <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-2xl sm:p-8">
-        <Link to="/"><Logo /></Link>
+        {brand.data ? <CompanyBrand name={brand.data.name} logoPath={brand.data.logo_url} /> : <Link to="/"><Logo /></Link>}
         {sent ? (
           <div className="mt-8">
             <h1 className="text-2xl font-bold">Check your email</h1>
@@ -87,7 +95,7 @@ function AuthPage() {
         ) : (
           <>
             <h1 className="mt-8 text-2xl font-bold">{isSignup ? "Create your account" : "Welcome back"}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">{isSignup ? "Start your 14-day free trial." : "Sign in to your workspace."}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{company ? "See your schedule, bills and service requests." : isSignup ? "Start your 14-day free trial." : "Sign in to your workspace."}</p>
             <Button type="button" variant="outline" size="lg" className="mt-6 w-full" onClick={google}>Continue with Google</Button>
             <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground"><span className="h-px flex-1 bg-border" />or<span className="h-px flex-1 bg-border" /></div>
             <form onSubmit={submit} className="space-y-4">
@@ -103,7 +111,7 @@ function AuthPage() {
             </form>
             <p className="mt-6 text-center text-sm text-muted-foreground">
               {isSignup ? "Already have an account? " : "New to LawnOffice? "}
-              <Link to="/auth" search={{ mode: isSignup ? "signin" : "signup" }} className="font-semibold text-primary">{isSignup ? "Sign in" : "Create one"}</Link>
+              <Link to="/auth" search={{ mode: isSignup ? "signin" : "signup", company }} className="font-semibold text-primary">{isSignup ? "Sign in" : "Create one"}</Link>
             </p>
           </>
         )}

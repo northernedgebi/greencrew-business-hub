@@ -1249,6 +1249,14 @@ export type Database = {
         Args: { _lawn: string; _service: string }
         Returns: undefined
       }
+      company_branding: {
+        Args: { _company: string }
+        Returns: {
+          id: string
+          logo_url: string
+          name: string
+        }[]
+      }
       create_company: {
         Args: { _name: string; _phone?: string; _plan?: string }
         Returns: string
@@ -1303,6 +1311,7 @@ export type Database = {
         Args: { _date: string; _end: string; _start: string }
         Returns: boolean
       }
+      is_current_company_logo: { Args: { _path: string }; Returns: boolean }
       is_manager: { Args: { _company: string }; Returns: boolean }
       is_member: { Args: { _company: string }; Returns: boolean }
       is_member_any: { Args: { _company: string }; Returns: boolean }

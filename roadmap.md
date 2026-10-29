@@ -1,4 +1,5 @@
 # LawnOffice enhancement roadmap
+- [x] Company logos in workspace and printed invoices, customer signup invitations, and account-scoped portal; verified signed-out logo rendering and linked-customer branding.
 - [x] Printable/PDF invoices and itemized email-app sharing; monthly dates, fixed fees, included-service snapshots and daily draft generation. Verified saved $500 fee, duplicate prevention, due dates and phone/print views; card processing intentionally disconnected.
 - [ ] Direct invoice email sending awaits the owner's verified sender domain; email-app sharing works meanwhile.
 - [x] Snow flat/hourly pricing, optional minimum and crew time entry; verified saved $80 charge for 0.5 hours with a 1-hour minimum.
