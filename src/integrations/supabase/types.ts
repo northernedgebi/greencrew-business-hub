@@ -572,10 +572,13 @@ export type Database = {
           created_at: string
           crew_id: string | null
           customer_id: string
+          hourly_rate: number | null
           id: string
           invoice_id: string | null
+          minimum_hours: number | null
           notes: string | null
           price: number
+          pricing_mode: string
           property_id: string | null
           recurrence_date: string | null
           recurring_plan_id: string | null
@@ -588,6 +591,7 @@ export type Database = {
           start_time: string | null
           status: Database["public"]["Enums"]["job_status"]
           title: string
+          worked_hours: number | null
         }
         Insert: {
           company_id: string
@@ -595,10 +599,13 @@ export type Database = {
           created_at?: string
           crew_id?: string | null
           customer_id: string
+          hourly_rate?: number | null
           id?: string
           invoice_id?: string | null
+          minimum_hours?: number | null
           notes?: string | null
           price?: number
+          pricing_mode?: string
           property_id?: string | null
           recurrence_date?: string | null
           recurring_plan_id?: string | null
@@ -611,6 +618,7 @@ export type Database = {
           start_time?: string | null
           status?: Database["public"]["Enums"]["job_status"]
           title: string
+          worked_hours?: number | null
         }
         Update: {
           company_id?: string
@@ -618,10 +626,13 @@ export type Database = {
           created_at?: string
           crew_id?: string | null
           customer_id?: string
+          hourly_rate?: number | null
           id?: string
           invoice_id?: string | null
+          minimum_hours?: number | null
           notes?: string | null
           price?: number
+          pricing_mode?: string
           property_id?: string | null
           recurrence_date?: string | null
           recurring_plan_id?: string | null
@@ -634,6 +645,7 @@ export type Database = {
           start_time?: string | null
           status?: Database["public"]["Enums"]["job_status"]
           title?: string
+          worked_hours?: number | null
         }
         Relationships: [
           {
@@ -884,8 +896,10 @@ export type Database = {
           end_date: string | null
           frequency: Database["public"]["Enums"]["recurrence"]
           id: string
+          minimum_hours: number | null
           notes: string | null
           price: number
+          pricing_mode: string
           property_id: string
           season_end: string | null
           season_start: string | null
@@ -903,8 +917,10 @@ export type Database = {
           end_date?: string | null
           frequency?: Database["public"]["Enums"]["recurrence"]
           id?: string
+          minimum_hours?: number | null
           notes?: string | null
           price?: number
+          pricing_mode?: string
           property_id: string
           season_end?: string | null
           season_start?: string | null
@@ -922,8 +938,10 @@ export type Database = {
           end_date?: string | null
           frequency?: Database["public"]["Enums"]["recurrence"]
           id?: string
+          minimum_hours?: number | null
           notes?: string | null
           price?: number
+          pricing_mode?: string
           property_id?: string
           season_end?: string | null
           season_start?: string | null
