@@ -1,4 +1,5 @@
 # LawnOffice enhancement roadmap
+- [ ] Printable invoices and email sharing; monthly billing dates and fixed monthly amounts; card-payment readiness without activation.
 - [x] Snow flat/hourly pricing, optional minimum and crew time entry; verified saved $80 charge for 0.5 hours with a 1-hour minimum.
 - [x] Edit/add/remove customer services with retained completed charges and customer history; verified edits/removal and activation changes persist after reload. Billing transitions reconcile on invoice changes and history reads.
 - [x] Winter services section, onboarding service checkboxes, separate charges, and same-address crew scheduling; verified onboarding and both new/existing shared crew tasks through the signed-in app.
