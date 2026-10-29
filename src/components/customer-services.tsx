@@ -46,7 +46,8 @@ export function CustomerServices({ customerId, properties, winterOnly = false }:
     if (f.frequency === "custom") { const n = Number(f.times_per_year); if (!Number.isInteger(n) || n < 2 || n > 51) throw new Error("Choose how many times a year, between 2 and 51"); }
     if ((f.season_start && !f.season_end) || (!f.season_start && f.season_end)) throw new Error("Choose both a season start and season end, or neither");
     if (planId && f.frequency !== "once") {
-      const { error } = await supabase.from("recurring_plans").update({ property_id: property, service: f.title, service_kind: f.kind, frequency: f.frequency, start_date: f.date, price: Number(f.price), crew_id: f.crew_id || null, notes: f.notes || null, times_per_year: f.frequency === "custom" ? Number(f.times_per_year) : null, season_start: f.season_start ? f.season_start.slice(5) : null, season_end: f.season_end ? f.season_end.slice(5) : null }).eq("id", planId).eq("company_id", companyId).eq("customer_id", customerId).select("id").single();
+      const pricing = servicePayload(f);
+      const { error } = await supabase.from("recurring_plans").update({ pricing_mode: pricing.pricing_mode, minimum_hours: pricing.minimum_hours, property_id: property, service: f.title, service_kind: f.kind, frequency: f.frequency, start_date: f.date, price: Number(f.price), crew_id: f.crew_id || null, notes: f.notes || null, times_per_year: f.frequency === "custom" ? Number(f.times_per_year) : null, season_start: f.season_start ? f.season_start.slice(5) : null, season_end: f.season_end ? f.season_end.slice(5) : null }).eq("id", planId).eq("company_id", companyId).eq("customer_id", customerId).select("id").single();
       if (error) throw error;
     } else {
       if (planId) throw new Error("Add a separate one-time service instead");
