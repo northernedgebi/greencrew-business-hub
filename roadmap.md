@@ -1,5 +1,5 @@
 # LawnOffice enhancement roadmap
-- [ ] Professional site typography and year-round front-page imagery with schedule, job tracking and billing examples.
+- [x] Professional site typography and year-round front-page imagery with schedule, job tracking and billing examples; checked images, signup navigation and small-screen layout.
 - [x] Company logos in workspace and printed invoices, customer signup invitations, and account-scoped portal; verified signed-out logo rendering and linked-customer branding.
 - [x] Printable/PDF invoices and itemized email-app sharing; monthly dates, fixed fees, included-service snapshots and daily draft generation. Verified saved $500 fee, duplicate prevention, due dates and phone/print views; card processing intentionally disconnected.
 - [ ] Direct invoice email sending awaits the owner's verified sender domain; email-app sharing works meanwhile.
