@@ -1,4 +1,5 @@
 import { SnowTimeEntry } from "@/components/snow-time-entry";
+import { canRemoveVisit } from "@/lib/service-retention";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -156,7 +157,7 @@ function Visits({ initialDay }: { initialDay?: string | undefined }) {
                 {(j.status === "scheduled" || j.status === "in_progress") && <Button size="sm" onClick={() => setStatus.mutate({ id: j.id, status: "completed" })}><Check />Complete</Button>}
                 {j.status !== "cancelled" && j.status !== "completed" && can(role, "jobs.manage") && <Button size="sm" variant="ghost" onClick={() => setStatus.mutate({ id: j.id, status: "cancelled" })}><X />Cancel</Button>}
                 {j.status === "completed" && !j.invoice_id && can(role, "billing.manage") && <Button size="sm" variant="outline" onClick={() => invoiceJob({ ...j, price: Number(j.price) })}><Receipt />Invoice</Button>}
-                {can(role, "jobs.manage") && <DeleteRecord table="jobs" id={j.id} name={j.title} description="This visit will be removed from the schedule and route. Invoice charges stay unchanged. If it belongs to an active recurring plan, filling the schedule may recreate that occurrence; cancel the visit instead to skip it permanently." />}
+                {can(role, "jobs.manage") && canRemoveVisit(j.status, j.invoice_id) && <DeleteRecord table="jobs" id={j.id} name={j.title} description="This visit will be removed from the schedule and route. Invoice charges stay unchanged. If it belongs to an active recurring plan, filling the schedule may recreate that occurrence; cancel the visit instead to skip it permanently." />}
               </div>
             </Card>
           ))}

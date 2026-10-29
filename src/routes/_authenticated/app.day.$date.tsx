@@ -1,4 +1,5 @@
 import { SnowTimeEntry } from "@/components/snow-time-entry";
+import { canRemoveVisit } from "@/lib/service-retention";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -115,7 +116,7 @@ function DayPage() {
                             {j.status === "scheduled" && <Button size="sm" variant="secondary" className="h-8 px-2" onClick={() => setStatus.mutate({ id: j.id, status: "in_progress" })}><Play />Start</Button>}
                             {(j.status === "scheduled" || j.status === "in_progress") && <Button size="sm" className="h-8 px-2" onClick={() => setStatus.mutate({ id: j.id, status: "completed" })}><Check />Done</Button>}
                             {j.status !== "cancelled" && j.status !== "completed" && <Button size="sm" variant="ghost" className="h-8 px-2" onClick={() => setStatus.mutate({ id: j.id, status: "cancelled" })}><X />Cancel</Button>}
-                            <DeleteRecord table="jobs" id={j.id} name={j.title} description="This visit leaves the schedule and route. Invoice charges stay. Active recurring plans may recreate deleted occurrences when filled; cancel instead to skip permanently." />
+                            {canRemoveVisit(j.status, j.invoice_id) && <DeleteRecord table="jobs" id={j.id} name={j.title} description="This visit leaves the schedule and route. Invoice charges stay. Active recurring plans may recreate deleted occurrences when filled; cancel instead to skip permanently." />}
                           </div>
                         )}
                       </div>
