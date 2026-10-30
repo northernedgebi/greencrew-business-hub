@@ -134,6 +134,7 @@ function Portal() {
           </>
         )}
       </main>
+      {company && <footer className="mx-auto max-w-3xl px-4 pt-4 sm:px-8"><Logo /></footer>}
       {moving && <MoveVisit visit={moving} busy={busy} onClose={() => setMoving(null)} onRequest={async (date, msg) => { if (await act(() => supabase.rpc("portal_request_reschedule", { _job: moving.id, _date: date, _message: msg }), "Request sent — the company will confirm")) setMoving(null); }} />}
     </div>
   );

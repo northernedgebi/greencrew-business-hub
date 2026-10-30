@@ -86,7 +86,8 @@ function AuthPage() {
   return (
     <div className="grid min-h-screen place-items-center bg-hero px-4 py-10">
       <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-2xl sm:p-8">
-        {brand.data ? <CompanyBrand name={brand.data.name} logoPath={brand.data.logo_url} /> : <Link to="/"><Logo /></Link>}
+        <Link to="/"><Logo /></Link>
+        {brand.data && <div className="mt-4 border-t pt-4"><CompanyBrand name={brand.data.name} logoPath={brand.data.logo_url} /></div>}
         {sent ? (
           <div className="mt-8">
             <h1 className="text-2xl font-bold">Check your email</h1>

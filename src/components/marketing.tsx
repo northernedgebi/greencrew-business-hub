@@ -1,16 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { Leaf } from "lucide-react";
+import logoAsset from "@/assets/billmyjobs-logo.png.asset.json";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 
-export function Logo({ light = false }: { light?: boolean }) {
+export function Logo({ light = false, className = "" }: { light?: boolean; className?: string }) {
   return (
-    <span className={`flex items-center gap-2 font-display text-xl font-extrabold ${light ? "text-forest-foreground" : "text-foreground"}`}>
-      <span className="grid h-8 w-8 place-items-center rounded-lg bg-lime text-lime-foreground">
-        <Leaf className="h-4 w-4" />
-      </span>
-      LawnOffice
-    </span>
+    <img src={logoAsset.url} alt="BillMyJobs.com — Track the work. Get paid." width={1844} height={768} className={`block w-36 max-w-full shrink-0 rounded-sm object-contain sm:w-44 ${light ? "bg-card" : ""} ${className}`} />
   );
 }
 
@@ -18,7 +13,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-30 border-b border-sidebar-border bg-forest/95 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+        <div className="mx-auto flex min-h-20 max-w-6xl items-center justify-between gap-3 px-4 py-2">
           <Link to="/"><Logo light /></Link>
           <nav className="flex items-center gap-1 sm:gap-3">
             <Link to="/pricing" className="hidden px-3 text-sm font-medium text-forest-foreground/80 hover:text-forest-foreground sm:block">Pricing</Link>
@@ -31,7 +26,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
       <footer className="border-t bg-forest py-10 text-forest-foreground/70">
         <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-4 px-4 sm:flex-row sm:items-center">
           <Logo light />
-          <p className="text-sm">© {new Date().getFullYear()} LawnOffice. Built for the people who keep yards green.</p>
+           <p className="text-sm">© {new Date().getFullYear()} BillMyJobs.com. Built for year-round property service businesses.</p>
         </div>
       </footer>
     </div>
