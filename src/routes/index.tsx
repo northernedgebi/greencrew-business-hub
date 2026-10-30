@@ -31,7 +31,7 @@ const FEATURES = [
 
 function Home() {
   return (
-    <MarketingShell hideHeaderLogo>
+    <MarketingShell>
       <section className="relative isolate overflow-hidden bg-forest text-forest-foreground">
         <img src={heroImg} alt="Lawn mowing, snow plowing, sprinkler maintenance, snow shoveling and landscape construction crews" width={1920} height={1024} fetchPriority="high" className="absolute inset-0 -z-20 h-full w-full object-cover" />
         <div className="absolute inset-0 -z-10 bg-hero-overlay" />
