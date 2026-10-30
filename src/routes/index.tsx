@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { CalendarDays, Users, Receipt, Route as RouteIcon, Repeat, Smartphone, ShieldCheck, BarChart3, ArrowRight, CheckCircle2 } from "lucide-react";
 import heroImg from "@/assets/year-round-services.jpg";
 import { Button } from "@/components/ui/button";
-import { MarketingShell, PricingGrid } from "@/components/marketing";
+import { Logo, MarketingShell, PricingGrid } from "@/components/marketing";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -35,13 +35,13 @@ function Home() {
       <section className="relative isolate overflow-hidden bg-forest text-forest-foreground">
         <img src={heroImg} alt="Lawn mowing, snow plowing, sprinkler maintenance, snow shoveling and landscape construction crews" width={1920} height={1024} fetchPriority="high" className="absolute inset-0 -z-20 h-full w-full object-cover" />
         <div className="absolute inset-0 -z-10 bg-hero-overlay" />
-        <div className="mx-auto flex min-h-[460px] max-w-6xl flex-col justify-end px-4 pb-10 pt-28 sm:min-h-[500px] sm:pb-12">
-          <div className="max-w-3xl">
+        <div className="mx-auto flex min-h-[460px] max-w-6xl flex-col items-center justify-center px-4 py-8 sm:min-h-[500px]">
+          <div className="w-full max-w-3xl text-center">
             <p className="mb-3 text-sm font-semibold text-lime">LAWN CARE · SNOW · IRRIGATION · CONSTRUCTION</p>
-            <h1 className="break-words text-4xl font-extrabold leading-tight sm:text-6xl">BillMyJobs.com</h1>
+            <h1 className="mx-auto w-full max-w-md"><Logo light className="!w-full" /><span className="sr-only">BillMyJobs.com</span></h1>
             <p className="mt-3 text-xl font-semibold sm:text-2xl">Your whole operation. Every service. Every season.</p>
-            <p className="mt-3 max-w-xl text-base text-forest-foreground/90 sm:text-lg">From mowing and sprinkler systems to snow plowing, shoveling and construction — keep customers, crews, schedules and billing together.</p>
-            <div className="mt-6 flex flex-wrap gap-3">
+            <p className="mx-auto mt-3 max-w-xl text-base text-forest-foreground/90 sm:text-lg">From mowing and sprinkler systems to snow plowing, shoveling and construction — keep customers, crews, schedules and billing together.</p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Button asChild variant="lime" size="lg"><Link to="/auth" search={{ mode: "signup" }}>Start your 14-day trial</Link></Button>
               <Button asChild variant="heroOutline" size="lg"><Link to="/pricing">See pricing</Link></Button>
             </div>
