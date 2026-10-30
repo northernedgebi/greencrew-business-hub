@@ -18,6 +18,7 @@
 - Disabling a company (subscription_status = suspended) is enforced in is_member/has_company_role so every RLS path locks out; only platform admins may change subscription status or trial dates (trigger).
 - Customer portal writes go only through security-definer portal_* RPCs; companies act on service_requests directly under office RLS.
 - Customer services reuse recurring_plans and jobs, distinguished by service_kind; atomic office-only RPCs create customers/services and combine individual visits so all schedule, route and billing views share persisted work.
+- Service package choices use the shared service form and persist their tier in the service title and editable scope in crew notes, so scheduling, history and billing reuse existing service records.
 - Winter services use the same service records and billing flow as landscaping; onboarding accepts a service array atomically, and shared-visit actions retain separate prices and recurrence identities while checking customer, property, company, crew, and local date.
 - Snow jobs snapshot service pricing, store total crew-work hours, and calculate billable prices in a database trigger after crew-field validation; invoiced pricing/time is immutable so all billing paths use the same protected charge.
 - Customer history is append-only under office/read-only RLS and written by record triggers; billing transitions are captured on invoice writes and reconciled on history reads with effective dates, while completed/billed visits cannot be deleted individually.

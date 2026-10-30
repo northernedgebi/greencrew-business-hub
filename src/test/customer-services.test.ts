@@ -30,7 +30,7 @@ describe("customer services", () => {
     ["fertilizers", "Fertilizers"],
     ["weeding", "Weeding"],
     ["fall_cleanup", "Fall cleanup"],
-    ["spring_cleanup", "Spring cleanup"],
+    ["spring_cleanup", "Spring cleanup — Basic"],
   ])("saves %s as separately priced additional work", (kind, title) => {
     expect(servicePayload({ ...categoryServiceForm(kind), price: "90", date: "2026-11-01" }, "America/New_York")).toMatchObject({ kind: "other", title, price: 90, date: "2026-11-01" });
   });
