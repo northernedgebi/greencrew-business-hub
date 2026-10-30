@@ -9,12 +9,12 @@ export function Logo({ light = false, className = "" }: { light?: boolean; class
   );
 }
 
-export function MarketingShell({ children }: { children: ReactNode }) {
+export function MarketingShell({ children, hideHeaderLogo = false }: { children: ReactNode; hideHeaderLogo?: boolean }) {
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-30 border-b border-sidebar-border bg-forest/95 backdrop-blur">
         <div className="mx-auto flex min-h-20 max-w-6xl items-center justify-between gap-3 px-4 py-2">
-          <Link to="/"><Logo light /></Link>
+          {hideHeaderLogo ? <span /> : <Link to="/"><Logo light /></Link>}
           <nav className="flex items-center gap-1 sm:gap-3">
             <Link to="/pricing" className="hidden px-3 text-sm font-medium text-forest-foreground/80 hover:text-forest-foreground sm:block">Pricing</Link>
             <Link to="/auth" className="px-3 text-sm font-medium text-forest-foreground/80 hover:text-forest-foreground">Log in</Link>
