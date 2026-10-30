@@ -1,4 +1,5 @@
 import { SnowTimeEntry } from "@/components/snow-time-entry";
+import { SnowReviewQueue } from "@/components/snow-review-queue";
 import { canRemoveVisit } from "@/lib/service-retention";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -47,6 +48,7 @@ function Schedule() {
           <Button variant={tab === "recurring" ? "default" : "outline"} onClick={() => setTab("recurring")}>Recurring plans</Button>
         </div>
       )}
+      {showTabs && <SnowReviewQueue />}
       {showTabs && <NearbyServiceSuggestions />}
       {(!showTabs || tab === "visits") && <Visits key={openDay ?? "today"} initialDay={openDay} />}
       {showTabs && tab === "month" && <MonthCalendar onOpenDay={(d) => navigate({ to: "/app/day/$date", params: { date: d } })} />}
