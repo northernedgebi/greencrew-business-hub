@@ -8,6 +8,7 @@ import { money, useWorkspace } from "@/lib/workspace";
 import { Card, Empty, PageHeader, Spinner, StatusBadge } from "@/components/app-ui";
 import { Button } from "@/components/ui/button";
 import { useCustomerOptions } from "./app.schedule";
+import { SnowReviewQueue } from "@/components/snow-review-queue";
 
 export const Route = createFileRoute("/_authenticated/app/invoices/")({ head: () => ({ meta: [{ title: "Invoices | LawnOffice" }, { name: "description", content: "Track landscaping invoices, outstanding balances and payments." }, { property: "og:title", content: "Invoices | LawnOffice" }, { property: "og:description", content: "Track landscaping invoices, outstanding balances and payments." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }), component: Invoices });
 
@@ -42,6 +43,7 @@ function Invoices() {
           </select>
           <Button onClick={create}><Plus />New</Button>
         </div>} />
+      <SnowReviewQueue />
       <div className="mb-4 flex gap-2 overflow-x-auto">
         {FILTERS.map((f) => <button key={f} onClick={() => setFilter(f)} className={`h-9 shrink-0 rounded-full border px-4 text-sm font-medium capitalize ${filter === f ? "border-primary bg-secondary" : "bg-card"}`}>{f}</button>)}
       </div>
