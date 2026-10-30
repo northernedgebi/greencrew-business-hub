@@ -1,5 +1,5 @@
 # LawnOffice enhancement roadmap
-- [ ] Add the supplied BillMyJobs logo to the homepage and shared software pages, preserve company branding, and verify logo rendering.
+- [x] Add the supplied BillMyJobs logo to the homepage and shared software pages, preserving company branding; verified homepage and signed-in logo rendering with no phone-width overflow.
 - [x] Professional site typography and year-round front-page imagery with schedule, job tracking and billing examples; checked images, signup navigation and small-screen layout.
 - [x] Company logos in workspace and printed invoices, customer signup invitations, and account-scoped portal; verified signed-out logo rendering and linked-customer branding.
 - [x] Printable/PDF invoices and itemized email-app sharing; monthly dates, fixed fees, included-service snapshots and daily draft generation. Verified saved $500 fee, duplicate prevention, due dates and phone/print views; card processing intentionally disconnected.
