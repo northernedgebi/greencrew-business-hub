@@ -17,14 +17,29 @@ export const SERVICE_CATEGORIES = [
   { value: "other", label: "Additional service" },
 ] as const;
 export const isWinterService = (kind: string) => ["snow_plowing", "snow_removal", "shoveling"].includes(kind);
+export const SPRING_PACKAGES = [
+  { value: "basic", label: "Basic", includes: "Leaf and loose debris removal; lawn and walkway cleanup; debris haul-away." },
+  { value: "medium", label: "Medium", includes: "Basic cleanup, plus garden bed cleanup, weeding, and bush trimming." },
+  { value: "advanced", label: "Advanced", includes: "Medium cleanup, plus bed edging, mulch installation, and spring fertilizer application." },
+] as const;
+export function springPackageFromTitle(title: string) {
+  return SPRING_PACKAGES.find(p => title.trim().toLowerCase() === `spring cleanup — ${p.label}`.toLowerCase());
+}
+export function selectSpringPackage(service: ServiceForm, tier: string): ServiceForm {
+  const selected = SPRING_PACKAGES.find(p => p.value === tier);
+  if (!selected) return service;
+  return { ...service, kind: "spring_cleanup", title: `Spring cleanup — ${selected.label}`, notes: selected.includes };
+}
 export function serviceKindFromTitle(title: string) {
+  if (/^spring cleanup(?:\s|$)/i.test(title.trim())) return "spring_cleanup";
   if (/shovel/i.test(title)) return "shoveling";
   if (/snow.*plow|plow/i.test(title)) return "snow_plowing";
   if (/snow/i.test(title)) return "snow_removal";
   return /mow|lawn|grass|cut/i.test(title) ? "lawn" : "other";
 }
 export function categoryServiceForm(kind: string): ServiceForm {
-  return { ...newServiceForm(), kind, title: SERVICE_CATEGORIES.find(c => c.value === kind)?.label ?? "", frequency: kind === "lawn" ? "weekly" : isWinterService(kind) ? "as_needed" : "once" };
+  const form: ServiceForm = { ...newServiceForm(), kind, title: SERVICE_CATEGORIES.find(c => c.value === kind)?.label ?? "", frequency: kind === "lawn" ? "weekly" : isWinterService(kind) ? "as_needed" : "once" };
+  return kind === "spring_cleanup" ? selectSpringPackage(form, "basic") : form;
 }
 export type CrewVisit = { id: string; customer_id: string; property_id: string | null; crew_id: string | null; scheduled_date: string; status?: string };
 export function availableCrewVisits<T extends CrewVisit>(visits: T[], customerId: string, propertyId: string, today: string, excludeId?: string) {
