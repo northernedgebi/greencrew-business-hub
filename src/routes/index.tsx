@@ -9,9 +9,9 @@ export const Route = createFileRoute("/")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "LawnOffice — Year-round property service management" },
+      { title: "BillMyJobs.com — Year-round property service management" },
       { name: "description", content: "Manage landscaping, snow plowing, sprinklers, shoveling and construction work with crew scheduling, job tracking and billing in one workspace." },
-      { property: "og:title", content: "LawnOffice — Year-round property service management" },
+      { property: "og:title", content: "BillMyJobs.com — Year-round property service management" },
       { property: "og:description", content: "One workspace for your customers, year-round services, crew schedules, job progress and invoices." },
     ],
   }),
@@ -38,7 +38,7 @@ function Home() {
         <div className="mx-auto flex min-h-[460px] max-w-6xl flex-col justify-end px-4 pb-10 pt-28 sm:min-h-[500px] sm:pb-12">
           <div className="max-w-3xl">
             <p className="mb-3 text-sm font-semibold text-lime">LAWN CARE · SNOW · IRRIGATION · CONSTRUCTION</p>
-            <h1 className="text-4xl font-extrabold leading-tight sm:text-6xl">LawnOffice</h1>
+            <h1 className="break-words text-4xl font-extrabold leading-tight sm:text-6xl">BillMyJobs.com</h1>
             <p className="mt-3 text-xl font-semibold sm:text-2xl">Your whole operation. Every service. Every season.</p>
             <p className="mt-3 max-w-xl text-base text-forest-foreground/90 sm:text-lg">From mowing and sprinkler systems to snow plowing, shoveling and construction — keep customers, crews, schedules and billing together.</p>
             <div className="mt-6 flex flex-wrap gap-3">

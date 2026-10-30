@@ -32,3 +32,4 @@
 - Customer service forms check normalized names per property against plans and upcoming standalone work, excluding the edited record and generated occurrences; refetch before saving so stale lists cannot silently add duplicates.
 - Reuse CompanyBrand with private signed storage logos; public company_branding exposes only name/id/current logo, and storage permits only current logos publicly. Portal account selection scopes content by customer so multiple hired companies retain separate branding.
 - Keep homepage workflow examples explicitly labeled and separate from live company data so marketing never implies actual customer records.
+- Render software branding through the shared Logo in marketing and application shells; retain CompanyBrand for tenant identity and invoice headers so platform branding does not replace the hired company.

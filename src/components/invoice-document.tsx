@@ -1,5 +1,6 @@
 import { money } from "@/lib/workspace";
 import { CompanyBrand } from "@/components/company-brand";
+import { Logo } from "@/components/marketing";
 
 type Company = { name: string; logo_url: string | null; address: string | null; phone: string | null; email: string | null };
 type Invoice = { number: number; issue_date: string; due_date: string; subtotal: number; tax_rate: number; total: number; amount_paid: number; notes: string | null; status: string; customer: { name: string; email: string | null } | null };
@@ -12,5 +13,6 @@ export function InvoiceDocument({ invoice: inv, company, items }: { invoice: Inv
     {addresses.map(address => <section key={address ?? "other"} className="mb-6">{address && <h3 className="border-b pb-2 font-semibold">{address}</h3>}<table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Service</th><th className="text-right">Qty</th><th className="text-right">Rate</th><th className="text-right">Amount</th></tr></thead><tbody>{items.filter(i => i.address === address).map(i => <tr key={i.id} className="border-b"><td className="py-3 pr-4">{i.description}</td><td className="text-right">{i.quantity}</td><td className="text-right">{money(i.unit_price)}</td><td className="text-right">{money(i.quantity * i.unit_price)}</td></tr>)}</tbody></table>{address && <p className="mt-2 text-right text-sm font-semibold">Address subtotal: {money(items.filter(i => i.address === address).reduce((s,i) => s+i.quantity*i.unit_price,0))}</p>}</section>)}
     <section className="ml-auto max-w-sm space-y-2 border-t pt-4"><p className="flex justify-between"><span>Subtotal</span><span>{money(inv.subtotal)}</span></p><p className="flex justify-between"><span>Tax ({inv.tax_rate}%)</span><span>{money(inv.total-inv.subtotal)}</span></p><p className="flex justify-between font-bold"><span>Total</span><span>{money(inv.total)}</span></p><p className="flex justify-between"><span>Paid</span><span>{money(inv.amount_paid)}</span></p><p className="flex justify-between text-xl font-bold"><span>Balance due</span><span>{money(Math.max(0,inv.total-inv.amount_paid))}</span></p></section>
     {inv.notes && <p className="mt-8 whitespace-pre-wrap text-sm">{inv.notes}</p>}
+    <footer className="mt-8 border-t pt-4"><Logo className="!w-28" /></footer>
   </article>;
 }
