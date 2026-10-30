@@ -37,9 +37,9 @@ function Home() {
         <div className="absolute inset-0 -z-10 bg-hero-overlay" />
         <div className="mx-auto flex min-h-[460px] max-w-6xl flex-col justify-center px-4 py-8 sm:min-h-[500px]">
           <div className="w-full max-w-3xl text-left">
-            <h1 className="w-full max-w-md"><Logo light className="!w-full" /><span className="sr-only">BillMyJobs.com</span></h1>
-            <p className="mt-3 text-xl font-semibold sm:text-2xl">Your whole operation. Every service. Every season.</p>
-            <p className="mt-3 max-w-xl text-base text-forest-foreground/90 sm:text-lg">From mowing and sprinkler systems to snow plowing, shoveling and construction — keep customers, crews, schedules and billing together.</p>
+            <h1 className="font-display text-4xl font-extrabold sm:text-5xl">BillMyJobs.com</h1>
+            <p className="mt-3 text-2xl font-semibold sm:text-3xl">Your whole operation. Every service. Every season.</p>
+            <p className="mt-3 max-w-xl text-lg text-forest-foreground/90 sm:text-xl">From mowing and sprinkler systems to snow plowing, shoveling and construction — keep customers, crews, schedules and billing together.</p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button asChild variant="lime" size="lg"><Link to="/auth" search={{ mode: "signup" }}>Start your 14-day trial</Link></Button>
               <Button asChild variant="heroOutline" size="lg"><Link to="/pricing">See pricing</Link></Button>
