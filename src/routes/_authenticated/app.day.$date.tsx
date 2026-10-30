@@ -19,7 +19,7 @@ export const Route = createFileRoute("/_authenticated/app/day/$date")({
 type JobStatus = "scheduled" | "in_progress" | "completed" | "cancelled";
 
 type DayJob = {
-  pricing_mode: string; hourly_rate: number | null; minimum_hours: number | null; worked_hours: number | null; invoice_id: string | null; id: string; title: string; status: JobStatus; price: number; start_time: string | null; route_order: number | null;
+  pricing_mode: string; per_inch_rate: number | null; snow_inches: number | null; snow_reviewed_at: string | null; hourly_rate: number | null; minimum_hours: number | null; worked_hours: number | null; invoice_id: string | null; id: string; title: string; status: JobStatus; price: number; start_time: string | null; route_order: number | null;
   customer: { name: string } | null; crew_id: string | null; crew: { name: string } | null;
   property: { address: string | null; city: string | null; zip: string | null; gate_code: string | null } | null;
 };
@@ -42,7 +42,7 @@ function DayPage() {
     enabled: valid,
     queryFn: async () => {
       const { data, error } = await supabase.from("jobs")
-        .select("id, title, status, price, pricing_mode, hourly_rate, minimum_hours, worked_hours, invoice_id, start_time, route_order, crew_id, customer:customers(name), crew:crews(name), property:properties(address, city, zip, gate_code)")
+        .select("id, title, status, price, pricing_mode, per_inch_rate, snow_inches, snow_reviewed_at, hourly_rate, minimum_hours, worked_hours, invoice_id, start_time, route_order, crew_id, customer:customers(name), crew:crews(name), property:properties(address, city, zip, gate_code)")
         .eq("company_id", companyId).eq("scheduled_date", date)
         .order("route_order", { nullsFirst: false }).order("start_time");
       if (error) throw error;
@@ -114,7 +114,7 @@ function DayPage() {
                         {can(role, "jobs.manage") && (
                           <div className="flex shrink-0 flex-col gap-1">
                             {j.status === "scheduled" && <Button size="sm" variant="secondary" className="h-8 px-2" onClick={() => setStatus.mutate({ id: j.id, status: "in_progress" })}><Play />Start</Button>}
-                            {(j.status === "scheduled" || j.status === "in_progress") && <Button size="sm" className="h-8 px-2" onClick={() => setStatus.mutate({ id: j.id, status: "completed" })}><Check />Done</Button>}
+                            {(j.status === "scheduled" || j.status === "in_progress") && j.pricing_mode !== "per_inch" && <Button size="sm" className="h-8 px-2" onClick={() => setStatus.mutate({ id: j.id, status: "completed" })}><Check />Done</Button>}
                             {j.status !== "cancelled" && j.status !== "completed" && <Button size="sm" variant="ghost" className="h-8 px-2" onClick={() => setStatus.mutate({ id: j.id, status: "cancelled" })}><X />Cancel</Button>}
                             {canRemoveVisit(j.status, j.invoice_id) && <DeleteRecord table="jobs" id={j.id} name={j.title} description="This visit leaves the schedule and route. Invoice charges stay. Active recurring plans may recreate deleted occurrences when filled; cancel instead to skip permanently." />}
                           </div>
