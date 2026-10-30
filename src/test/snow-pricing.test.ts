@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { snowCharge } from "@/lib/snow-pricing";
+import { snowCharge, needsSnowReview } from "@/lib/snow-pricing";
 import { categoryServiceForm, servicePayload, customerYearTotals } from "@/lib/customer-services";
 
 describe("snow pricing", () => {
+  it("bills rate times reported inches", () => expect(snowCharge("per_inch", 20, 4.5)).toBe(90));
+  it("flags completed per-inch work until reviewed", () => expect(needsSnowReview({ pricing_mode: "per_inch", status: "completed", snow_reviewed_at: null })).toBe(true));
+  it("clears the flag after office approval", () => expect(needsSnowReview({ pricing_mode: "per_inch", status: "completed", snow_reviewed_at: "2026-10-30T02:00:00Z" })).toBe(false));
+  it("does not count per-inch rates as fixed yearly revenue", () => expect(customerYearTotals([{ service: "Snow", price: 20, frequency: "weekly", active: true, pricing_mode: "per_inch" }], [], []).yearlyServices).toBe(0));
+  it("persists per-inch service pricing", () => expect(servicePayload({ ...categoryServiceForm("snow_plowing"), price: "20", pricing_mode: "per_inch" })).toMatchObject({ pricing_mode: "per_inch", price: 20 }));
   it("charges a flat per-storm fee regardless of time", () => expect(snowCharge("flat", 125, 2.5)).toBe(125));
   it("bills only crew time when the minimum is blank", () => expect(snowCharge("hourly", 80, 0.5, null)).toBe(40));
   it("applies a one-hour minimum", () => expect(snowCharge("hourly", 80, 0.5, 1)).toBe(80));

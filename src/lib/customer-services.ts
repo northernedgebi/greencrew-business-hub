@@ -46,7 +46,7 @@ export function availableCrewVisits<T extends CrewVisit>(visits: T[], customerId
   return visits.filter(v => v.id !== excludeId && v.customer_id === customerId && v.property_id === propertyId && !!v.crew_id && v.scheduled_date >= today && (!v.status || v.status === "scheduled" || v.status === "in_progress"));
 }
 export type ServiceFrequency = "once" | "weekly" | "biweekly" | "monthly" | "yearly" | "custom" | "as_needed";
-export type ServiceForm = { title: string; kind: string; frequency: ServiceFrequency; date: string; price: string; times_per_year: string; crew_id: string; notes: string; season_start: string; season_end: string; pricing_mode?: "flat" | "hourly"; minimum_hours?: string };
+export type ServiceForm = { title: string; kind: string; frequency: ServiceFrequency; date: string; price: string; times_per_year: string; crew_id: string; notes: string; season_start: string; season_end: string; pricing_mode?: "flat" | "hourly" | "per_inch"; minimum_hours?: string };
 export const newServiceForm = (): ServiceForm => ({ title: DEFAULT_SERVICE, kind: "lawn", frequency: "weekly", date: localDate(new Date()), price: "", times_per_year: "4", crew_id: "", notes: "", season_start: "", season_end: "" });
 export function seasonLabel(start: string | null | undefined, end: string | null | undefined) {
   if (!start || !end) return null;
@@ -92,13 +92,13 @@ export function summarizeCustomerServices(plans: ServicePlanForSummary[], oneTim
 }
 
 export function customerMonthlyValue(plans: ServicePlanForSummary[]) {
-  return plans.reduce((sum, p) => sum + (p.pricing_mode === "hourly" || p.frequency === "once" || p.frequency === "as_needed" ? 0 : monthlyServiceValue(Number(p.price), p.frequency, p.times_per_year)), 0);
+  return plans.reduce((sum, p) => sum + (p.pricing_mode === "hourly" || p.pricing_mode === "per_inch" || p.frequency === "once" || p.frequency === "as_needed" ? 0 : monthlyServiceValue(Number(p.price), p.frequency, p.times_per_year)), 0);
 }
 
 export type YearTotals = { yearlyServices: number; paidThisYear: number; leftForYear: number };
 
 export function customerYearTotals(plans: ServicePlanForSummary[], oneTimeThisYear: { price: number }[], paymentsThisYear: { amount: number }[]): YearTotals {
-  const yearlyServices = plans.reduce((sum, p) => sum + (!p.active || p.pricing_mode === "hourly" || p.frequency === "once" || p.frequency === "as_needed" ? 0 : monthlyServiceValue(Number(p.price), p.frequency, p.times_per_year) * 12), 0)
+  const yearlyServices = plans.reduce((sum, p) => sum + (!p.active || p.pricing_mode === "hourly" || p.pricing_mode === "per_inch" || p.frequency === "once" || p.frequency === "as_needed" ? 0 : monthlyServiceValue(Number(p.price), p.frequency, p.times_per_year) * 12), 0)
     + oneTimeThisYear.reduce((sum, j) => sum + Number(j.price), 0);
   const paidThisYear = paymentsThisYear.reduce((sum, p) => sum + Number(p.amount), 0);
   return { yearlyServices, paidThisYear, leftForYear: Math.max(0, yearlyServices - paidThisYear) };

@@ -1,4 +1,5 @@
 import { SnowTimeEntry } from "@/components/snow-time-entry";
+import { SnowReviewQueue } from "@/components/snow-review-queue";
 import { canRemoveVisit } from "@/lib/service-retention";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -47,6 +48,7 @@ function Schedule() {
           <Button variant={tab === "recurring" ? "default" : "outline"} onClick={() => setTab("recurring")}>Recurring plans</Button>
         </div>
       )}
+      {showTabs && <SnowReviewQueue />}
       {showTabs && <NearbyServiceSuggestions />}
       {(!showTabs || tab === "visits") && <Visits key={openDay ?? "today"} initialDay={openDay} />}
       {showTabs && tab === "month" && <MonthCalendar onOpenDay={(d) => navigate({ to: "/app/day/$date", params: { date: d } })} />}
@@ -77,7 +79,7 @@ function Visits({ initialDay }: { initialDay?: string | undefined }) {
     enabled: visibleDay,
     queryFn: async () => {
       const { data, error } = await supabase.from("jobs")
-        .select("id, title, scheduled_date, status, price, monthly_included, pricing_mode, hourly_rate, minimum_hours, worked_hours, start_time, notes, invoice_id, customer_id, property_id, crew_id, route_order, customer:customers(name, phone), property:properties(address, city, zip, gate_code), crew:crews(name)")
+        .select("id, title, scheduled_date, status, price, monthly_included, pricing_mode, per_inch_rate, snow_inches, snow_reviewed_at, hourly_rate, minimum_hours, worked_hours, start_time, notes, invoice_id, customer_id, property_id, crew_id, route_order, customer:customers(name, phone), property:properties(address, city, zip, gate_code), crew:crews(name)")
         .eq("company_id", companyId).eq("scheduled_date", selectedDay);
       if (error) throw error;
       // Saved route order first (Routes page), then start time, ZIP, street.
@@ -154,10 +156,10 @@ function Visits({ initialDay }: { initialDay?: string | undefined }) {
               <div className="mt-3 flex flex-wrap gap-2">
                 {can(role, "jobs.manage") && j.status !== "completed" && j.status !== "cancelled" && <NewJob day={selectedDay} job={j} onSaved={setDay} />}
                 {j.status === "scheduled" && <Button size="sm" variant="secondary" onClick={() => setStatus.mutate({ id: j.id, status: "in_progress" })}><Play />Start</Button>}
-                {(j.status === "scheduled" || j.status === "in_progress") && <Button size="sm" onClick={() => setStatus.mutate({ id: j.id, status: "completed" })}><Check />Complete</Button>}
+                {(j.status === "scheduled" || j.status === "in_progress") && j.pricing_mode !== "per_inch" && <Button size="sm" onClick={() => setStatus.mutate({ id: j.id, status: "completed" })}><Check />Complete</Button>}
                 {j.status !== "cancelled" && j.status !== "completed" && can(role, "jobs.manage") && <Button size="sm" variant="ghost" onClick={() => setStatus.mutate({ id: j.id, status: "cancelled" })}><X />Cancel</Button>}
                 {j.monthly_included && <span className="text-xs text-muted-foreground">Included in monthly service fee</span>}
-                {j.status === "completed" && !j.invoice_id && !j.monthly_included && can(role, "billing.manage") && <Button size="sm" variant="outline" onClick={() => invoiceJob({ ...j, price: Number(j.price) })}><Receipt />Invoice</Button>}
+                {j.status === "completed" && !j.invoice_id && !j.monthly_included && (j.pricing_mode !== "per_inch" || !!j.snow_reviewed_at) && can(role, "billing.manage") && <Button size="sm" variant="outline" onClick={() => invoiceJob({ ...j, price: Number(j.price) })}><Receipt />Invoice</Button>}
                 {can(role, "jobs.manage") && canRemoveVisit(j.status, j.invoice_id) && <DeleteRecord table="jobs" id={j.id} name={j.title} description="This visit will be removed from the schedule and route. Invoice charges stay unchanged. If it belongs to an active recurring plan, filling the schedule may recreate that occurrence; cancel the visit instead to skip it permanently." />}
               </div>
             </Card>

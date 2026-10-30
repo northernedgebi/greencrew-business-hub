@@ -44,7 +44,7 @@ function CustomerDetail() {
         supabase.rpc("customer_account_state", { _customer: id }),
         supabase.from("recurring_plans").select("service, frequency, price, pricing_mode, times_per_year, active").eq("company_id", companyId).eq("customer_id", id).eq("active", true),
         supabase.from("jobs").select("price").eq("company_id", companyId).eq("customer_id", id).is("recurring_plan_id", null).neq("status", "cancelled").gte("scheduled_date", yearStart),
-        supabase.from("jobs").select("id, title, scheduled_date, price, property_id, property:properties(address)").eq("company_id", companyId).eq("customer_id", id).eq("status", "completed").eq("monthly_included", false).is("invoice_id", null).order("scheduled_date"),
+        supabase.from("jobs").select("id, title, scheduled_date, price, property_id, property:properties(address)").eq("company_id", companyId).eq("customer_id", id).eq("status", "completed").eq("monthly_included", false).or("pricing_mode.neq.per_inch,snow_reviewed_at.not.is.null").is("invoice_id", null).order("scheduled_date"),
       ]);
       if (c.error) throw c.error;
       if (account.error) throw account.error;

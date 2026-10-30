@@ -27,9 +27,9 @@ export const Route = createFileRoute("/_authenticated/app/routes")({
 
 const sel = "h-11 w-full rounded-xl border bg-background px-3 text-sm";
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
-const JOB_COLS = "id, title, status, price, pricing_mode, hourly_rate, minimum_hours, worked_hours, invoice_id, notes, route_order, start_time, scheduled_date, crew_id, property_id, customer:customers(name), property:properties(id, address, city, state, zip, lat, lng, gate_code, notes)";
+const JOB_COLS = "id, title, status, price, pricing_mode, per_inch_rate, snow_inches, snow_reviewed_at, hourly_rate, minimum_hours, worked_hours, invoice_id, notes, route_order, start_time, scheduled_date, crew_id, property_id, customer:customers(name), property:properties(id, address, city, state, zip, lat, lng, gate_code, notes)";
 
-type Job = { price: number; pricing_mode: string; hourly_rate: number | null; minimum_hours: number | null; worked_hours: number | null; invoice_id: string | null; id: string; title: string; status: string; notes: string | null; route_order: number | null; property_id: string | null; customer: { name: string } | null; property: { id: string; address: string; city: string | null; state: string | null; zip: string | null; lat: number | null; lng: number | null; gate_code: string | null; notes: string | null } | null };
+type Job = { price: number; pricing_mode: string; per_inch_rate: number | null; snow_inches: number | null; snow_reviewed_at: string | null; hourly_rate: number | null; minimum_hours: number | null; worked_hours: number | null; invoice_id: string | null; id: string; title: string; status: string; notes: string | null; route_order: number | null; property_id: string | null; customer: { name: string } | null; property: { id: string; address: string; city: string | null; state: string | null; zip: string | null; lat: number | null; lng: number | null; gate_code: string | null; notes: string | null } | null };
 type Group = { key: string; name: string; property: Job["property"]; jobs: Job[]; order: number };
 type Crew = { id: string; name: string; start_address: string | null; start_lat: number | null; start_lng: number | null };
 

@@ -1,4 +1,5 @@
 # LawnOffice enhancement roadmap
+- [x] Per-inch snow pricing, crew inches on completion, office review flags and protected invoicing; verified 4.5 inches at $20 produces $90, billing blocked before approval, then approved invoice persists.
 - [x] Add the supplied BillMyJobs logo to the homepage and shared software pages, preserving company branding; verified homepage and signed-in logo rendering with no phone-width overflow.
 - [x] Professional site typography and year-round front-page imagery with schedule, job tracking and billing examples; checked images, signup navigation and small-screen layout.
 - [x] Company logos in workspace and printed invoices, customer signup invitations, and account-scoped portal; verified signed-out logo rendering and linked-customer branding.
