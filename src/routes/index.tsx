@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { CalendarDays, Users, Receipt, Route as RouteIcon, Repeat, Smartphone, ShieldCheck, BarChart3, ArrowRight, CheckCircle2 } from "lucide-react";
 import heroImg from "@/assets/year-round-services.jpg";
 import { Button } from "@/components/ui/button";
-import { Logo, MarketingShell, PricingGrid } from "@/components/marketing";
+import { MarketingShell, PricingGrid } from "@/components/marketing";
 
 export const Route = createFileRoute("/")({
   head: () => ({
