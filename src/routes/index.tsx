@@ -37,7 +37,6 @@ function Home() {
         <div className="absolute inset-0 -z-10 bg-hero-overlay" />
         <div className="mx-auto flex min-h-[460px] max-w-6xl flex-col justify-center px-4 py-8 sm:min-h-[500px]">
           <div className="w-full max-w-3xl text-left">
-            <p className="mb-3 text-sm font-semibold text-lime">LAWN CARE · SNOW · IRRIGATION · CONSTRUCTION</p>
             <h1 className="w-full max-w-md"><Logo light className="!w-full" /><span className="sr-only">BillMyJobs.com</span></h1>
             <p className="mt-3 text-xl font-semibold sm:text-2xl">Your whole operation. Every service. Every season.</p>
             <p className="mt-3 max-w-xl text-base text-forest-foreground/90 sm:text-lg">From mowing and sprinkler systems to snow plowing, shoveling and construction — keep customers, crews, schedules and billing together.</p>
