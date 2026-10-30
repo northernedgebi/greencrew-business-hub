@@ -669,6 +669,7 @@ export type Database = {
           minimum_hours: number | null
           monthly_included: boolean
           notes: string | null
+          per_inch_rate: number | null
           price: number
           pricing_mode: string
           property_id: string | null
@@ -679,6 +680,8 @@ export type Database = {
           service_kind: string
           snow_inches: number | null
           snow_method: string | null
+          snow_reviewed_at: string | null
+          snow_reviewed_by: string | null
           snow_trips: number | null
           start_time: string | null
           status: Database["public"]["Enums"]["job_status"]
@@ -697,6 +700,7 @@ export type Database = {
           minimum_hours?: number | null
           monthly_included?: boolean
           notes?: string | null
+          per_inch_rate?: number | null
           price?: number
           pricing_mode?: string
           property_id?: string | null
@@ -707,6 +711,8 @@ export type Database = {
           service_kind?: string
           snow_inches?: number | null
           snow_method?: string | null
+          snow_reviewed_at?: string | null
+          snow_reviewed_by?: string | null
           snow_trips?: number | null
           start_time?: string | null
           status?: Database["public"]["Enums"]["job_status"]
@@ -725,6 +731,7 @@ export type Database = {
           minimum_hours?: number | null
           monthly_included?: boolean
           notes?: string | null
+          per_inch_rate?: number | null
           price?: number
           pricing_mode?: string
           property_id?: string | null
@@ -735,6 +742,8 @@ export type Database = {
           service_kind?: string
           snow_inches?: number | null
           snow_method?: string | null
+          snow_reviewed_at?: string | null
+          snow_reviewed_by?: string | null
           snow_trips?: number | null
           start_time?: string | null
           status?: Database["public"]["Enums"]["job_status"]
@@ -1231,6 +1240,10 @@ export type Database = {
       add_customer_service: {
         Args: { _company: string; _customer: string; _service: Json }
         Returns: string
+      }
+      approve_snow_visit: {
+        Args: { _inches: number; _job: string; _rate: number }
+        Returns: undefined
       }
       can_access_crew_job: {
         Args: { _company: string; _crew: string; _date: string }
