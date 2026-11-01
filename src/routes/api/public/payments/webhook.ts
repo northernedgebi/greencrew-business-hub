@@ -5,7 +5,7 @@ import { companyStatusFromSubscription, planFromPriceId } from "@/lib/software-p
 
 let _supabase: ReturnType<typeof createClient> | null = null;
 function db() {
-  if (!_supabase) _supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } });
+  if (!_supabase) _supabase = createClient(process.env["SUPABASE_URL"]!, process.env["SUPABASE_SERVICE_ROLE_KEY"]!, { auth: { persistSession: false } });
   return _supabase;
 }
 
@@ -36,7 +36,7 @@ async function syncSubscription(subscription: any, env: StripeEnv) {
   // In the preview (test mode) also reflect the status so the flow can be tried end to end.
   const plan = planFromPriceId(priceId);
   const update: Record<string, string> = { subscription_status: companyStatusFromSubscription(status) };
-  if (plan) update.plan = plan;
+  if (plan) update["plan"] = plan;
   // Never override a platform-admin suspension.
   await (db().from("companies") as any).update(update).eq("id", companyId).neq("subscription_status", "suspended");
 }

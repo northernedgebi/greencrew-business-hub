@@ -6,18 +6,17 @@ import { PLAN_PRICE_IDS } from "@/lib/software-plans";
 
 async function resolveOrCreateCustomer(
   stripe: ReturnType<typeof createStripeClient>,
-  options: { email?: string; userId?: string },
+  options: { email?: string | undefined; userId?: string | undefined },
 ): Promise<string> {
   if (options.userId && !/^[a-zA-Z0-9_-]+$/.test(options.userId)) throw new Error("Invalid userId");
   if (options.userId) {
     const found = await stripe.customers.search({ query: `metadata['userId']:'${options.userId}'`, limit: 1 });
-    if (found.data.length) return found.data[0].id;
+    const first = found.data[0]; if (first) return first.id;
   }
   if (options.email) {
     const existing = await stripe.customers.list({ email: options.email, limit: 1 });
-    if (existing.data.length) {
-      const customer = existing.data[0];
-      if (options.userId && customer.metadata?.userId !== options.userId) {
+    const customer = existing.data[0]; if (customer) {
+      if (options.userId && customer.metadata?.["userId"] !== options.userId) {
         await stripe.customers.update(customer.id, { metadata: { ...customer.metadata, userId: options.userId } });
       }
       return customer.id;
@@ -48,11 +47,11 @@ export const createPlanCheckout = createServerFn({ method: "POST" })
       const { data: { user } } = await supabase.auth.getUser();
       const stripe = createStripeClient(data.environment);
       const prices = await stripe.prices.list({ lookup_keys: [data.priceId] });
-      if (!prices.data.length) return { error: "Plan price not found" };
+      const price = prices.data[0]; if (!price) return { error: "Plan price not found" };
       const customerId = await resolveOrCreateCustomer(stripe, { email: user?.email ?? undefined, userId });
       const meta = { userId, companyId: data.companyId };
       const session = await stripe.checkout.sessions.create({
-        line_items: [{ price: prices.data[0].id, quantity: 1 }],
+        line_items: [{ price: price.id, quantity: 1 }],
         mode: "subscription",
         ui_mode: "embedded_page",
         return_url: data.returnUrl,
