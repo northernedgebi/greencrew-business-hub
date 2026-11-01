@@ -34,3 +34,4 @@
 - Reuse CompanyBrand with private signed storage logos; public company_branding exposes only name/id/current logo, and storage permits only current logos publicly. Portal account selection scopes content by customer so multiple hired companies retain separate branding.
 - Keep homepage workflow examples explicitly labeled and separate from live company data so marketing never implies actual customer records.
 - Render software branding through the shared Logo in marketing and application shells; retain CompanyBrand for tenant identity and invoice headers so platform branding does not replace the hired company.
+- Software subscriptions are per company: checkout carries companyId metadata; the payments webhook upserts company_subscriptions and syncs companies.plan/subscription_status (never overriding suspended), so access gating keeps reading the company row.
