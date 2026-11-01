@@ -10,6 +10,7 @@ import { Card, PageHeader, Spinner } from "@/components/app-ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SubscriptionBilling } from "@/components/subscription-billing";
 
 export const Route = createFileRoute("/_authenticated/app/settings")({ head: () => ({ meta: [{ title: "Company Settings | LawnOffice" }, { name: "description", content: "Manage company contact details and LawnOffice workspace settings." }, { property: "og:title", content: "Company Settings | LawnOffice" }, { property: "og:description", content: "Manage company contact details and LawnOffice workspace settings." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }), component: Settings });
 
@@ -59,7 +60,7 @@ function Settings() {
           <p className="text-sm">Plan: <span className="font-semibold capitalize">{q.data.plan}</span></p>
           <p className="text-sm">Status: <span className="font-semibold capitalize">{q.data.subscription_status}</span></p>
           {q.data.subscription_status === "trialing" && <p className="text-sm">Trial ends {new Date(q.data.trial_ends_at).toLocaleDateString()}</p>}
-          <p className="mt-3 text-sm text-muted-foreground">Online subscription checkout is coming next.</p>
+          <SubscriptionBilling companyId={ws.companyId} canManage={ws.role === "owner"} />
         </Card>
       </div>
     </>
