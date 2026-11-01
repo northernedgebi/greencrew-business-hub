@@ -32,6 +32,7 @@ import { Route as AuthenticatedAppDayDateRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAppInvoicesIndexRouteImport } from './routes/_authenticated/app.invoices.index'
 import { Route as AuthenticatedAppInvoicesIdRouteImport } from './routes/_authenticated/app.invoices.$id'
 import { Route as ApiPublicBillingMonthlyRouteImport } from './routes/api/public/billing/monthly'
+import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -156,6 +157,12 @@ const ApiPublicBillingMonthlyRoute = ApiPublicBillingMonthlyRouteImport.update({
   path: '/api/public/billing/monthly',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPaymentsWebhookRoute =
+  ApiPublicPaymentsWebhookRouteImport.update({
+    id: '/api/public/payments/webhook',
+    path: '/api/public/payments/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -178,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/app/day/$date': typeof AuthenticatedAppDayDateRoute
   '/app/invoices/$id': typeof AuthenticatedAppInvoicesIdRoute
   '/api/public/billing/monthly': typeof ApiPublicBillingMonthlyRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/app/customers/': typeof AuthenticatedAppCustomersIndexRoute
   '/app/invoices/': typeof AuthenticatedAppInvoicesIndexRoute
 }
@@ -201,6 +209,7 @@ export interface FileRoutesByTo {
   '/app/day/$date': typeof AuthenticatedAppDayDateRoute
   '/app/invoices/$id': typeof AuthenticatedAppInvoicesIdRoute
   '/api/public/billing/monthly': typeof ApiPublicBillingMonthlyRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/app/customers': typeof AuthenticatedAppCustomersIndexRoute
   '/app/invoices': typeof AuthenticatedAppInvoicesIndexRoute
 }
@@ -227,6 +236,7 @@ export interface FileRoutesById {
   '/_authenticated/app/day/$date': typeof AuthenticatedAppDayDateRoute
   '/_authenticated/app/invoices/$id': typeof AuthenticatedAppInvoicesIdRoute
   '/api/public/billing/monthly': typeof ApiPublicBillingMonthlyRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/_authenticated/app/customers/': typeof AuthenticatedAppCustomersIndexRoute
   '/_authenticated/app/invoices/': typeof AuthenticatedAppInvoicesIndexRoute
 }
@@ -253,6 +263,7 @@ export interface FileRouteTypes {
     | '/app/day/$date'
     | '/app/invoices/$id'
     | '/api/public/billing/monthly'
+    | '/api/public/payments/webhook'
     | '/app/customers/'
     | '/app/invoices/'
   fileRoutesByTo: FileRoutesByTo
@@ -276,6 +287,7 @@ export interface FileRouteTypes {
     | '/app/day/$date'
     | '/app/invoices/$id'
     | '/api/public/billing/monthly'
+    | '/api/public/payments/webhook'
     | '/app/customers'
     | '/app/invoices'
   id:
@@ -301,6 +313,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/day/$date'
     | '/_authenticated/app/invoices/$id'
     | '/api/public/billing/monthly'
+    | '/api/public/payments/webhook'
     | '/_authenticated/app/customers/'
     | '/_authenticated/app/invoices/'
   fileRoutesById: FileRoutesById
@@ -311,6 +324,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   PricingRoute: typeof PricingRoute
   ApiPublicBillingMonthlyRoute: typeof ApiPublicBillingMonthlyRoute
+  ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -476,6 +490,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBillingMonthlyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/payments/webhook': {
+      id: '/api/public/payments/webhook'
+      path: '/api/public/payments/webhook'
+      fullPath: '/api/public/payments/webhook'
+      preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -539,6 +560,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   PricingRoute: PricingRoute,
   ApiPublicBillingMonthlyRoute: ApiPublicBillingMonthlyRoute,
+  ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
